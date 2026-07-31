@@ -44,6 +44,10 @@
 <!-- Format: DECIDED: [decision] (Stage [slug], [date]) -->
 
 - 보안은 최소 수준(비밀번호 해시 저장) + 승인 없는 가입이므로 히든 안티-중복계정 장치(IP 등 신호 활용, 목적 한정·최소보관·비노출)를 둔다 (Stage feasibility, 2026-07-31) (learned 2026-07-31) <!-- cid:feasibility:c2 -->
+- 관리자(시스템 관리자)는 4개 지점에서 승인한다 — ① 모임 개설, ② 모임 시작, ③ 멘토 정상 완료, ④ 멘티 수료 완료 (Stage rough-mockups, 2026-07-31) (learned 2026-07-31) <!-- cid:rough-mockups:u1 -->
+- 멘티 수료는 출석률 80% 기준으로 시스템이 자동 판정하고 관리자가 승인(④)하여 확정한다. 멘토는 멘티 수료를 인정하지 않으며, 멘토는 모임 정상 완료 인정 신청(관리자 승인③)과 멘티 피드백 확인만 담당한다 (Stage rough-mockups, 2026-07-31) (learned 2026-07-31) <!-- cid:rough-mockups:u2 -->
+- 멘티 피드백(과정 설문)은 멘토가 확인하며 시스템 관리자도 열람할 수 있다 (Stage rough-mockups, 2026-07-31) (learned 2026-07-31) <!-- cid:rough-mockups:u3 -->
+- 사전 설문(신청 설문)의 문항 틀은 멘토가 모임 개설 시 자유롭게(문항을 임의로 구성) 지정하며, 멘티는 신청 시 그 설문에 응답한다 (Stage rough-mockups, 2026-07-31) (learned 2026-07-31) <!-- cid:rough-mockups:u4 -->
 ## Scope Overrides
 
 <!-- Custom scope rules for this project. -->
