@@ -154,7 +154,7 @@
       "scope-definition": "EXECUTE",
       "team-formation": "EXECUTE",
       "rough-mockups": "EXECUTE",
-      "approval-handoff": "SKIP",
+      "approval-handoff": "EXECUTE",
       "reverse-engineering": "SKIP",
       "practices-discovery": "EXECUTE",
       "requirements-analysis": "EXECUTE",

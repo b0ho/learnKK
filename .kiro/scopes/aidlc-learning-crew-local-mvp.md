@@ -36,18 +36,19 @@ Everything from implementation onward is deferred. `code-generation`,
 `build-and-test`, and `ci-pipeline` SKIP because implementation is handed
 off to three separate per-team workflows — one developer per assigned Bolt.
 `nfr-design` and `infrastructure-design` SKIP here; those decisions belong
-with the teams that will build against them. The entire operation phase
+with the teams that will build against them. `approval-handoff` EXECUTE — the
+ideation→inception handoff is made an explicit formal gate (user decision). The entire operation phase
 (`deployment-pipeline`, `environment-provisioning`, `deployment-execution`,
 `observability-setup`, `incident-response`, `performance-validation`,
 `feedback-optimization`) SKIPs — a design-only workflow never reaches
-production. `approval-handoff` and `reverse-engineering` SKIP: this is a
-greenfield build with no existing codebase to map, and the ideation→inception
-handoff is carried inline.
+production. `reverse-engineering` SKIP: this is a greenfield build with no
+existing codebase to map. `approval-handoff` EXECUTE: the ideation→inception
+handoff is run as an explicit formal gate (user decision).
 
 ## Membership
 
 Not inferable — `keywords: []`, so this scope resolves only by explicit
 `--scope learning-crew-local-mvp`. Initialization, the full ideation set
-(minus approval-handoff), and inception through detailed design run;
+(including approval-handoff), and inception through detailed design run;
 construction implementation and the whole operation phase are deferred to
 the per-developer implementation workflows.
