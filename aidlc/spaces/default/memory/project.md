@@ -62,3 +62,5 @@
 
 <!-- Project-specific corrections from human feedback. -->
 <!-- Format: NEVER/ALWAYS [behavior] (learned [date]) -->
+- 사용자가 확인할 답변·질문·산출물 내용은 한글로 작성하고, 고유어·기술 용어(고유명사·기술 용어 등)는 영어를 그대로 사용한다 (learned 2026-07-31) <!-- cid:intent-capture:u1 -->
+- §13 learnings 반영을 사용자에게 물어볼 때, 추천 항목을 목록 최상위에 별도 항목으로 명시한다 (learned 2026-07-31) <!-- cid:intent-capture:u2 -->
