@@ -1,0 +1,16 @@
+# macOS
+.DS_Store
+
+# AI-DLC per-user cursors
+aidlc/active-space
+aidlc/spaces/*/intents/active-intent
+
+# AI-DLC per-clone audit-shard token and machine-local runtime
+aidlc/.aidlc-clone-id
+aidlc/.aidlc-sessions/
+
+# AI-DLC per-intent runtime graph (and per-Bolt worktree fragments)
+aidlc/spaces/*/intents/*/runtime-graph.json
+
+# AI-DLC per-intent recovery, hooks-health, sensors scratch
+aidlc/spaces/*/intents/*/.aidlc-*

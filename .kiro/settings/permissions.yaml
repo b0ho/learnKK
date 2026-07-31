@@ -1,0 +1,85 @@
+rules:
+  - capability: shell
+    effect: allow
+  - capability: fs_read
+    effect: allow
+  - capability: fs_write
+    effect: allow
+  - capability: web_fetch
+    effect: allow
+  - capability: web_search
+    effect: allow
+  - capability: subagent
+    effect: allow
+  - capability: skill
+    effect: allow
+  - capability: power
+    effect: allow
+  - capability: context
+    effect: allow
+  - capability: diagnostics
+    effect: allow
+  - capability: mcp
+    effect: allow
+  - capability: shell
+    match:
+      - rm -rf /
+      - rm -rf /*
+      - rm -fr /
+      - rm -fr /*
+      - rm -rf ~
+      - rm -rf ~/*
+      - rm -rf ..
+      - rm -rf ../*
+      - rm -rf --no-preserve-root*
+    effect: ask
+  - capability: shell
+    match:
+      - dd *
+      - mkfs*
+      - fdisk *
+      - parted *
+      - diskutil *
+      - newfs*
+    effect: ask
+  - capability: shell
+    match:
+      - sudo
+      - sudo *
+      - su
+      - su *
+      - doas *
+    effect: ask
+  - capability: shell
+    match:
+      - shutdown*
+      - reboot*
+      - halt*
+      - poweroff*
+      - init 0
+      - init 6
+    effect: deny
+  - capability: shell
+    match:
+      - chmod -R 777 /*
+      - chmod 777 /*
+      - chown -R * /
+      - chown -R * /*
+    effect: ask
+  - capability: shell
+    match:
+      - eval *
+      - bash -c *
+      - sh -c *
+      - zsh -c *
+    effect: ask
+  - capability: shell
+    match:
+      - git push --force*
+      - git push -f*
+      - git reset --hard*
+      - git clean -f*
+      - git clean -fd*
+      - git branch -D*
+      - git config *
+    effect: ask
