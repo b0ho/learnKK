@@ -3,8 +3,21 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="light">
+  <meta name="color-scheme" content="light dark">
   <title>AI-DLC 진행 현황 · 260731-learnkk-crew</title>
+  <script>
+    // Apply the saved (or system) theme before paint to avoid a flash of the wrong theme.
+    (function () {
+      try {
+        var saved = localStorage.getItem("aidlc-theme");
+        var theme = saved
+          || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.dataset.theme = theme;
+      } catch (e) {
+        document.documentElement.dataset.theme = "light";
+      }
+    })();
+  </script>
   <style>
     :root {
       --ink: #17221d;
@@ -20,6 +33,60 @@
       --rose: #b95e55;
       --shadow: 0 18px 50px rgba(42, 54, 47, .09);
     }
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --ink: #e6ece8;
+      --muted: #94a29a;
+      --paper: #101713;
+      --surface: #18221d;
+      --line: #2b3630;
+      --forest: #164b38;
+      --forest-2: #4aa87f;
+      --mint: #1f3a2c;
+      --lime: #dce870;
+      --amber: #e2a34e;
+      --rose: #d1786e;
+      --shadow: 0 18px 50px rgba(0, 0, 0, .5);
+    }
+    html[data-theme="dark"] body {
+      background:
+        radial-gradient(circle at 85% 0%, rgba(220, 232, 112, .08), transparent 25rem),
+        var(--paper);
+    }
+    html[data-theme="dark"] .toolbar { background: rgba(24, 34, 29, .9); }
+    html[data-theme="dark"] .panel:not(.primary) p,
+    html[data-theme="dark"] .purpose,
+    html[data-theme="dark"] .document { color: #b3beb6 !important; }
+    html[data-theme="dark"] .panel.primary { color: #17221d; }
+    html[data-theme="dark"] .panel.primary .eyebrow { color: #164b38; }
+    html[data-theme="dark"] .step-index a { background: #46524a; }
+    html[data-theme="dark"] .step-index a.done { background: var(--forest-2); }
+    html[data-theme="dark"] .step-index a.current { background: var(--amber); }
+    html[data-theme="dark"] .search,
+    html[data-theme="dark"] .intent-switcher select,
+    html[data-theme="dark"] .detail-grid > div,
+    html[data-theme="dark"] .glossary-tools input { background: #1e2a24; color: var(--ink); }
+    html[data-theme="dark"] .glossary-tools input,
+    html[data-theme="dark"] .intent-switcher select { border-color: var(--line); }
+    html[data-theme="dark"] .phase-progress { background: #26302a; }
+    html[data-theme="dark"] .stage-card:hover { border-color: #3a463f; }
+    html[data-theme="dark"] .stage-marker { background: #3a463f; box-shadow: 0 0 0 1px #3a463f; }
+    html[data-theme="dark"] .badge { background: #2a352e; color: #b6c0b9; }
+    html[data-theme="dark"] .badge.complete { color: #bfe6cf; background: var(--mint); }
+    html[data-theme="dark"] .artifact-list a,
+    html[data-theme="dark"] .artifact-list button { color: #bfe6cf; }
+    html[data-theme="dark"] .modal-close { background: #26302a; color: var(--muted); }
+    html[data-theme="dark"] .document blockquote { background: #1c2823; color: #aeb9b2; }
+    html[data-theme="dark"] .document code { background: #26302a; }
+    html[data-theme="dark"] .document th { background: #1e2a24; }
+    html[data-theme="dark"] .term { background: #1c2823; }
+    html[data-theme="dark"] .term p { color: #aeb9b2; }
+    html[data-theme="dark"] .term h3,
+    html[data-theme="dark"] .document h3 { color: var(--forest-2); }
+    html[data-theme="dark"] .connection-note { background: #1c2823; }
+    html[data-theme="dark"] .guide-button { background: #1e2a24; border-color: var(--line); color: var(--forest-2); }
+    html[data-theme="dark"] .guide-button:hover,
+    html[data-theme="dark"] .phase-toggle:hover { background: #223129; }
     * { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
     body {
@@ -61,7 +128,7 @@
     .progress-orb {
       align-self: center; justify-self: center; position: relative; display: grid; place-items: center;
       width: 190px; aspect-ratio: 1; border-radius: 50%;
-      background: conic-gradient(var(--lime) 22%, rgba(255,255,255,.12) 0);
+      background: conic-gradient(var(--lime) 39%, rgba(255,255,255,.12) 0);
       z-index: 1;
     }
     .progress-orb::before { content: ""; position: absolute; inset: 14px; border-radius: 50%; background: var(--forest); }
@@ -191,8 +258,8 @@
     }
     .modal.open { display: grid; }
     .modal-card {
-      display: grid; grid-template-rows: auto minmax(0,1fr); width: min(920px, 100%);
-      max-height: min(86vh, 920px); overflow: hidden; border-radius: 22px;
+      display: grid; grid-template-rows: auto minmax(0,1fr); width: min(1120px, 100%);
+      max-height: min(92vh, 1120px); overflow: hidden; border-radius: 22px;
       background: var(--surface); box-shadow: 0 28px 90px rgba(10,24,17,.28);
     }
     .modal-head {
@@ -204,8 +271,8 @@
       width: 34px; height: 34px; border: 0; border-radius: 50%; color: var(--muted);
       background: #eceae3; cursor: pointer; font-size: 20px;
     }
-    .modal-body { overflow: auto; padding: 24px; }
-    .document { max-width: 760px; margin: 0 auto; color: #35423b; }
+    .modal-body { overflow: auto; padding: 28px 32px; }
+    .document { max-width: 940px; margin: 0 auto; color: #35423b; }
     .document h1 { margin: 0 0 20px; color: var(--ink); font-size: 30px; letter-spacing: -.04em; }
     .document h2 { margin: 30px 0 10px; padding-top: 18px; border-top: 1px solid var(--line); color: var(--ink); font-size: 21px; }
     .document h3 { margin: 22px 0 8px; color: var(--forest); font-size: 16px; }
@@ -267,38 +334,38 @@
   <main class="shell">
     <header class="topbar">
       <div class="brand"><span class="brand-mark">AID</span><span>AI-DLC 진행 현황</span></div>
-      <div class="top-meta"><span class="live-dot offline" id="live-dot"></span><span id="connection-status">생성 시점 · <time data-time="2026-07-31T07:17:00.796Z">2026-07-31T07:17:00.796Z</time></span></div>
+      <div class="top-meta"><span class="live-dot offline" id="live-dot"></span><span id="connection-status">생성 시점 · <time data-time="2026-07-31T09:11:16.811Z">2026-07-31T09:11:16.811Z</time></span></div>
     </header>
 
     <section class="hero">
       <div>
         <span class="kicker" id="scope-label">default Space · Learning Crew Local Mvp Scope</span>
         <h1 id="intent-name">260731-learnkk-crew</h1>
-        <p class="hero-copy">현재 <strong id="current-stage-name">Market Research</strong> Stage를 진행하고 있습니다. 승인된 산출물과 다음 작업을 한 화면에서 확인하세요.</p>
+        <p class="hero-copy" id="intent-intro">러닝 크루(learning crew)를 모집·운영하는 모바일 웹뷰 학습 모임 플랫폼.</p>
         <div class="hero-tags">
           <span class="hero-tag" id="project-type">Greenfield</span>
           <span class="hero-tag" id="depth-label">Depth Standard</span>
           <span class="hero-tag" id="test-label">Test Strategy Standard</span>
-          <span class="hero-tag">AI-DLC v2.5.2</span>
+          <span class="hero-tag" id="version-label">AI-DLC v2.5.30</span>
         </div>
       </div>
-      <div class="progress-orb" id="progress-orb" role="img" aria-label="전체 진행률 22%">
-        <div class="orb-content"><strong id="overall-percent">22%</strong><span id="overall-count">4 / 18 Stage</span></div>
+      <div class="progress-orb" id="progress-orb" role="img" aria-label="전체 진행률 39%">
+        <div class="orb-content"><strong id="overall-percent">39%</strong><span id="overall-count">7 / 18 Stage</span></div>
       </div>
     </section>
 
     <section class="metric-grid" aria-label="Workflow 요약">
       <div class="metric"><span>현재 Phase</span><strong id="metric-phase">Ideation</strong></div>
-      <div class="metric"><span>완료 Stage</span><strong id="metric-completed">4</strong></div>
-      <div class="metric"><span>남은 Stage</span><strong id="metric-remaining">13</strong></div>
-      <div class="metric"><span>현재 담당</span><strong id="metric-agent">product</strong></div>
+      <div class="metric"><span>완료 Stage</span><strong id="metric-completed">7</strong></div>
+      <div class="metric"><span>남은 Stage</span><strong id="metric-remaining">10</strong></div>
+      <div class="metric"><span>현재 담당</span><strong id="metric-agent">delivery</strong></div>
     </section>
 
     <section class="now">
       <article class="panel primary">
         <span class="eyebrow">지금 해야 할 일</span>
-        <h2 id="next-action">Market Research 수행</h2>
-        <p id="current-purpose">시장·대안·경쟁 환경을 조사해 제품 판단의 근거를 만듭니다.</p>
+        <h2 id="next-action">Team Formation 수행</h2>
+        <p id="current-purpose">필요 역량과 협업팀 구성을 정하고 역할 공백을 확인합니다.</p>
         <div class="action">
           <code>/aidlc --resume</code>
           <span id="pending-artifacts">누락 산출물 없음</span>
@@ -306,8 +373,8 @@
       </article>
       <article class="panel">
         <span class="eyebrow">다음 Stage</span>
-        <h2 id="next-stage-name">Feasibility &amp; Constraints</h2>
-        <p id="next-stage-purpose">기술·사업·운영 제약과 위험을 검토해 실행 가능성을 평가합니다.</p>
+        <h2 id="next-stage-name">Rough Mockups</h2>
+        <p id="next-stage-purpose">핵심 사용자 흐름과 화면 구조를 빠르게 시각화합니다.</p>
         <nav class="step-index" aria-label="Phase 바로가기">
           <a href="#initialization" class="done " title="Initialization"></a><a href="#ideation" class=" current" title="Ideation"></a><a href="#inception" class=" " title="Inception"></a><a href="#construction" class=" " title="Construction"></a><a href="#operation" class=" " title="Operation"></a>
         </nav>
@@ -328,9 +395,11 @@
         </select>
       </div>
       <button class="utility" id="glossary-button">용어사전</button>
+      <button class="utility" id="theme-toggle" aria-pressed="false">다크 모드</button>
       <button class="utility" id="refresh-dashboard">새로고침</button>
       <button class="utility" id="go-current">현재 작업으로 이동</button>
       <button class="utility" id="collapse-complete">완료 Phase 접기</button>
+      <button class="utility" id="hide-completed">완료 Stage 숨기기</button>
       <button class="utility" id="expand-all">모든 상세 펼치기</button>
       <button class="utility" id="connect-folder">프로젝트 읽기 권한</button>
     </div>
@@ -460,8 +529,8 @@
         </div>
         <div class="phase-header-actions">
           <div class="phase-score active">
-            <strong>17%</strong>
-            <span>1/6 완료</span>
+            <strong>67%</strong>
+            <span>4/6 완료</span>
           </div>
           <button class="phase-toggle" type="button" aria-expanded="true">
             <span>접기</span><span class="chevron" aria-hidden="true">⌃</span>
@@ -469,8 +538,8 @@
         </div>
       </div>
       <div class="phase-content">
-        <div class="phase-progress" aria-label="Ideation 17% 완료">
-          <span style="width:17%"></span>
+        <div class="phase-progress" aria-label="Ideation 67% 완료">
+          <span style="width:67%"></span>
         </div>
         <div class="stage-list">
 
@@ -504,9 +573,9 @@
         </div>
       </div>
     </article>
-    <article class="stage-card active current"
+    <article class="stage-card complete"
       data-stage="market-research" data-phase="ideation"
-      data-status="in-progress" data-search="1.2 market research market-research 시장·대안·경쟁 환경을 조사해 제품 판단의 근거를 만듭니다.">
+      data-status="completed" data-search="1.2 market research market-research 시장·대안·경쟁 환경을 조사해 제품 판단의 근거를 만듭니다.">
       <div class="stage-marker" aria-hidden="true"></div>
       <div class="stage-main">
         <div class="stage-heading">
@@ -515,12 +584,12 @@
             <h3>Market Research</h3>
             <p class="slug">market-research</p>
           </div>
-          <span class="badge active">진행 중</span>
+          <span class="badge complete">완료</span>
         </div>
         <p class="purpose">시장·대안·경쟁 환경을 조사해 제품 판단의 근거를 만듭니다.</p>
         <div class="stage-actions">
           <details>
-          <summary>세부 정보와 산출물 <span class="artifact-count">0</span></summary>
+          <summary>세부 정보와 산출물 <span class="artifact-count">4</span></summary>
           <div class="detail-grid">
             <div><h4>실행 조건</h4><p data-detail="condition">Project Type과 Scope의 실행 조건이 충족될 때 수행합니다.</p></div>
             <div><h4>담당</h4><p data-detail="agents">aidlc-product-agent</p></div>
@@ -528,15 +597,15 @@
             <div><h4>예상 출력</h4><p data-detail="outputs">생성 산출물: competitive-analysis, market-trends, build-vs-buy, market-research-questions</p></div>
           </div>
           <h4 class="artifact-title">현재 산출물</h4>
-          <p class="empty">아직 생성된 산출물이 없습니다.</p>
+          <div class="artifact-list"><a href="spaces/default/intents/260731-learnkk-crew/ideation/market-research/build-vs-buy.md" target="_blank">ideation/market-research/build-vs-buy.md</a><a href="spaces/default/intents/260731-learnkk-crew/ideation/market-research/competitive-analysis.md" target="_blank">ideation/market-research/competitive-analysis.md</a><a href="spaces/default/intents/260731-learnkk-crew/ideation/market-research/market-research-questions.md" target="_blank">ideation/market-research/market-research-questions.md</a><a href="spaces/default/intents/260731-learnkk-crew/ideation/market-research/market-trends.md" target="_blank">ideation/market-research/market-trends.md</a></div>
           </details>
           <button class="guide-button" type="button" data-guide="market-research">Stage 상세 설명</button>
         </div>
       </div>
     </article>
-    <article class="stage-card pending"
+    <article class="stage-card complete"
       data-stage="feasibility" data-phase="ideation"
-      data-status="pending" data-search="1.3 feasibility &amp; constraints feasibility 기술·사업·운영 제약과 위험을 검토해 실행 가능성을 평가합니다.">
+      data-status="completed" data-search="1.3 feasibility &amp; constraints feasibility 기술·사업·운영 제약과 위험을 검토해 실행 가능성을 평가합니다.">
       <div class="stage-marker" aria-hidden="true"></div>
       <div class="stage-main">
         <div class="stage-heading">
@@ -545,12 +614,12 @@
             <h3>Feasibility &amp; Constraints</h3>
             <p class="slug">feasibility</p>
           </div>
-          <span class="badge pending">대기</span>
+          <span class="badge complete">완료</span>
         </div>
         <p class="purpose">기술·사업·운영 제약과 위험을 검토해 실행 가능성을 평가합니다.</p>
         <div class="stage-actions">
           <details>
-          <summary>세부 정보와 산출물 <span class="artifact-count">0</span></summary>
+          <summary>세부 정보와 산출물 <span class="artifact-count">4</span></summary>
           <div class="detail-grid">
             <div><h4>실행 조건</h4><p data-detail="condition">Project Type과 Scope의 실행 조건이 충족될 때 수행합니다.</p></div>
             <div><h4>담당</h4><p data-detail="agents">aidlc-architect-agent · aidlc-aws-platform-agent · aidlc-compliance-agent</p></div>
@@ -558,15 +627,15 @@
             <div><h4>예상 출력</h4><p data-detail="outputs">생성 산출물: feasibility-assessment, constraint-register, raid-log, feasibility-questions</p></div>
           </div>
           <h4 class="artifact-title">현재 산출물</h4>
-          <p class="empty">아직 생성된 산출물이 없습니다.</p>
+          <div class="artifact-list"><a href="spaces/default/intents/260731-learnkk-crew/ideation/feasibility/constraint-register.md" target="_blank">ideation/feasibility/constraint-register.md</a><a href="spaces/default/intents/260731-learnkk-crew/ideation/feasibility/feasibility-assessment.md" target="_blank">ideation/feasibility/feasibility-assessment.md</a><a href="spaces/default/intents/260731-learnkk-crew/ideation/feasibility/feasibility-questions.md" target="_blank">ideation/feasibility/feasibility-questions.md</a><a href="spaces/default/intents/260731-learnkk-crew/ideation/feasibility/raid-log.md" target="_blank">ideation/feasibility/raid-log.md</a></div>
           </details>
           <button class="guide-button" type="button" data-guide="feasibility">Stage 상세 설명</button>
         </div>
       </div>
     </article>
-    <article class="stage-card pending"
+    <article class="stage-card complete"
       data-stage="scope-definition" data-phase="ideation"
-      data-status="pending" data-search="1.4 scope definition scope-definition 포함 scope, 제외 scope와 intent 백로그를 확정합니다.">
+      data-status="completed" data-search="1.4 scope definition scope-definition 포함 scope, 제외 scope와 intent 백로그를 확정합니다.">
       <div class="stage-marker" aria-hidden="true"></div>
       <div class="stage-main">
         <div class="stage-heading">
@@ -575,12 +644,12 @@
             <h3>Scope Definition</h3>
             <p class="slug">scope-definition</p>
           </div>
-          <span class="badge pending">대기</span>
+          <span class="badge complete">완료</span>
         </div>
         <p class="purpose">포함 Scope, 제외 Scope와 Intent 백로그를 확정합니다.</p>
         <div class="stage-actions">
           <details>
-          <summary>세부 정보와 산출물 <span class="artifact-count">0</span></summary>
+          <summary>세부 정보와 산출물 <span class="artifact-count">3</span></summary>
           <div class="detail-grid">
             <div><h4>실행 조건</h4><p data-detail="condition">현재 Scope의 실행 계획에 포함되는 필수 Stage입니다.</p></div>
             <div><h4>담당</h4><p data-detail="agents">aidlc-product-agent · aidlc-delivery-agent</p></div>
@@ -588,15 +657,15 @@
             <div><h4>예상 출력</h4><p data-detail="outputs">생성 산출물: scope-document, intent-backlog, scope-definition-questions</p></div>
           </div>
           <h4 class="artifact-title">현재 산출물</h4>
-          <p class="empty">아직 생성된 산출물이 없습니다.</p>
+          <div class="artifact-list"><a href="spaces/default/intents/260731-learnkk-crew/ideation/scope-definition/intent-backlog.md" target="_blank">ideation/scope-definition/intent-backlog.md</a><a href="spaces/default/intents/260731-learnkk-crew/ideation/scope-definition/scope-definition-questions.md" target="_blank">ideation/scope-definition/scope-definition-questions.md</a><a href="spaces/default/intents/260731-learnkk-crew/ideation/scope-definition/scope-document.md" target="_blank">ideation/scope-definition/scope-document.md</a></div>
           </details>
           <button class="guide-button" type="button" data-guide="scope-definition">Stage 상세 설명</button>
         </div>
       </div>
     </article>
-    <article class="stage-card pending"
+    <article class="stage-card active current"
       data-stage="team-formation" data-phase="ideation"
-      data-status="pending" data-search="1.5 team formation team-formation 필요 역량과 협업팀 구성을 정하고 역할 공백을 확인합니다.">
+      data-status="in-progress" data-search="1.5 team formation team-formation 필요 역량과 협업팀 구성을 정하고 역할 공백을 확인합니다.">
       <div class="stage-marker" aria-hidden="true"></div>
       <div class="stage-main">
         <div class="stage-heading">
@@ -605,12 +674,12 @@
             <h3>Team Formation</h3>
             <p class="slug">team-formation</p>
           </div>
-          <span class="badge pending">대기</span>
+          <span class="badge active">진행 중</span>
         </div>
         <p class="purpose">필요 역량과 협업팀 구성을 정하고 역할 공백을 확인합니다.</p>
         <div class="stage-actions">
           <details>
-          <summary>세부 정보와 산출물 <span class="artifact-count">0</span></summary>
+          <summary>세부 정보와 산출물 <span class="artifact-count">4</span></summary>
           <div class="detail-grid">
             <div><h4>실행 조건</h4><p data-detail="condition">Project Type과 Scope의 실행 조건이 충족될 때 수행합니다.</p></div>
             <div><h4>담당</h4><p data-detail="agents">aidlc-delivery-agent</p></div>
@@ -618,7 +687,7 @@
             <div><h4>예상 출력</h4><p data-detail="outputs">생성 산출물: team-assessment, skill-matrix, mob-composition, team-formation-questions</p></div>
           </div>
           <h4 class="artifact-title">현재 산출물</h4>
-          <p class="empty">아직 생성된 산출물이 없습니다.</p>
+          <div class="artifact-list"><a href="spaces/default/intents/260731-learnkk-crew/ideation/team-formation/mob-composition.md" target="_blank">ideation/team-formation/mob-composition.md</a><a href="spaces/default/intents/260731-learnkk-crew/ideation/team-formation/skill-matrix.md" target="_blank">ideation/team-formation/skill-matrix.md</a><a href="spaces/default/intents/260731-learnkk-crew/ideation/team-formation/team-assessment.md" target="_blank">ideation/team-formation/team-assessment.md</a><a href="spaces/default/intents/260731-learnkk-crew/ideation/team-formation/team-formation-questions.md" target="_blank">ideation/team-formation/team-formation-questions.md</a></div>
           </details>
           <button class="guide-button" type="button" data-guide="team-formation">Stage 상세 설명</button>
         </div>
@@ -674,7 +743,7 @@
           <div class="detail-grid">
             <div><h4>실행 조건</h4><p data-detail="condition">현재 Scope의 실행 계획에서 제외된 Stage입니다.</p></div>
             <div><h4>담당</h4><p data-detail="agents">aidlc-delivery-agent · aidlc-product-agent</p></div>
-            <div><h4>입력</h4><p data-detail="inputs">입력 산출물: intent-statement, scope-document, intent-backlog, competitive-analysis, feasibility-assessment, constraint-register, team-assessment, wireframes</p></div>
+            <div><h4>입력</h4><p data-detail="inputs">입력 산출물: intent-statement, stakeholder-map, scope-document, intent-backlog, competitive-analysis, feasibility-assessment, constraint-register, team-assessment, wireframes</p></div>
             <div><h4>예상 출력</h4><p data-detail="outputs">생성 산출물: initiative-brief, decision-log, approval-handoff-questions</p></div>
           </div>
           <h4 class="artifact-title">현재 산출물</h4>
@@ -1425,7 +1494,7 @@
     </div>
 
     <footer class="footer">
-      <span>마지막 상태 변경: <time id="last-updated" data-time="2026-07-31T07:16:37Z">2026-07-31T07:16:37Z</time></span>
+      <span>마지막 상태 변경: <time id="last-updated" data-time="2026-07-31T09:05:55Z">2026-07-31T09:05:55Z</time></span>
       <span id="data-mode"><a href="spaces/default/intents/260731-learnkk-crew/aidlc-state.md" target="_blank">원본 aidlc-state.md 열기</a> · 새로고침 버튼을 누르면 최신 로컬 상태를 읽습니다.</span>
     </footer>
   </main>
@@ -1871,7 +1940,6 @@
       setText("#project-type", localizedConfigValue(stateField(content, "Project Type")));
       setText("#depth-label", "Depth " + localizedConfigValue(stateField(content, "Depth")));
       setText("#test-label", "Test Strategy " + localizedConfigValue(stateField(content, "Test Strategy")));
-      setText("#current-stage-name", currentName);
       setText("#overall-percent", percent + "%");
       setText("#overall-count", completedCount + " / " + executable.length + " Stage");
       setText("#metric-phase", phaseMeta[phase] ? phaseMeta[phase].label : phase);
@@ -1890,6 +1958,7 @@
       orb.setAttribute("aria-label", "전체 진행률 " + percent + "%");
       updateTime(document.querySelector("#last-updated"), stateField(content, "Last Updated"));
 
+      const phaseDone = {};
       document.querySelectorAll(".phase-section").forEach((section) => {
         const cards = [...section.querySelectorAll(".stage-card")];
         const activeCards = cards.filter((card) => card.dataset.status !== "skipped");
@@ -1900,6 +1969,13 @@
         score.querySelector("span").textContent = doneCards.length + "/" + activeCards.length + " 완료";
         score.classList.toggle("active", section.dataset.phase === phase);
         section.querySelector(".phase-progress span").style.width = phasePercent + "%";
+        phaseDone[section.dataset.phase] = activeCards.length > 0 && doneCards.length === activeCards.length;
+      });
+      // Keep the "다음 Stage" panel's phase shortcut bar in sync on refresh, too.
+      document.querySelectorAll(".step-index a").forEach((link) => {
+        const linkPhase = (link.getAttribute("href") || "").replace("#", "");
+        link.classList.toggle("done", Boolean(phaseDone[linkPhase]));
+        link.classList.toggle("current", linkPhase === phase);
       });
       if (completedPhasesCollapsed) applyCompletedPhaseCollapse();
       applyFilters();
@@ -1996,9 +2072,7 @@
         const stateFile = await stateHandle.getFile();
         const contextChanged = context.space !== liveState.space || context.intent !== liveState.intent;
         if (!force && !contextChanged && stateFile.lastModified === liveState.stateModified) {
-          document.querySelectorAll(".stage-card details[open]").forEach((details) => {
-            refreshArtifacts(details.closest(".stage-card"));
-          });
+          refreshAllArtifacts();
           return;
         }
         const graphResult = await readTextAt(liveState.root, [".kiro", "tools", "data", "stage-graph.json"]);
@@ -2011,6 +2085,9 @@
         liveState.recordHandle = context.recordHandle;
         liveState.stateModified = stateFile.lastModified;
         updateDashboard(stateText, graph, context);
+        refreshAllArtifacts();
+        refreshIntentIntro(context.recordHandle);
+        refreshVersion();
         liveDot.className = "live-dot";
         connectButton.textContent = "읽기 권한 연결됨";
         const synced = new Intl.DateTimeFormat("ko-KR", { timeStyle: "medium" }).format(new Date());
@@ -2071,9 +2148,6 @@
         // Some file:// browser profiles do not persist handles. Live reading still works.
       }
       await refreshLive(true);
-      document.querySelectorAll(".stage-card details[open]").forEach((details) => {
-        refreshArtifacts(details.closest(".stage-card"));
-      });
       return true;
     }
 
@@ -2237,6 +2311,96 @@
       card.querySelector(".artifact-count").textContent = String(files.length);
     }
 
+    function refreshAllArtifacts() {
+      if (!liveState.root) return;
+      document.querySelectorAll(".stage-card").forEach((card) => {
+        refreshArtifacts(card);
+      });
+    }
+
+    function extractIntentIntro(markdown) {
+      const raw = String(markdown || "").replace(/^---\s*\n[\s\S]*?\n---\s*\n/, "");
+      const clean = (value) => String(value)
+        .replace(/\[[^\]]*\]/g, "")
+        .replace(/[*_>#\x60]/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+      const firstSentence = (value) => {
+        const text = clean(value);
+        const match = text.match(/^[^.。]*[.。]/);
+        return match ? match[0].trim() : text;
+      };
+      const candidates = [];
+      const comment = raw.match(/<!--([\s\S]*?)-->/);
+      if (comment) {
+        const summary = firstSentence(comment[1]);
+        if (summary && !/이 문서는|this document/i.test(summary)) candidates.push(summary);
+      }
+      const body = raw.replace(/<!--[\s\S]*?-->/g, "");
+      const paragraphs = [];
+      let current = [];
+      let inProblem = false;
+      const flush = () => {
+        if (current.length) {
+          paragraphs.push({ inProblem, text: current.join(" ") });
+          current = [];
+        }
+      };
+      for (const line of body.split(/\r?\n/)) {
+        const heading = line.match(/^#{1,6}\s+(.*)$/);
+        if (heading) {
+          flush();
+          inProblem = /problem statement/i.test(heading[1]);
+          continue;
+        }
+        if (!line.trim()) {
+          flush();
+          continue;
+        }
+        current.push(line.trim());
+      }
+      flush();
+      const goal = paragraphs.find((item) => /목표|목적|통합|aims to|goal/i.test(item.text) && clean(item.text));
+      const problem = paragraphs.find((item) => item.inProblem && clean(item.text));
+      const firstBody = paragraphs.find((item) => clean(item.text));
+      if (goal) candidates.push(clean(goal.text));
+      if (problem) candidates.push(clean(problem.text));
+      if (firstBody) candidates.push(clean(firstBody.text));
+      let chosen = candidates.find(Boolean) || "";
+      if (!chosen) return "";
+      const limit = 140;
+      if (chosen.length > limit) {
+        chosen = chosen.slice(0, limit).replace(/\s+\S*$/, "").trim() + "…";
+      }
+      return chosen;
+    }
+
+    async function refreshIntentIntro(recordHandle) {
+      const intro = document.querySelector("#intent-intro");
+      if (!intro || !recordHandle) return;
+      try {
+        const result = await readTextAt(recordHandle, [
+          "ideation", "intent-capture", "intent-statement.md"
+        ]);
+        const text = extractIntentIntro(result && result.text);
+        if (text) intro.textContent = text;
+      } catch {
+        // Keep the baked-in intro when the intent statement cannot be read.
+      }
+    }
+
+    async function refreshVersion() {
+      const label = document.querySelector("#version-label");
+      if (!label || !liveState.root) return;
+      try {
+        const result = await readTextAt(liveState.root, [".kiro", "tools", "aidlc-version.ts"]);
+        const match = result && result.text.match(/AIDLC_VERSION\s*=\s*["']([^"']+)["']/);
+        if (match) label.textContent = "AI-DLC v" + match[1];
+      } catch {
+        // Keep the baked-in version label if the source cannot be read.
+      }
+    }
+
     document.querySelectorAll(".stage-card details").forEach((details) => {
       details.addEventListener("toggle", () => {
         if (details.open && liveState.root) refreshArtifacts(details.closest(".stage-card"));
@@ -2259,6 +2423,12 @@
     })();
 
     let activeFilter = "all";
+    let hideCompleted = false;
+    try {
+      hideCompleted = localStorage.getItem("aidlc-hide-completed") === "hidden";
+    } catch {
+      // Browser storage is a convenience only.
+    }
     const search = document.querySelector(".search");
     function applyFilters() {
       const query = search.value.trim().toLowerCase();
@@ -2268,7 +2438,8 @@
           || (activeFilter === "completed" && status === "completed")
           || (activeFilter === "todo" && !["completed", "skipped"].includes(status));
         const matchesSearch = !query || card.dataset.search.includes(query);
-        card.classList.toggle("hidden", !(matchesFilter && matchesSearch));
+        const passesHideCompleted = !(hideCompleted && status === "completed");
+        card.classList.toggle("hidden", !(matchesFilter && matchesSearch && passesHideCompleted));
       });
       document.querySelectorAll(".phase-section").forEach((section) => {
         const hasVisible = [...section.querySelectorAll(".stage-card")]
@@ -2311,6 +2482,23 @@
         button.textContent = "새로고침";
       }
     });
+    const hideCompletedButton = document.querySelector("#hide-completed");
+    function syncHideCompletedButton() {
+      hideCompletedButton.textContent = hideCompleted ? "완료 Stage 표시" : "완료 Stage 숨기기";
+      hideCompletedButton.classList.toggle("strong", hideCompleted);
+      hideCompletedButton.setAttribute("aria-pressed", String(hideCompleted));
+    }
+    hideCompletedButton.addEventListener("click", () => {
+      hideCompleted = !hideCompleted;
+      try {
+        localStorage.setItem("aidlc-hide-completed", hideCompleted ? "hidden" : "shown");
+      } catch {
+        // Browser storage is a convenience only.
+      }
+      syncHideCompletedButton();
+      applyFilters();
+    });
+    syncHideCompletedButton();
     document.querySelectorAll(".filter").forEach((button) => {
       button.addEventListener("click", () => {
         document.querySelectorAll(".filter").forEach((item) => item.classList.remove("selected"));
@@ -2320,6 +2508,39 @@
       });
     });
     search.addEventListener("input", applyFilters);
+
+    const themeToggle = document.querySelector("#theme-toggle");
+    function applyThemeLabel() {
+      const dark = document.documentElement.dataset.theme === "dark";
+      themeToggle.textContent = dark ? "라이트 모드" : "다크 모드";
+      themeToggle.setAttribute("aria-pressed", String(dark));
+    }
+    applyThemeLabel();
+    themeToggle.addEventListener("click", () => {
+      const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+      document.documentElement.dataset.theme = next;
+      try {
+        localStorage.setItem("aidlc-theme", next);
+      } catch {
+        // Browser storage is a convenience only; the theme still applies for this session.
+      }
+      applyThemeLabel();
+    });
+    // Follow system changes only when the user has not made an explicit choice.
+    if (window.matchMedia) {
+      window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (event) => {
+        let hasChoice = false;
+        try {
+          hasChoice = Boolean(localStorage.getItem("aidlc-theme"));
+        } catch {
+          hasChoice = false;
+        }
+        if (!hasChoice) {
+          document.documentElement.dataset.theme = event.matches ? "dark" : "light";
+          applyThemeLabel();
+        }
+      });
+    }
 
     let expanded = false;
     document.querySelector("#expand-all").addEventListener("click", (event) => {

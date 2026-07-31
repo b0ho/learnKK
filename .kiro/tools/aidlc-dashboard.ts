@@ -205,6 +205,68 @@ function progressPercent(completed: number, total: number): number {
   return total === 0 ? 0 : Math.round((completed / total) * 100);
 }
 
+// Derive a short, representative intro for the intent from its intent-statement.md.
+// Priority: leading summary comment → a goal/purpose paragraph → the Problem
+// Statement's first paragraph → the first body paragraph. Citation tags ([Q1])
+// and Markdown markers are stripped and the result is truncated. Intent-neutral:
+// no per-intent text is baked in — everything is read from the document.
+function extractIntro(markdown: string): string {
+  const raw = String(markdown || "").replace(/^---\s*\n[\s\S]*?\n---\s*\n/, "");
+  const clean = (value: string): string => String(value)
+    .replace(/\[[^\]]*\]/g, "")
+    .replace(/[*_`>#]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  const firstSentence = (value: string): string => {
+    const text = clean(value);
+    const match = text.match(/^[^.。]*[.。]/);
+    return match ? match[0].trim() : text;
+  };
+  const candidates: string[] = [];
+  const comment = raw.match(/<!--([\s\S]*?)-->/);
+  if (comment) {
+    const summary = firstSentence(comment[1]);
+    if (summary && !/이 문서는|this document/i.test(summary)) candidates.push(summary);
+  }
+  const body = raw.replace(/<!--[\s\S]*?-->/g, "");
+  const paragraphs: Array<{ inProblem: boolean; text: string }> = [];
+  let current: string[] = [];
+  let inProblem = false;
+  const flush = (): void => {
+    if (current.length) {
+      paragraphs.push({ inProblem, text: current.join(" ") });
+      current = [];
+    }
+  };
+  for (const line of body.split(/\r?\n/)) {
+    const heading = line.match(/^#{1,6}\s+(.*)$/);
+    if (heading) {
+      flush();
+      inProblem = /problem statement/i.test(heading[1]);
+      continue;
+    }
+    if (!line.trim()) {
+      flush();
+      continue;
+    }
+    current.push(line.trim());
+  }
+  flush();
+  const goal = paragraphs.find((item) => /목표|목적|통합|aims to|goal/i.test(item.text) && clean(item.text));
+  const problem = paragraphs.find((item) => item.inProblem && clean(item.text));
+  const firstBody = paragraphs.find((item) => clean(item.text));
+  if (goal) candidates.push(clean(goal.text));
+  if (problem) candidates.push(clean(problem.text));
+  if (firstBody) candidates.push(clean(firstBody.text));
+  let chosen = candidates.find(Boolean) || "";
+  if (!chosen) return "";
+  const limit = 140;
+  if (chosen.length > limit) {
+    chosen = chosen.slice(0, limit).replace(/\s+\S*$/, "").trim() + "…";
+  }
+  return chosen;
+}
+
 function localizedCondition(execution: string, status: StageStatus): string {
   if (status === "skipped") {
     return "현재 Scope의 실행 계획에서 제외된 Stage입니다.";
@@ -399,6 +461,11 @@ function buildDashboard(): void {
   const generatedAt = new Date().toISOString();
   const lastUpdated = field(state, "Last Updated");
   const stateHref = encodeRelativePath(relative(outputDir, statePath));
+  const intentStatementPath = join(recordPath, "ideation", "intent-capture", "intent-statement.md");
+  const intentIntro = existsSync(intentStatementPath)
+    ? extractIntro(readFileSync(intentStatementPath, "utf8"))
+    : "";
+  const heroIntro = intentIntro || "이 Intent의 진행 현황과 산출물, 다음 작업을 한 화면에서 확인하세요.";
   const phaseSections = PHASES
     .map((phase) => renderPhase(phase, stages.filter((stage) => stage.phase === phase), currentStageSlug))
     .join("");
@@ -408,8 +475,21 @@ function buildDashboard(): void {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="light">
+  <meta name="color-scheme" content="light dark">
   <title>AI-DLC 진행 현황 · ${escapeHtml(intent)}</title>
+  <script>
+    // Apply the saved (or system) theme before paint to avoid a flash of the wrong theme.
+    (function () {
+      try {
+        var saved = localStorage.getItem("aidlc-theme");
+        var theme = saved
+          || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.dataset.theme = theme;
+      } catch (e) {
+        document.documentElement.dataset.theme = "light";
+      }
+    })();
+  </script>
   <style>
     :root {
       --ink: #17221d;
@@ -425,6 +505,60 @@ function buildDashboard(): void {
       --rose: #b95e55;
       --shadow: 0 18px 50px rgba(42, 54, 47, .09);
     }
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --ink: #e6ece8;
+      --muted: #94a29a;
+      --paper: #101713;
+      --surface: #18221d;
+      --line: #2b3630;
+      --forest: #164b38;
+      --forest-2: #4aa87f;
+      --mint: #1f3a2c;
+      --lime: #dce870;
+      --amber: #e2a34e;
+      --rose: #d1786e;
+      --shadow: 0 18px 50px rgba(0, 0, 0, .5);
+    }
+    html[data-theme="dark"] body {
+      background:
+        radial-gradient(circle at 85% 0%, rgba(220, 232, 112, .08), transparent 25rem),
+        var(--paper);
+    }
+    html[data-theme="dark"] .toolbar { background: rgba(24, 34, 29, .9); }
+    html[data-theme="dark"] .panel:not(.primary) p,
+    html[data-theme="dark"] .purpose,
+    html[data-theme="dark"] .document { color: #b3beb6 !important; }
+    html[data-theme="dark"] .panel.primary { color: #17221d; }
+    html[data-theme="dark"] .panel.primary .eyebrow { color: #164b38; }
+    html[data-theme="dark"] .step-index a { background: #46524a; }
+    html[data-theme="dark"] .step-index a.done { background: var(--forest-2); }
+    html[data-theme="dark"] .step-index a.current { background: var(--amber); }
+    html[data-theme="dark"] .search,
+    html[data-theme="dark"] .intent-switcher select,
+    html[data-theme="dark"] .detail-grid > div,
+    html[data-theme="dark"] .glossary-tools input { background: #1e2a24; color: var(--ink); }
+    html[data-theme="dark"] .glossary-tools input,
+    html[data-theme="dark"] .intent-switcher select { border-color: var(--line); }
+    html[data-theme="dark"] .phase-progress { background: #26302a; }
+    html[data-theme="dark"] .stage-card:hover { border-color: #3a463f; }
+    html[data-theme="dark"] .stage-marker { background: #3a463f; box-shadow: 0 0 0 1px #3a463f; }
+    html[data-theme="dark"] .badge { background: #2a352e; color: #b6c0b9; }
+    html[data-theme="dark"] .badge.complete { color: #bfe6cf; background: var(--mint); }
+    html[data-theme="dark"] .artifact-list a,
+    html[data-theme="dark"] .artifact-list button { color: #bfe6cf; }
+    html[data-theme="dark"] .modal-close { background: #26302a; color: var(--muted); }
+    html[data-theme="dark"] .document blockquote { background: #1c2823; color: #aeb9b2; }
+    html[data-theme="dark"] .document code { background: #26302a; }
+    html[data-theme="dark"] .document th { background: #1e2a24; }
+    html[data-theme="dark"] .term { background: #1c2823; }
+    html[data-theme="dark"] .term p { color: #aeb9b2; }
+    html[data-theme="dark"] .term h3,
+    html[data-theme="dark"] .document h3 { color: var(--forest-2); }
+    html[data-theme="dark"] .connection-note { background: #1c2823; }
+    html[data-theme="dark"] .guide-button { background: #1e2a24; border-color: var(--line); color: var(--forest-2); }
+    html[data-theme="dark"] .guide-button:hover,
+    html[data-theme="dark"] .phase-toggle:hover { background: #223129; }
     * { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
     body {
@@ -596,8 +730,8 @@ function buildDashboard(): void {
     }
     .modal.open { display: grid; }
     .modal-card {
-      display: grid; grid-template-rows: auto minmax(0,1fr); width: min(920px, 100%);
-      max-height: min(86vh, 920px); overflow: hidden; border-radius: 22px;
+      display: grid; grid-template-rows: auto minmax(0,1fr); width: min(1120px, 100%);
+      max-height: min(92vh, 1120px); overflow: hidden; border-radius: 22px;
       background: var(--surface); box-shadow: 0 28px 90px rgba(10,24,17,.28);
     }
     .modal-head {
@@ -609,8 +743,8 @@ function buildDashboard(): void {
       width: 34px; height: 34px; border: 0; border-radius: 50%; color: var(--muted);
       background: #eceae3; cursor: pointer; font-size: 20px;
     }
-    .modal-body { overflow: auto; padding: 24px; }
-    .document { max-width: 760px; margin: 0 auto; color: #35423b; }
+    .modal-body { overflow: auto; padding: 28px 32px; }
+    .document { max-width: 940px; margin: 0 auto; color: #35423b; }
     .document h1 { margin: 0 0 20px; color: var(--ink); font-size: 30px; letter-spacing: -.04em; }
     .document h2 { margin: 30px 0 10px; padding-top: 18px; border-top: 1px solid var(--line); color: var(--ink); font-size: 21px; }
     .document h3 { margin: 22px 0 8px; color: var(--forest); font-size: 16px; }
@@ -679,12 +813,12 @@ function buildDashboard(): void {
       <div>
         <span class="kicker" id="scope-label">${escapeHtml(space)} Space · ${escapeHtml(localizedConfig(field(state, "Scope")))} Scope</span>
         <h1 id="intent-name">${escapeHtml(intent)}</h1>
-        <p class="hero-copy">현재 <strong id="current-stage-name">${escapeHtml(currentStage?.name ?? currentStageSlug)}</strong> Stage를 진행하고 있습니다. 승인된 산출물과 다음 작업을 한 화면에서 확인하세요.</p>
+        <p class="hero-copy" id="intent-intro">${escapeHtml(heroIntro)}</p>
         <div class="hero-tags">
           <span class="hero-tag" id="project-type">${escapeHtml(localizedConfig(field(state, "Project Type")))}</span>
           <span class="hero-tag" id="depth-label">Depth ${escapeHtml(localizedConfig(field(state, "Depth")))}</span>
           <span class="hero-tag" id="test-label">Test Strategy ${escapeHtml(localizedConfig(field(state, "Test Strategy")))}</span>
-          <span class="hero-tag">AI-DLC v${AIDLC_VERSION}</span>
+          <span class="hero-tag" id="version-label">AI-DLC v${AIDLC_VERSION}</span>
         </div>
       </div>
       <div class="progress-orb" id="progress-orb" role="img" aria-label="전체 진행률 ${overallPercent}%">
@@ -738,9 +872,11 @@ function buildDashboard(): void {
         </select>
       </div>
       <button class="utility" id="glossary-button">용어사전</button>
+      <button class="utility" id="theme-toggle" aria-pressed="false">다크 모드</button>
       <button class="utility" id="refresh-dashboard">새로고침</button>
       <button class="utility" id="go-current">현재 작업으로 이동</button>
       <button class="utility" id="collapse-complete">완료 Phase 접기</button>
+      <button class="utility" id="hide-completed">완료 Stage 숨기기</button>
       <button class="utility" id="expand-all">모든 상세 펼치기</button>
       <button class="utility" id="connect-folder">프로젝트 읽기 권한</button>
     </div>
@@ -1196,7 +1332,6 @@ function buildDashboard(): void {
       setText("#project-type", localizedConfigValue(stateField(content, "Project Type")));
       setText("#depth-label", "Depth " + localizedConfigValue(stateField(content, "Depth")));
       setText("#test-label", "Test Strategy " + localizedConfigValue(stateField(content, "Test Strategy")));
-      setText("#current-stage-name", currentName);
       setText("#overall-percent", percent + "%");
       setText("#overall-count", completedCount + " / " + executable.length + " Stage");
       setText("#metric-phase", phaseMeta[phase] ? phaseMeta[phase].label : phase);
@@ -1215,6 +1350,7 @@ function buildDashboard(): void {
       orb.setAttribute("aria-label", "전체 진행률 " + percent + "%");
       updateTime(document.querySelector("#last-updated"), stateField(content, "Last Updated"));
 
+      const phaseDone = {};
       document.querySelectorAll(".phase-section").forEach((section) => {
         const cards = [...section.querySelectorAll(".stage-card")];
         const activeCards = cards.filter((card) => card.dataset.status !== "skipped");
@@ -1225,6 +1361,13 @@ function buildDashboard(): void {
         score.querySelector("span").textContent = doneCards.length + "/" + activeCards.length + " 완료";
         score.classList.toggle("active", section.dataset.phase === phase);
         section.querySelector(".phase-progress span").style.width = phasePercent + "%";
+        phaseDone[section.dataset.phase] = activeCards.length > 0 && doneCards.length === activeCards.length;
+      });
+      // Keep the "다음 Stage" panel's phase shortcut bar in sync on refresh, too.
+      document.querySelectorAll(".step-index a").forEach((link) => {
+        const linkPhase = (link.getAttribute("href") || "").replace("#", "");
+        link.classList.toggle("done", Boolean(phaseDone[linkPhase]));
+        link.classList.toggle("current", linkPhase === phase);
       });
       if (completedPhasesCollapsed) applyCompletedPhaseCollapse();
       applyFilters();
@@ -1321,9 +1464,7 @@ function buildDashboard(): void {
         const stateFile = await stateHandle.getFile();
         const contextChanged = context.space !== liveState.space || context.intent !== liveState.intent;
         if (!force && !contextChanged && stateFile.lastModified === liveState.stateModified) {
-          document.querySelectorAll(".stage-card details[open]").forEach((details) => {
-            refreshArtifacts(details.closest(".stage-card"));
-          });
+          refreshAllArtifacts();
           return;
         }
         const graphResult = await readTextAt(liveState.root, [".kiro", "tools", "data", "stage-graph.json"]);
@@ -1336,6 +1477,9 @@ function buildDashboard(): void {
         liveState.recordHandle = context.recordHandle;
         liveState.stateModified = stateFile.lastModified;
         updateDashboard(stateText, graph, context);
+        refreshAllArtifacts();
+        refreshIntentIntro(context.recordHandle);
+        refreshVersion();
         liveDot.className = "live-dot";
         connectButton.textContent = "읽기 권한 연결됨";
         const synced = new Intl.DateTimeFormat("ko-KR", { timeStyle: "medium" }).format(new Date());
@@ -1396,9 +1540,6 @@ function buildDashboard(): void {
         // Some file:// browser profiles do not persist handles. Live reading still works.
       }
       await refreshLive(true);
-      document.querySelectorAll(".stage-card details[open]").forEach((details) => {
-        refreshArtifacts(details.closest(".stage-card"));
-      });
       return true;
     }
 
@@ -1562,6 +1703,96 @@ function buildDashboard(): void {
       card.querySelector(".artifact-count").textContent = String(files.length);
     }
 
+    function refreshAllArtifacts() {
+      if (!liveState.root) return;
+      document.querySelectorAll(".stage-card").forEach((card) => {
+        refreshArtifacts(card);
+      });
+    }
+
+    function extractIntentIntro(markdown) {
+      const raw = String(markdown || "").replace(/^---\\s*\\n[\\s\\S]*?\\n---\\s*\\n/, "");
+      const clean = (value) => String(value)
+        .replace(/\\[[^\\]]*\\]/g, "")
+        .replace(/[*_>#\\x60]/g, "")
+        .replace(/\\s+/g, " ")
+        .trim();
+      const firstSentence = (value) => {
+        const text = clean(value);
+        const match = text.match(/^[^.。]*[.。]/);
+        return match ? match[0].trim() : text;
+      };
+      const candidates = [];
+      const comment = raw.match(/<!--([\\s\\S]*?)-->/);
+      if (comment) {
+        const summary = firstSentence(comment[1]);
+        if (summary && !/이 문서는|this document/i.test(summary)) candidates.push(summary);
+      }
+      const body = raw.replace(/<!--[\\s\\S]*?-->/g, "");
+      const paragraphs = [];
+      let current = [];
+      let inProblem = false;
+      const flush = () => {
+        if (current.length) {
+          paragraphs.push({ inProblem, text: current.join(" ") });
+          current = [];
+        }
+      };
+      for (const line of body.split(/\\r?\\n/)) {
+        const heading = line.match(/^#{1,6}\\s+(.*)$/);
+        if (heading) {
+          flush();
+          inProblem = /problem statement/i.test(heading[1]);
+          continue;
+        }
+        if (!line.trim()) {
+          flush();
+          continue;
+        }
+        current.push(line.trim());
+      }
+      flush();
+      const goal = paragraphs.find((item) => /목표|목적|통합|aims to|goal/i.test(item.text) && clean(item.text));
+      const problem = paragraphs.find((item) => item.inProblem && clean(item.text));
+      const firstBody = paragraphs.find((item) => clean(item.text));
+      if (goal) candidates.push(clean(goal.text));
+      if (problem) candidates.push(clean(problem.text));
+      if (firstBody) candidates.push(clean(firstBody.text));
+      let chosen = candidates.find(Boolean) || "";
+      if (!chosen) return "";
+      const limit = 140;
+      if (chosen.length > limit) {
+        chosen = chosen.slice(0, limit).replace(/\\s+\\S*$/, "").trim() + "…";
+      }
+      return chosen;
+    }
+
+    async function refreshIntentIntro(recordHandle) {
+      const intro = document.querySelector("#intent-intro");
+      if (!intro || !recordHandle) return;
+      try {
+        const result = await readTextAt(recordHandle, [
+          "ideation", "intent-capture", "intent-statement.md"
+        ]);
+        const text = extractIntentIntro(result && result.text);
+        if (text) intro.textContent = text;
+      } catch {
+        // Keep the baked-in intro when the intent statement cannot be read.
+      }
+    }
+
+    async function refreshVersion() {
+      const label = document.querySelector("#version-label");
+      if (!label || !liveState.root) return;
+      try {
+        const result = await readTextAt(liveState.root, [".kiro", "tools", "aidlc-version.ts"]);
+        const match = result && result.text.match(/AIDLC_VERSION\\s*=\\s*["']([^"']+)["']/);
+        if (match) label.textContent = "AI-DLC v" + match[1];
+      } catch {
+        // Keep the baked-in version label if the source cannot be read.
+      }
+    }
+
     document.querySelectorAll(".stage-card details").forEach((details) => {
       details.addEventListener("toggle", () => {
         if (details.open && liveState.root) refreshArtifacts(details.closest(".stage-card"));
@@ -1584,6 +1815,12 @@ function buildDashboard(): void {
     })();
 
     let activeFilter = "all";
+    let hideCompleted = false;
+    try {
+      hideCompleted = localStorage.getItem("aidlc-hide-completed") === "hidden";
+    } catch {
+      // Browser storage is a convenience only.
+    }
     const search = document.querySelector(".search");
     function applyFilters() {
       const query = search.value.trim().toLowerCase();
@@ -1593,7 +1830,8 @@ function buildDashboard(): void {
           || (activeFilter === "completed" && status === "completed")
           || (activeFilter === "todo" && !["completed", "skipped"].includes(status));
         const matchesSearch = !query || card.dataset.search.includes(query);
-        card.classList.toggle("hidden", !(matchesFilter && matchesSearch));
+        const passesHideCompleted = !(hideCompleted && status === "completed");
+        card.classList.toggle("hidden", !(matchesFilter && matchesSearch && passesHideCompleted));
       });
       document.querySelectorAll(".phase-section").forEach((section) => {
         const hasVisible = [...section.querySelectorAll(".stage-card")]
@@ -1636,6 +1874,23 @@ function buildDashboard(): void {
         button.textContent = "새로고침";
       }
     });
+    const hideCompletedButton = document.querySelector("#hide-completed");
+    function syncHideCompletedButton() {
+      hideCompletedButton.textContent = hideCompleted ? "완료 Stage 표시" : "완료 Stage 숨기기";
+      hideCompletedButton.classList.toggle("strong", hideCompleted);
+      hideCompletedButton.setAttribute("aria-pressed", String(hideCompleted));
+    }
+    hideCompletedButton.addEventListener("click", () => {
+      hideCompleted = !hideCompleted;
+      try {
+        localStorage.setItem("aidlc-hide-completed", hideCompleted ? "hidden" : "shown");
+      } catch {
+        // Browser storage is a convenience only.
+      }
+      syncHideCompletedButton();
+      applyFilters();
+    });
+    syncHideCompletedButton();
     document.querySelectorAll(".filter").forEach((button) => {
       button.addEventListener("click", () => {
         document.querySelectorAll(".filter").forEach((item) => item.classList.remove("selected"));
@@ -1645,6 +1900,39 @@ function buildDashboard(): void {
       });
     });
     search.addEventListener("input", applyFilters);
+
+    const themeToggle = document.querySelector("#theme-toggle");
+    function applyThemeLabel() {
+      const dark = document.documentElement.dataset.theme === "dark";
+      themeToggle.textContent = dark ? "라이트 모드" : "다크 모드";
+      themeToggle.setAttribute("aria-pressed", String(dark));
+    }
+    applyThemeLabel();
+    themeToggle.addEventListener("click", () => {
+      const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+      document.documentElement.dataset.theme = next;
+      try {
+        localStorage.setItem("aidlc-theme", next);
+      } catch {
+        // Browser storage is a convenience only; the theme still applies for this session.
+      }
+      applyThemeLabel();
+    });
+    // Follow system changes only when the user has not made an explicit choice.
+    if (window.matchMedia) {
+      window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (event) => {
+        let hasChoice = false;
+        try {
+          hasChoice = Boolean(localStorage.getItem("aidlc-theme"));
+        } catch {
+          hasChoice = false;
+        }
+        if (!hasChoice) {
+          document.documentElement.dataset.theme = event.matches ? "dark" : "light";
+          applyThemeLabel();
+        }
+      });
+    }
 
     let expanded = false;
     document.querySelector("#expand-all").addEventListener("click", (event) => {
