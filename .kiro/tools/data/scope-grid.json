@@ -143,6 +143,42 @@
       "feedback-optimization": "SKIP"
     }
   },
+  "learning-crew-local-mvp": {
+    "stages": {
+      "workspace-scaffold": "EXECUTE",
+      "workspace-detection": "EXECUTE",
+      "state-init": "EXECUTE",
+      "intent-capture": "EXECUTE",
+      "market-research": "EXECUTE",
+      "feasibility": "EXECUTE",
+      "scope-definition": "EXECUTE",
+      "team-formation": "EXECUTE",
+      "rough-mockups": "EXECUTE",
+      "approval-handoff": "SKIP",
+      "reverse-engineering": "SKIP",
+      "practices-discovery": "EXECUTE",
+      "requirements-analysis": "EXECUTE",
+      "user-stories": "EXECUTE",
+      "refined-mockups": "EXECUTE",
+      "application-design": "EXECUTE",
+      "units-generation": "EXECUTE",
+      "delivery-planning": "EXECUTE",
+      "functional-design": "EXECUTE",
+      "nfr-requirements": "EXECUTE",
+      "nfr-design": "SKIP",
+      "infrastructure-design": "SKIP",
+      "code-generation": "SKIP",
+      "build-and-test": "SKIP",
+      "ci-pipeline": "SKIP",
+      "deployment-pipeline": "SKIP",
+      "environment-provisioning": "SKIP",
+      "deployment-execution": "SKIP",
+      "observability-setup": "SKIP",
+      "incident-response": "SKIP",
+      "performance-validation": "SKIP",
+      "feedback-optimization": "SKIP"
+    }
+  },
   "mvp": {
     "stages": {
       "workspace-scaffold": "EXECUTE",

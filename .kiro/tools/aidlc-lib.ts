@@ -33,6 +33,8 @@ export interface StageEntry {
   // fields uses the GraphStage type in aidlc-graph.ts (required there).
   plugin?: string;
   condition?: string;
+  reviewer?: string;
+  reviewer_max_iterations?: number;
   produces?: string[];
   // Artifacts the stage MAY write per unit; exempt from the per-unit
   // coverage check in aidlc-orchestrate.ts unitCovered. See GraphStage in
@@ -1909,7 +1911,7 @@ export function auditFilePath(projectDir: string, intent?: string, space?: strin
 // appends — the whole point of per-clone sharding).
 export const CLONE_ID_FILE = ".aidlc-clone-id";
 
-function cloneIdPath(projectDir: string): string {
+export function cloneIdPath(projectDir: string): string {
   return join(workspaceRoot(projectDir), CLONE_ID_FILE);
 }
 
@@ -3648,6 +3650,10 @@ interface ScopeMetadata {
   testStrategy?: string;
   runner?: boolean;
   skeleton: boolean;
+  /** When true, this scope is the enabled plugin's freeform/default fallback
+   *  (plugin-only installs where the core `feature`/`poc` defaults are
+   *  deselected). At most one enabled scope should set this. */
+  freeformDefault?: boolean;
 }
 
 let _scopeMetadata: Record<string, ScopeMetadata> | null = null;
@@ -3741,6 +3747,7 @@ export function loadScopeMetadataAll(): Record<string, ScopeMetadata> {
       }
       meta.skeleton = skeleton === "on";
     }
+    if (scalarField(fm, "freeform_default") === "true") meta.freeformDefault = true;
     out[name] = meta;
   }
   _scopeMetadataAll = out;
@@ -3751,17 +3758,23 @@ export function loadScopeMetadata(): Record<string, ScopeMetadata> {
   if (_scopeMetadata !== null) return _scopeMetadata;
   const all = loadScopeMetadataAll();
   const selected = pluginsEnabled();
-  if (selected === null) {
-    _scopeMetadata = all;
-    return all;
-  }
-  const out: Record<string, ScopeMetadata> = {};
+  const enabled: Record<string, ScopeMetadata> = {};
   for (const [name, meta] of Object.entries(all)) {
     const owner = meta.plugin ?? "aidlc";
-    if (selected.has(owner)) out[name] = meta;
+    if (selected === null || selected.has(owner)) enabled[name] = meta;
   }
-  _scopeMetadata = out;
-  return out;
+  const nominated = Object.values(enabled)
+    .filter((meta) => meta.freeformDefault === true)
+    .map((meta) => meta.name)
+    .sort();
+  if (nominated.length > 1) {
+    throw new Error(
+      `Multiple enabled scopes declare freeform_default: true (${nominated.join(", ")}). ` +
+        "At most one enabled scope may nominate the freeform default."
+    );
+  }
+  _scopeMetadata = enabled;
+  return enabled;
 }
 
 // loadScopeMapping reconstructs the legacy `Record<scope, ScopeDefinition>`
@@ -3864,6 +3877,20 @@ export function selectionAwareDefaultScope(preferred = "feature"): DefaultScopeR
   const scopes = [...validScopes()];
   if (scopes.includes(preferred)) return { scope: preferred };
 
+  // An explicit nomination wins whenever `preferred` is not enabled, regardless
+  // of plugin bucketing: a scope with frontmatter `freeform_default: true` is
+  // the install's declared lean default (e.g. a plugin's lightweight scope over
+  // its heavier full-lifecycle scope). Checked before the sole-plugin heuristic
+  // below so it also holds in mixed installs.
+  const meta = loadScopeMetadata();
+  const nominatedGlobal = scopes.find((s) => meta[s]?.freeformDefault === true);
+  if (nominatedGlobal) {
+    return {
+      scope: nominatedGlobal,
+      note: `scope "${preferred}" is not an enabled scope; using "${nominatedGlobal}" (nominated freeform default)`,
+    };
+  }
+
   const mapping = loadScopeMapping();
   const scopesByPlugin = new Map<string, string[]>();
   for (const scope of scopes) {
@@ -3895,6 +3922,18 @@ export function selectionAwareDefaultScope(preferred = "feature"): DefaultScopeR
           ? `No default scope is available: scope "${preferred}" is disabled or absent while core scopes are enabled. Pass --scope explicitly.`
           : `No default scope is available: core scope "${preferred}" is disabled or absent and multiple plugin scope owners are enabled (${pluginOwners.join(", ")}). Pass --scope explicitly.`,
   };
+}
+
+/**
+ * Thin string-returning wrapper over {@link selectionAwareDefaultScope} for
+ * callers that just need the resolved scope name. `preferred` is the caller's
+ * core-era literal ("feature" for freeform inference, "poc" for intent birth).
+ * When `preferred` is enabled it wins (stock behaviour preserved); otherwise
+ * the nominated freeform default (or the sole enabled plugin's first scope) is
+ * returned, falling back to `preferred` when nothing can be chosen.
+ */
+export function resolveDefaultScope(preferred: string): string {
+  return selectionAwareDefaultScope(preferred).scope;
 }
 
 // Agent metadata derived from `.claude/agents/*.md` frontmatter. Adding a
@@ -5370,80 +5409,113 @@ export function parseBoltDag(body: string): BoltDagParse {
   return { ok: true, units: edges, batches };
 }
 
-// Read the per-unit kinds off the compiled runtime graph's bolt_dag.units[]
-// (name to kind). Returns null when there is no graph file, no bolt_dag node, a
-// malformed graph, OR when no unit carries a kind: every null path means "no
-// kinds known", so the engine cheaply skips filtering and every unit stays on
-// the full matrix. Mirrors readBoltDagBatches' fail-safe posture: an absent or
-// unreadable graph is a legitimate branch, never a throw.
-//
-// Trust posture (also matching readBoltDagBatches): kind values are only
-// shape-checked here (string), not enum-checked - the UNIT_KINDS enum gate
-// lives at units-generation parse, before the graph is compiled. A unit
-// hand-tagged in the compiled graph with a valid-but-wrong kind therefore
-// over-prunes (or under-prunes) silently; the compiled graph is trusted as
-// already-validated input, same as its batches.
-export function readBoltDagUnitKinds(projectDir: string): Map<string, string> | null {
-  const path = runtimeGraphPath(projectDir);
-  if (!existsSync(path)) return null;
-  try {
-    const graph: unknown = JSON.parse(readFileSync(path, "utf-8"));
-    if (graph !== null && typeof graph === "object" && "bolt_dag" in graph) {
-      const boltDag = (graph as { bolt_dag?: { units?: unknown } }).bolt_dag;
-      const units = boltDag?.units;
-      if (Array.isArray(units)) {
-        const kinds = new Map<string, string>();
-        for (const u of units) {
-          if (
-            u !== null &&
-            typeof u === "object" &&
-            typeof (u as { name?: unknown }).name === "string" &&
-            typeof (u as { kind?: unknown }).kind === "string"
-          ) {
-            kinds.set((u as { name: string }).name, (u as { kind: string }).kind);
-          }
-        }
-        if (kinds.size > 0) return kinds;
-      }
+export type BoltDagResolution =
+  | {
+      state: "ok";
+      batches: string[][];
+      units: string[];
+      unitKinds: Map<string, string> | null;
+      healed: boolean;
     }
-  } catch {
-    // Malformed runtime graph: fail safe to "no kinds" (full matrix).
+  | { state: "none" }
+  | { state: "malformed"; reason: string; detail: string };
+
+type ResolvedBoltDag = Extract<BoltDagResolution, { state: "ok" }>;
+
+function boltDagMatches(a: ResolvedBoltDag, b: ResolvedBoltDag): boolean {
+  if (JSON.stringify(a.batches) !== JSON.stringify(b.batches)) return false;
+  const aKinds = a.unitKinds ?? new Map<string, string>();
+  const bKinds = b.unitKinds ?? new Map<string, string>();
+  if (aKinds.size !== bKinds.size) return false;
+  for (const [unit, kind] of aKinds) {
+    if (bKinds.get(unit) !== kind) return false;
   }
-  return null;
+  return true;
 }
 
-// Read every unit name off the compiled runtime graph's bolt_dag.units[].
-// Returns null on a missing file/node, a malformed graph, or an empty units
-// list. Companion to readBoltDagUnitKinds: the kinds map only carries the
-// kind-tagged units, but the all-vacuous coverage check needs the COMPLETE
-// unit set so an untagged unit (which owes the full matrix) still blocks a
-// wrong "everything is vacuous" verdict.
-export function readBoltDagUnits(projectDir: string): string[] | null {
-  const path = runtimeGraphPath(projectDir);
-  if (!existsSync(path)) return null;
-  try {
-    const graph: unknown = JSON.parse(readFileSync(path, "utf-8"));
-    if (graph !== null && typeof graph === "object" && "bolt_dag" in graph) {
-      const boltDag = (graph as { bolt_dag?: { units?: unknown } }).bolt_dag;
-      const units = boltDag?.units;
-      if (Array.isArray(units)) {
-        const names: string[] = [];
-        for (const u of units) {
-          if (
-            u !== null &&
-            typeof u === "object" &&
-            typeof (u as { name?: unknown }).name === "string"
-          ) {
-            names.push((u as { name: string }).name);
+// Resolve the active intent's unit DAG. The authored dependency artifact is
+// authoritative whenever it exists: a valid cache is accepted only when its
+// batches and unit kinds still match that artifact. Callers must keep the three
+// states distinct: "none" is a real no-DAG workflow, while "malformed" means
+// the unit set is unknowable and must fail closed.
+export function resolveBoltDag(projectDir: string): BoltDagResolution {
+  let cached: ResolvedBoltDag | null = null;
+  const graphPath = runtimeGraphPath(projectDir);
+  if (existsSync(graphPath)) {
+    try {
+      const graph: unknown = JSON.parse(readFileSync(graphPath, "utf-8"));
+      const boltDag =
+        graph !== null && typeof graph === "object" && "bolt_dag" in graph
+          ? (graph as { bolt_dag?: { batches?: unknown; units?: unknown } }).bolt_dag
+          : undefined;
+      const batches = boltDag?.batches;
+      if (
+        Array.isArray(batches) &&
+        batches.every(
+          (batch) =>
+            Array.isArray(batch) &&
+            batch.every((unit) => typeof unit === "string" && unit.length > 0),
+        )
+      ) {
+        const typedBatches = batches as string[][];
+        const units = typedBatches.flat();
+        if (units.length > 0) {
+          const unitKinds = new Map<string, string>();
+          if (Array.isArray(boltDag?.units)) {
+            for (const unit of boltDag.units) {
+              if (
+                unit !== null &&
+                typeof unit === "object" &&
+                typeof (unit as { name?: unknown }).name === "string" &&
+                typeof (unit as { kind?: unknown }).kind === "string"
+              ) {
+                unitKinds.set(
+                  (unit as { name: string }).name,
+                  (unit as { kind: string }).kind,
+                );
+              }
+            }
           }
+          cached = {
+            state: "ok",
+            batches: typedBatches,
+            units,
+            unitKinds: unitKinds.size > 0 ? unitKinds : null,
+            healed: false,
+          };
         }
-        if (names.length > 0) return names;
       }
+    } catch {
+      // Fall through to the authored dependency artifact.
     }
-  } catch {
-    // Malformed runtime graph: fail safe to "no units known".
   }
-  return null;
+
+  const dependencyPath = unitDependencyPath(projectDir);
+  if (!existsSync(dependencyPath)) return cached ?? { state: "none" };
+
+  let body: string;
+  try {
+    body = readFileSync(dependencyPath, "utf-8");
+  } catch (e) {
+    return { state: "malformed", reason: "unreadable", detail: errorMessage(e) };
+  }
+  const parsed = parseBoltDag(body);
+  if (!parsed.ok) {
+    return { state: "malformed", reason: parsed.reason, detail: parsed.detail };
+  }
+  const unitKinds = new Map(
+    parsed.units
+      .filter((unit) => unit.kind !== undefined)
+      .map((unit) => [unit.name, unit.kind!]),
+  );
+  const authored: ResolvedBoltDag = {
+    state: "ok",
+    batches: parsed.batches,
+    units: parsed.batches.flat(),
+    unitKinds: unitKinds.size > 0 ? unitKinds : null,
+    healed: true,
+  };
+  return cached !== null && boltDagMatches(cached, authored) ? cached : authored;
 }
 
 // Prune a produces name list to the artifacts that apply to `unitKind`. Returns
