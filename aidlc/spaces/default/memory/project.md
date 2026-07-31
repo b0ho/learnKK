@@ -37,11 +37,13 @@
 
 <!-- Technology choices locked for this project. -->
 
+- 프론트엔드 React, 백엔드 Java Spring, 데이터 저장 PostgreSQL, 전부 로컬 환경 (feasibility에서 팀 확정) (learned 2026-07-31) <!-- cid:feasibility:c1 -->
 ## Decided
 
 <!-- Decisions made in earlier stages that should not be re-asked. -->
 <!-- Format: DECIDED: [decision] (Stage [slug], [date]) -->
 
+- 보안은 최소 수준(비밀번호 해시 저장) + 승인 없는 가입이므로 히든 안티-중복계정 장치(IP 등 신호 활용, 목적 한정·최소보관·비노출)를 둔다 (Stage feasibility, 2026-07-31) (learned 2026-07-31) <!-- cid:feasibility:c2 -->
 ## Scope Overrides
 
 <!-- Custom scope rules for this project. -->
