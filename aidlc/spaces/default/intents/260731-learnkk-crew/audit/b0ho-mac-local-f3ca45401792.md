@@ -373,3 +373,635 @@
 **Stage**: approval-handoff
 
 ---
+
+## Artifact Created
+**Timestamp**: 2026-08-01T05:13:09Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: /Users/b0ho/git/learnKK/aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/memory.md
+**Context**: inception > practices-discovery > memory.md
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-08-01T05:13:09Z
+**Event**: SENSOR_FIRED
+**Fire id**: 2f8d988a
+**Sensor ID**: required-sections
+**Stage slug**: practices-discovery
+**Output path**: aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/memory.md
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-08-01T05:13:09Z
+**Event**: SENSOR_PASSED
+**Fire id**: 2f8d988a
+**Sensor ID**: required-sections
+**Stage slug**: practices-discovery
+**Output path**: aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/memory.md
+**Duration ms**: 17
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-08-01T05:13:09Z
+**Event**: SENSOR_FIRED
+**Fire id**: 2c0c8ac6
+**Sensor ID**: upstream-coverage
+**Stage slug**: practices-discovery
+**Output path**: aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/memory.md
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-08-01T05:13:09Z
+**Event**: SENSOR_PASSED
+**Fire id**: 2c0c8ac6
+**Sensor ID**: upstream-coverage
+**Stage slug**: practices-discovery
+**Output path**: aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/memory.md
+**Duration ms**: 17
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-08-01T05:14:39Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: /Users/b0ho/git/learnKK/aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/team-practices.md
+**Context**: inception > practices-discovery > team-practices.md
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-08-01T05:14:39Z
+**Event**: SENSOR_FIRED
+**Fire id**: 620ecf8f
+**Sensor ID**: required-sections
+**Stage slug**: practices-discovery
+**Output path**: aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/team-practices.md
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-08-01T05:14:39Z
+**Event**: SENSOR_PASSED
+**Fire id**: 620ecf8f
+**Sensor ID**: required-sections
+**Stage slug**: practices-discovery
+**Output path**: aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/team-practices.md
+**Duration ms**: 17
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-08-01T05:14:39Z
+**Event**: SENSOR_FIRED
+**Fire id**: 670acfa3
+**Sensor ID**: upstream-coverage
+**Stage slug**: practices-discovery
+**Output path**: aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/team-practices.md
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-08-01T05:14:39Z
+**Event**: SENSOR_PASSED
+**Fire id**: 670acfa3
+**Sensor ID**: upstream-coverage
+**Stage slug**: practices-discovery
+**Output path**: aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/team-practices.md
+**Duration ms**: 16
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-08-01T05:14:57Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: /Users/b0ho/git/learnKK/aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/discovered-rules.md
+**Context**: inception > practices-discovery > discovered-rules.md
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-08-01T05:14:57Z
+**Event**: SENSOR_FIRED
+**Fire id**: 008cf421
+**Sensor ID**: required-sections
+**Stage slug**: practices-discovery
+**Output path**: aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/discovered-rules.md
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-08-01T05:14:58Z
+**Event**: SENSOR_PASSED
+**Fire id**: 008cf421
+**Sensor ID**: required-sections
+**Stage slug**: practices-discovery
+**Output path**: aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/discovered-rules.md
+**Duration ms**: 19
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-08-01T05:14:58Z
+**Event**: SENSOR_FIRED
+**Fire id**: 00f19051
+**Sensor ID**: upstream-coverage
+**Stage slug**: practices-discovery
+**Output path**: aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/discovered-rules.md
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-08-01T05:14:58Z
+**Event**: SENSOR_PASSED
+**Fire id**: 00f19051
+**Sensor ID**: upstream-coverage
+**Stage slug**: practices-discovery
+**Output path**: aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/discovered-rules.md
+**Duration ms**: 16
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-08-01T05:15:25Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: /Users/b0ho/git/learnKK/aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/evidence.md
+**Context**: inception > practices-discovery > evidence.md
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-08-01T05:15:26Z
+**Event**: SENSOR_FIRED
+**Fire id**: d5122150
+**Sensor ID**: required-sections
+**Stage slug**: practices-discovery
+**Output path**: aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/evidence.md
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-08-01T05:15:26Z
+**Event**: SENSOR_PASSED
+**Fire id**: d5122150
+**Sensor ID**: required-sections
+**Stage slug**: practices-discovery
+**Output path**: aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/evidence.md
+**Duration ms**: 16
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-08-01T05:15:26Z
+**Event**: SENSOR_FIRED
+**Fire id**: 0f70af63
+**Sensor ID**: upstream-coverage
+**Stage slug**: practices-discovery
+**Output path**: aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/evidence.md
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-08-01T05:15:26Z
+**Event**: SENSOR_PASSED
+**Fire id**: 0f70af63
+**Sensor ID**: upstream-coverage
+**Stage slug**: practices-discovery
+**Output path**: aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/evidence.md
+**Duration ms**: 16
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-08-01T05:15:32Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: /Users/b0ho/git/learnKK/aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/practices-discovery-timestamp.md
+**Context**: inception > practices-discovery > practices-discovery-timestamp.md
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-08-01T05:15:32Z
+**Event**: SENSOR_FIRED
+**Fire id**: 06d9031e
+**Sensor ID**: required-sections
+**Stage slug**: practices-discovery
+**Output path**: aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/practices-discovery-timestamp.md
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-08-01T05:15:33Z
+**Event**: SENSOR_PASSED
+**Fire id**: 06d9031e
+**Sensor ID**: required-sections
+**Stage slug**: practices-discovery
+**Output path**: aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/practices-discovery-timestamp.md
+**Duration ms**: 15
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-08-01T05:15:33Z
+**Event**: SENSOR_FIRED
+**Fire id**: 7c9de031
+**Sensor ID**: upstream-coverage
+**Stage slug**: practices-discovery
+**Output path**: aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/practices-discovery-timestamp.md
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-08-01T05:15:33Z
+**Event**: SENSOR_PASSED
+**Fire id**: 7c9de031
+**Sensor ID**: upstream-coverage
+**Stage slug**: practices-discovery
+**Output path**: aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/practices-discovery-timestamp.md
+**Duration ms**: 16
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-08-01T05:15:50Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: unknown
+**Message**: Drafted all four practices-discovery artifacts as LEAD (greenfield, local, design-only React+Spring+PostgreSQL). No git/state tools run, no gate presented — this is the Step 2 lead DRAFT only.\n\nFiles 
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-08-01T05:17:15Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: /Users/b0ho/git/learnKK/aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/contributions/aidlc-quality-agent.md
+**Context**: inception > practices-discovery > contributions > aidlc-quality-agent.md
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-08-01T05:17:15Z
+**Event**: SENSOR_FIRED
+**Fire id**: 626751e3
+**Sensor ID**: required-sections
+**Stage slug**: practices-discovery
+**Output path**: aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/contributions/aidlc-quality-agent.md
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-08-01T05:17:15Z
+**Event**: SENSOR_PASSED
+**Fire id**: 626751e3
+**Sensor ID**: required-sections
+**Stage slug**: practices-discovery
+**Output path**: aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/contributions/aidlc-quality-agent.md
+**Duration ms**: 16
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-08-01T05:17:15Z
+**Event**: SENSOR_FIRED
+**Fire id**: dd821f17
+**Sensor ID**: upstream-coverage
+**Stage slug**: practices-discovery
+**Output path**: aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/contributions/aidlc-quality-agent.md
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-08-01T05:17:15Z
+**Event**: SENSOR_PASSED
+**Fire id**: dd821f17
+**Sensor ID**: upstream-coverage
+**Stage slug**: practices-discovery
+**Output path**: aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/contributions/aidlc-quality-agent.md
+**Duration ms**: 15
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-08-01T05:17:24Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: unknown
+**Message**: Completed independent quality/testing review of the practices-discovery lead draft and wrote contributions/aidlc-quality-agent.md (with `**Collaborator:** aidlc-quality-agent`, `## Contribution`, `## 
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-08-01T05:17:36Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: /Users/b0ho/git/learnKK/aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/contributions/aidlc-devsecops-agent.md
+**Context**: inception > practices-discovery > contributions > aidlc-devsecops-agent.md
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-08-01T05:17:36Z
+**Event**: SENSOR_FIRED
+**Fire id**: c73a8cb8
+**Sensor ID**: required-sections
+**Stage slug**: practices-discovery
+**Output path**: aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/contributions/aidlc-devsecops-agent.md
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-08-01T05:17:36Z
+**Event**: SENSOR_PASSED
+**Fire id**: c73a8cb8
+**Sensor ID**: required-sections
+**Stage slug**: practices-discovery
+**Output path**: aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/contributions/aidlc-devsecops-agent.md
+**Duration ms**: 17
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-08-01T05:17:36Z
+**Event**: SENSOR_FIRED
+**Fire id**: 97cb70c7
+**Sensor ID**: upstream-coverage
+**Stage slug**: practices-discovery
+**Output path**: aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/contributions/aidlc-devsecops-agent.md
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-08-01T05:17:36Z
+**Event**: SENSOR_PASSED
+**Fire id**: 97cb70c7
+**Sensor ID**: upstream-coverage
+**Stage slug**: practices-discovery
+**Output path**: aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/contributions/aidlc-devsecops-agent.md
+**Duration ms**: 17
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-08-01T05:17:39Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: /Users/b0ho/git/learnKK/aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/contributions/aidlc-developer-agent.md
+**Context**: inception > practices-discovery > contributions > aidlc-developer-agent.md
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-08-01T05:17:39Z
+**Event**: SENSOR_FIRED
+**Fire id**: c14321ff
+**Sensor ID**: required-sections
+**Stage slug**: practices-discovery
+**Output path**: aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/contributions/aidlc-developer-agent.md
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-08-01T05:17:39Z
+**Event**: SENSOR_PASSED
+**Fire id**: c14321ff
+**Sensor ID**: required-sections
+**Stage slug**: practices-discovery
+**Output path**: aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/contributions/aidlc-developer-agent.md
+**Duration ms**: 16
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-08-01T05:17:39Z
+**Event**: SENSOR_FIRED
+**Fire id**: 19ee6a22
+**Sensor ID**: upstream-coverage
+**Stage slug**: practices-discovery
+**Output path**: aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/contributions/aidlc-developer-agent.md
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-08-01T05:17:39Z
+**Event**: SENSOR_PASSED
+**Fire id**: 19ee6a22
+**Sensor ID**: upstream-coverage
+**Stage slug**: practices-discovery
+**Output path**: aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/contributions/aidlc-developer-agent.md
+**Duration ms**: 15
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-08-01T05:17:45Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: unknown
+**Message**: Completed independent devsecops blind review of the practices-discovery lead draft and wrote my contribution file. Key findings: the lead draft omits security-specific controls that the design-only, a
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-08-01T05:17:49Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: unknown
+**Message**: Completed an independent developer/code-style review of the practices-discovery lead draft and wrote my contribution to `contributions/aidlc-developer-agent.md` (exact required structure: Collaborator
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-08-01T05:19:10Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: /Users/b0ho/git/learnKK/aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/practices-discovery-questions.md
+**Context**: inception > practices-discovery > practices-discovery-questions.md
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-08-01T05:19:10Z
+**Event**: SENSOR_FIRED
+**Fire id**: e295e7b2
+**Sensor ID**: required-sections
+**Stage slug**: practices-discovery
+**Output path**: aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/practices-discovery-questions.md
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-08-01T05:19:10Z
+**Event**: SENSOR_PASSED
+**Fire id**: e295e7b2
+**Sensor ID**: required-sections
+**Stage slug**: practices-discovery
+**Output path**: aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/practices-discovery-questions.md
+**Duration ms**: 16
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-08-01T05:19:10Z
+**Event**: SENSOR_FIRED
+**Fire id**: ab811618
+**Sensor ID**: upstream-coverage
+**Stage slug**: practices-discovery
+**Output path**: aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/practices-discovery-questions.md
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-08-01T05:19:10Z
+**Event**: SENSOR_PASSED
+**Fire id**: ab811618
+**Sensor ID**: upstream-coverage
+**Stage slug**: practices-discovery
+**Output path**: aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/practices-discovery-questions.md
+**Duration ms**: 16
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-08-01T05:19:22Z
+**Event**: DECISION_RECORDED
+**Stage**: practices-discovery
+**Decision**: Q1 Way of Working — 브랜칭+저장소구조+공유계약
+**Options**: A(trunk+monorepo+3계약),B(multi-repo),C(계약우선 없음),X(기타)
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-08-01T05:19:22Z
+**Event**: DECISION_RECORDED
+**Stage**: practices-discovery
+**Decision**: Q2 Walking Skeleton — 공통기반 관통 슬라이스
+**Options**: A(skeleton 먼저),B(없이 바로),C(이월),X(기타)
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-08-01T05:19:22Z
+**Event**: DECISION_RECORDED
+**Stage**: practices-discovery
+**Decision**: Q3 Testing Posture — 프레임워크+커버리지+방법론+계약테스트
+**Options**: A(권장 번들/test-alongside),B(TDD),C(BDD),D(조정),X(기타)
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-08-01T05:19:22Z
+**Event**: DECISION_RECORDED
+**Stage**: practices-discovery
+**Decision**: Q4 Deployment — 로컬기동+시크릿주입
+**Options**: A(docker-compose+.env),B(각자 로컬),C(미정),X(기타)
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-08-01T05:19:22Z
+**Event**: DECISION_RECORDED
+**Stage**: practices-discovery
+**Decision**: Q5 Code Style — 린터/포매터+경계규약
+**Options**: A(권장/커스텀에러),B(RFC7807),C(JS),D(도구만),X(기타)
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-08-01T05:19:22Z
+**Event**: DECISION_RECORDED
+**Stage**: practices-discovery
+**Decision**: Q6 보안 자세 — 로컬 한정, 후속 상속
+**Options**: A(권장/bcrypt),B(argon2id),C(최소),X(기타)
+
+---
+
+## Human Turn
+**Timestamp**: 2026-08-02T07:05:00Z
+**Event**: HUMAN_TURN
+
+---
+
+## Human Turn
+**Timestamp**: 2026-08-02T07:10:50Z
+**Event**: HUMAN_TURN
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-08-02T07:11:31Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: /Users/b0ho/git/learnKK/aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/practices-discovery-questions.md
+**Context**: inception > practices-discovery > practices-discovery-questions.md
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-08-02T07:11:31Z
+**Event**: SENSOR_FIRED
+**Fire id**: 9ba2df38
+**Sensor ID**: required-sections
+**Stage slug**: practices-discovery
+**Output path**: aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/practices-discovery-questions.md
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-08-02T07:11:31Z
+**Event**: SENSOR_PASSED
+**Fire id**: 9ba2df38
+**Sensor ID**: required-sections
+**Stage slug**: practices-discovery
+**Output path**: aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/practices-discovery-questions.md
+**Duration ms**: 16
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-08-02T07:11:31Z
+**Event**: SENSOR_FIRED
+**Fire id**: 373c3e6c
+**Sensor ID**: upstream-coverage
+**Stage slug**: practices-discovery
+**Output path**: aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/practices-discovery-questions.md
+
+---
+
+## Sensor Passed
+**Timestamp**: 2026-08-02T07:11:31Z
+**Event**: SENSOR_PASSED
+**Fire id**: 373c3e6c
+**Sensor ID**: upstream-coverage
+**Stage slug**: practices-discovery
+**Output path**: aidlc/spaces/default/intents/260731-learnkk-crew/inception/practices-discovery/practices-discovery-questions.md
+**Duration ms**: 16
+
+---
+
+## Human Turn
+**Timestamp**: 2026-08-02T07:11:44Z
+**Event**: HUMAN_TURN
+
+---
+
+## Human Turn
+**Timestamp**: 2026-08-02T07:12:42Z
+**Event**: HUMAN_TURN
+
+---
+
+## Human Turn
+**Timestamp**: 2026-08-02T07:13:24Z
+**Event**: HUMAN_TURN
+
+---
+
+## Human Turn
+**Timestamp**: 2026-08-02T15:27:11Z
+**Event**: HUMAN_TURN
+
+---
