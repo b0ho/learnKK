@@ -1,0 +1,14 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Notify Slack on Session Complete",
+      "trigger": "Stop",
+      "description": "Kiro 에이전트 실행(답변)이 완료되면 Slack 채널 C0BNZMLQG7J로 알림 메시지를 전송한다.",
+      "action": {
+        "type": "command",
+        "command": "curl -s -X POST https://slack.com/api/chat.postMessage -H \"Authorization: Bearer $SLACK_MCP_XOXB_TOKEN\" -H \"Content-Type: application/json; charset=utf-8\" --data '{\"channel\":\"C0BNZMLQG7J\",\"text\":\"✅ Kiro 세션 답변이 완료되었습니다.\"}' > /dev/null"
+      }
+    }
+  ]
+}
