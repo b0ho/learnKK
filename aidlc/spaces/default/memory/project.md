@@ -58,12 +58,23 @@
 <!-- Format: NEVER [behavior] (affirmed [date]) -->
 <!-- Example: NEVER throw exceptions across service layer boundaries (affirmed 2026-05-17) -->
 
+- NEVER 외부 SaaS·클라우드·AWS 등 외부 서비스에 의존하는 설계를 도입한다 (constraint-register T3, 전부 로컬 확정). (affirmed 2026-08-17)
+- NEVER 이번 워크플로우의 범위에 실제 구현 코드·배포·CI·운영 인프라를 포함한다 (constraint-register T5, scope-document out-of-scope; 이번은 설계 전용). (affirmed 2026-08-17)
+- NEVER 안티-중복계정용으로 수집한 신호(IP 등)를 목적 외로 쓰거나, 최소 보관·비노출 원칙을 벗어나 노출한다 (project.md Decided, feasibility R3). (affirmed 2026-08-17)
+- NEVER 비밀번호·DB 자격증명·세션 시크릿 등 비밀값을 repo에 커밋한다 — `.env`류는 gitignore, 환경변수/Spring profile로 주입 (devsecops `[affirmed]` Q6, secure-by-default). (affirmed 2026-08-17)
+- NEVER JPA Entity를 API 경계(Controller 응답) 밖으로 그대로 노출한다 — Controller는 Request/Response DTO만 사용 (developer `[affirmed]` Q5). (affirmed 2026-08-17)
 ## Mandated
 
 <!-- Populated by practices-discovery affirmation gate. -->
 <!-- Format: ALWAYS [behavior] (affirmed [date]) -->
 <!-- Example: ALWAYS use Result<T,E> for fallible operations in service layer (affirmed 2026-05-17) -->
 
+- ALWAYS 프론트엔드는 React, 백엔드는 Java Spring, 데이터 저장은 PostgreSQL로 구현한다 (project.md Tech Stack lock, feasibility 확정). (affirmed 2026-08-17)
+- ALWAYS 시스템 전 구성요소를 로컬 환경에서 완결하도록 설계·구축한다 (constraint-register T3, project.md Tech Stack lock). (affirmed 2026-08-17)
+- ALWAYS 사용자 비밀번호는 적응형 해시(bcrypt, Spring Security 기본)로 저장한다 — 평문·가역 암호 저장 금지 (project.md Decided, feasibility R1, devsecops `[affirmed]` Q6). (affirmed 2026-08-17)
+- ALWAYS 사용자가 확인할 답변·질문·산출물 내용은 한글로 작성하고, 고유명사·기술 용어는 영어를 그대로 쓴다 (project.md Corrections). (affirmed 2026-08-17)
+- ALWAYS JSON API 필드는 camelCase로 통일하고, JPA 물리 네이밍은 snake_case 전략으로 매핑한다 (developer `[affirmed]` Q5 — 병렬 interface 불일치 방지). (affirmed 2026-08-17)
+- ALWAYS 전역 에러 응답은 단일 커스텀 스키마 `{code, message, details}`로 통일한다 (developer `[affirmed]` Q5). (affirmed 2026-08-17)
 ## Corrections
 
 <!-- Project-specific corrections from human feedback. -->
@@ -71,3 +82,4 @@
 - 사용자가 확인할 답변·질문·산출물 내용은 한글로 작성하고, 고유어·기술 용어(고유명사·기술 용어 등)는 영어를 그대로 사용한다 (learned 2026-07-31) <!-- cid:intent-capture:u1 -->
 - §13 learnings 반영을 사용자에게 물어볼 때, 추천 항목을 목록 최상위에 별도 항목으로 명시한다 (learned 2026-07-31) <!-- cid:intent-capture:u2 -->
 - 승인 게이트를 제시하는 시점에, 그 스테이지와 관련된 변경사항만 미리 git staged 상태로 만들어 두고(무관한 변경은 stage하지 않음), 사용자가 승인하면 staged 변경을 커밋한다 (learned 2026-07-31) <!-- cid:market-research:u1 -->
+- 산출물 수정 시 변경과 무관한 부분까지 파일 전체를 재작성(fs_write)하지 말 것 — str_replace로 실제 바뀌는 부분만 최소 범위로 편집해 staged 대비 diff를 리뷰 가능하게 유지한다 (learned 2026-08-17) <!-- cid:user-stories:user-diff-hygiene -->

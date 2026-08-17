@@ -16,15 +16,28 @@
 
 이 프로젝트는 **greenfield**다. 아직 코드베이스·git 히스토리·CI 설정·배포 구성이 없어 브라운필드식 증거(branching 실측, CI 파이프라인, 코드 관례 추론)는 **존재하지 않는다.** 따라서 team-practices 초안은 실측 증거가 아니라 org.md 기본값 + 확정 제약을 특화한 **제안**이며, 팀 의도는 인터뷰에서 사람이 확정해야 한다. upstream-coverage 센서의 브라운필드 조건부 입력(code-structure, technology-stack 등)은 설계상 부재한다.
 
-## Open Uncertainties (인터뷰가 해결해야 할 것)
+## Support Agent Blind Review (folded in)
 
-- **Way of Working** — trunk-based/squash 정책을 팀이 그대로 채택할지. 공통 기반 interface contract의 소유·고정 순서(delivery-planning 연계).
-- **Walking Skeleton** — 팀 구현 워크플로우에서 skeleton을 켤지. 공통 기반을 관통하는 skeleton을 먼저 세울지.
-- **Testing Posture** — 테스트 프레임워크(JUnit/MockMvc, Vitest·Jest+RTL) 확정, coverage floor 80% 유지/조정, 방법론(TDD/BDD/test-after).
-- **Deployment** — 로컬 실행/기동 표준화 필요 여부(예: docker-compose로 PostgreSQL 기동). CI/CD 설계를 어느 구현 워크플로우로 이월할지.
-- **Code Style** — 구체 린터/포매터 도구 선택과 설정, 린터 위에 얹을 추가 팀 관례(named export, 예외 처리 규약, 레이어 경계).
+지원 3인의 독립 검토가 리드 초안을 보강했고, 최종 통합에 반영됐다:
+
+- **quality-agent** — 프레임워크 조합(JUnit5+Spring Boot Test+MockMvc+Mockito / RTL+Vitest) 지지. 핵심 갭으로 **API 계약 테스트 계층 부재**와 **통합 테스트 DB 재현성**을 지적 → Testcontainers 로컬 PostgreSQL + OpenAPI 기반 계약 테스트 계층을 posture에 추가. coverage floor는 FE/BE 각각 측정 + 도메인 규칙 branch/시나리오 보강.
+- **developer-agent** — 최대 리스크(독립 병렬 interface 불일치)를 코드-레벨 계약으로 통제할 것을 강조 → **monorepo(`/frontend`,`/backend`,`/contracts`)** + 3개 계약 아티팩트(OpenAPI/DB 스키마/도메인 타입) + 경계 규약(JSON camelCase↔JPA snake_case, Entity 비노출, 커스텀 에러 스키마)을 확정. 네이밍·에러·Entity-비노출을 project.md 승격 후보로 제시.
+- **devsecops-agent** — 스타일 린터가 커버하지 않는 **보안 계층**을 분리 명시 → bcrypt 해시, 시크릿 비커밋 hard rule, 보안 정적분석(SpotBugs+FindSecBugs / eslint-plugin-security), 의존성 스캔(npm audit / OWASP Dependency-Check), 안티-중복계정 신호 보관·비노출 규약을 확정·이월.
+
+## Interview Resolution (Q1~Q6 = A)
+
+인터뷰에서 팀이 위 open uncertainty를 전부 권장 번들(A)로 확정했다:
+
+- **Q1 Way of Working** = A — trunk-based+squash+monorepo + 3개 계약 우선 고정.
+- **Q2 Walking Skeleton** = A — 공통 기반 관통 skeleton을 먼저 한 번.
+- **Q3 Testing Posture** = A — JUnit5/MockMvc/Mockito + RTL/Vitest + Testcontainers + 80% floor(각각) + test-alongside + OpenAPI 계약 테스트.
+- **Q4 Deployment** = A — docker-compose 표준화 + 시크릿 비커밋(`.env`/`.env.example`) + CI/CD 이월.
+- **Q5 Code Style** = A — Prettier+ESLint(+TS) / Spotless+google-java-format+Checkstyle + 경계 규약(camelCase/snake_case, Entity 비노출, 커스텀 에러 스키마).
+- **Q6 Security** = A — bcrypt + 시크릿 비커밋 NEVER + 보안 정적분석 + 의존성 스캔 + 안티-중복 신호 이월.
+
+승격 결과: 계약 우선·네이밍/에러 경계·시크릿 비커밋·Entity 비노출·bcrypt는 discovered-rules의 `[affirmed]` hard rule로, 나머지 practice 자세는 team-practices로 확정됐다.
 
 ## Assumptions & Open Questions
 
-- 지원 에이전트(quality/developer/devsecops)의 blind review 기여와 인터뷰 결정은 이 초안에 아직 반영되지 않았고, 리드 최종 통합에서 보강된다.
-- 위 open uncertainties는 인터뷰 질문의 근거이며, 해소된 답만 team.md/project.md로 승격된다.
+- 인터뷰로 해소되지 않고 명시적으로 하류로 이월된 항목: 계약 소유·고정 순서(delivery-planning), DB 마이그레이션 도구·BE 빌드 구성(구현 워크플로우), 안티-중복계정 신호 보관 상세(nfr-requirements/functional-design).
+- 프론트 빌드 도구가 webpack/CRA로 확정되면 Vitest→Jest로 러너만 대체(RTL은 불변).
