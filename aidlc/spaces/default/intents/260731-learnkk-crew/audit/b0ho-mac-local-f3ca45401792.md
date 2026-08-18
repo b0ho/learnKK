@@ -19709,3 +19709,131 @@
 **Event**: HUMAN_TURN
 
 ---
+
+## Human Turn
+**Timestamp**: 2026-08-17T18:32:13Z
+**Event**: HUMAN_TURN
+
+---
+
+## Session Start
+**Timestamp**: 2026-08-17T18:34:22Z
+**Event**: SESSION_STARTED
+**Source**: startup
+
+---
+
+## Human Turn
+**Timestamp**: 2026-08-17T18:34:22Z
+**Event**: HUMAN_TURN
+
+---
+
+## Error Logged
+**Timestamp**: 2026-08-17T18:34:36Z
+**Event**: ERROR_LOGGED
+**Tool**: aidlc-utility
+**Command**: aidlc-utility --status
+**Error**: Usage: aidlc-utility <help|version|status|doctor|intent-birth|intent|space|space-create|codekb-path|detect|select-plugins|plugin-list|plugin-sync|recompose|scope-change|config-change|config-get|config-list|set-status|detect-scope|resolve-env-scope|scope-table|stage-table|upgrade> [--project-dir <path>] [--scope <scope>] [--json]
+
+---
+
+## Human Turn
+**Timestamp**: 2026-08-17T18:36:58Z
+**Event**: HUMAN_TURN
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-08-17T18:38:45Z
+**Event**: SENSOR_FIRED
+**Fire id**: 9851ba76
+**Sensor ID**: required-sections
+**Stage slug**: nfr-requirements
+**Output path**: aidlc/spaces/default/intents/intents.json
+
+---
+
+## Sensor Failed
+**Timestamp**: 2026-08-17T18:38:45Z
+**Event**: SENSOR_FAILED
+**Fire id**: 9851ba76
+**Sensor ID**: required-sections
+**Stage slug**: nfr-requirements
+**Output path**: aidlc/spaces/default/intents/intents.json
+**Detail path**: aidlc/spaces/default/intents/260731-learnkk-crew/.aidlc-sensors/nfr-requirements/required-sections-9851ba76.md
+**Findings count**: 2
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-08-17T18:38:45Z
+**Event**: SENSOR_FIRED
+**Fire id**: 2eb83a11
+**Sensor ID**: upstream-coverage
+**Stage slug**: nfr-requirements
+**Output path**: aidlc/spaces/default/intents/intents.json
+
+---
+
+## Sensor Failed
+**Timestamp**: 2026-08-17T18:38:45Z
+**Event**: SENSOR_FAILED
+**Fire id**: 2eb83a11
+**Sensor ID**: upstream-coverage
+**Stage slug**: nfr-requirements
+**Output path**: aidlc/spaces/default/intents/intents.json
+**Detail path**: aidlc/spaces/default/intents/260731-learnkk-crew/.aidlc-sensors/nfr-requirements/upstream-coverage-2eb83a11.md
+**Findings count**: 3
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-08-17T18:38:49Z
+**Event**: SENSOR_FIRED
+**Fire id**: 562a94dc
+**Sensor ID**: required-sections
+**Stage slug**: nfr-requirements
+**Output path**: aidlc/spaces/default/intents/active-intent
+
+---
+
+## Sensor Failed
+**Timestamp**: 2026-08-17T18:38:49Z
+**Event**: SENSOR_FAILED
+**Fire id**: 562a94dc
+**Sensor ID**: required-sections
+**Stage slug**: nfr-requirements
+**Output path**: aidlc/spaces/default/intents/active-intent
+**Detail path**: aidlc/spaces/default/intents/260731-learnkk-crew/.aidlc-sensors/nfr-requirements/required-sections-562a94dc.md
+**Findings count**: 2
+
+---
+
+## Sensor Fired
+**Timestamp**: 2026-08-17T18:38:49Z
+**Event**: SENSOR_FIRED
+**Fire id**: e83fc674
+**Sensor ID**: upstream-coverage
+**Stage slug**: nfr-requirements
+**Output path**: aidlc/spaces/default/intents/active-intent
+
+---
+
+## Sensor Failed
+**Timestamp**: 2026-08-17T18:38:49Z
+**Event**: SENSOR_FAILED
+**Fire id**: e83fc674
+**Sensor ID**: upstream-coverage
+**Stage slug**: nfr-requirements
+**Output path**: aidlc/spaces/default/intents/active-intent
+**Detail path**: aidlc/spaces/default/intents/260731-learnkk-crew/.aidlc-sensors/nfr-requirements/upstream-coverage-e83fc674.md
+**Findings count**: 3
+
+---
+
+## Human Turn
+**Timestamp**: 2026-08-17T18:40:35Z
+**Event**: HUMAN_TURN
+
+---

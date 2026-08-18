@@ -1,0 +1,22 @@
+# Local development stack for learnKK (런크크). Secrets come from a local .env (gitignored);
+# see .env.example for the required variables.
+services:
+  db:
+    image: postgres:16
+    container_name: learnkk-postgres
+    environment:
+      POSTGRES_DB: ${DB_NAME:-learnkk}
+      POSTGRES_USER: ${DB_USERNAME:-learnkk}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-learnkk}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - learnkk-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-learnkk} -d ${DB_NAME:-learnkk}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  learnkk-pgdata:

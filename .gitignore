@@ -63,3 +63,16 @@ aidlc/diagnostics/
 # aidlc/spaces/*/intents/*/<phase>/<stage>/*.md (artifacts + diary).
 
 # kiro://profile/github/615646f6fa2011da40dca4bf347d132c
+
+# --- Secrets (never commit) ---
+.env
+.env.local
+
+# --- Backend (Gradle / Java) ---
+backend/.gradle/
+backend/build/
+backend/bin/
+*.class
+
+# --- Gradle wrapper: keep the jar committed (needed to bootstrap), ignore local dists ---
+.gradle/

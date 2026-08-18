@@ -52,6 +52,8 @@
 
 <!-- Custom scope rules for this project. -->
 
+- 이 프로젝트는 개별 개발자의 로컬 구현 작업이다. 구현 워크플로우(intent)에서도 **파이프라인 단계(ci-pipeline 3.7, deployment-pipeline 4.1)와 operation phase 전체(4.1~4.7)는 실행하지 않는다.** 구현 스코프의 유효 종료 지점은 construction의 build-and-test(3.6)다. (learned 2026-08-17)
+
 ## Forbidden
 
 <!-- Populated by practices-discovery affirmation gate. -->
@@ -63,6 +65,7 @@
 - NEVER 안티-중복계정용으로 수집한 신호(IP 등)를 목적 외로 쓰거나, 최소 보관·비노출 원칙을 벗어나 노출한다 (project.md Decided, feasibility R3). (affirmed 2026-08-17)
 - NEVER 비밀번호·DB 자격증명·세션 시크릿 등 비밀값을 repo에 커밋한다 — `.env`류는 gitignore, 환경변수/Spring profile로 주입 (devsecops `[affirmed]` Q6, secure-by-default). (affirmed 2026-08-17)
 - NEVER JPA Entity를 API 경계(Controller 응답) 밖으로 그대로 노출한다 — Controller는 Request/Response DTO만 사용 (developer `[affirmed]` Q5). (affirmed 2026-08-17)
+- NEVER 파이프라인(ci-pipeline·deployment-pipeline)과 operation phase 단계(배포·환경 프로비저닝·관측·인시던트·성능검증·피드백)를 실행한다 — 개별 개발자 로컬 구현 작업이며 구현은 build-and-test(3.6)에서 종료한다 (learned 2026-08-17). <!-- cid:code-generation:no-pipeline-ops -->
 ## Mandated
 
 <!-- Populated by practices-discovery affirmation gate. -->

@@ -5,5 +5,12 @@
     "dirName": "260731-learnkk-crew",
     "scope": "learning-crew-local-mvp",
     "status": "complete"
+  },
+  {
+    "uuid": "01a01106-a2a6-7bc8-bbd3-aab836bf0f1b",
+    "slug": "bolt1-skeleton",
+    "dirName": "260817-bolt1-skeleton",
+    "scope": "feature",
+    "status": "complete"
   }
 ]

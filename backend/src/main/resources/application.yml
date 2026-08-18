@@ -1,0 +1,34 @@
+spring:
+  application:
+    name: learnkk-backend
+  # Secrets (DB credentials) are injected via environment / Spring profile — never committed.
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/learnkk}
+    username: ${DB_USERNAME:learnkk}
+    password: ${DB_PASSWORD:}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+      naming:
+        # snake_case physical naming (project.md mandated).
+        physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  jackson:
+    property-naming-strategy: LOWER_CAMEL_CASE
+    serialization:
+      write-dates-as-timestamps: false
+
+server:
+  port: ${SERVER_PORT:8080}
+
+# Application-specific secret placeholder (self-managed session token signing/seed).
+learnkk:
+  session:
+    secret: ${SESSION_SECRET:change-me-in-local-env}
