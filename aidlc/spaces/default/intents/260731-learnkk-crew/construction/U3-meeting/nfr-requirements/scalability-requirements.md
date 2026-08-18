@@ -14,12 +14,12 @@ requirements NFR2(모임 수십 개·동시 수십 명)·NFR4(단일 인스턴�
 ## 동시성
 
 - 상태 전이 경합(이중 승인): 조건부 UPDATE(`WHERE status=<expected>`)로 직렬화 → 하나만 성공, 409(BR-U3-1). DB 수준 원자성으로 애플리케이션 락 불요.
-- 개설·문항 편집은 소유 멘토 단독이라 경합 낮음.
+- 개설·사전설문 템플릿 편집은 소유 멘토 단독이라 경합 낮음.
 
 ## 확장 전략
 
 - 단일 JVM·단일 DB로 목표 충족. 수평 확장은 범위 밖(NFR4).
-- 데이터 증가: meeting/survey_question 완만 — 종료 모임 아카이빙은 [open] 후속.
+- 데이터 증가: meeting/survey_template 완만 — 종료 모임 아카이빙은 [open] 후속.
 
 ## Assumptions & Open Questions
 
