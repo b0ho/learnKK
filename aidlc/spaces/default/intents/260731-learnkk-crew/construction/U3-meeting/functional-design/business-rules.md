@@ -31,7 +31,7 @@ U3는 모임 상태머신의 **단일 집행자**(unit-of-work.md, ADR-006). U1�
 
 - 개설자는 role=MENTOR(Principal, U2). 아니면 403.
 - 필수: title, topic, weeks(>0), 모집기간, capacity(>0), format. 위반 400.
-- 사전설문 문항(SurveyQuestion)은 개설/수정 중 자유 구성(FR2.1). 문항 없이 개설도 허용 [assumption].
+- 사전설문 템플릿(SurveyTemplate)은 개설/수정 중 **자유형식**으로 작성(FR2.1) — 멘티는 이 템플릿을 기반으로 게시글 형태로 작성한다(산출물 소유는 U8). 템플릿 없이 개설도 허용 [assumption].
 - 개설 직후 status=PENDING_APPROVAL(①대기).
 
 ## BR-U3-4. 모집확정 규칙 (US-3.4, T3/T4)
@@ -52,12 +52,12 @@ U3는 모임 상태머신의 **단일 집행자**(unit-of-work.md, ADR-006). U1�
 ## BR-U3-6. 목록·조회·운영 허브 (US-3.1/2.3)
 
 - `listRecruiting`: status=RECRUITING 모임만 멘티에게 노출(US-3.1). 페이지네이션(U1 규약).
-- `listMyMeetings`(멘토 운영 허브): 자기 모임만(403 경계) — 백엔드는 U3 모임 데이터만 반환. 신청자 목록·사전설문 응답은 **운영 허브 화면이 FE에서 U4/U8 엔드포인트를 각각 호출해 조합**(백엔드 U3→U4/U8 의존 없음, 순환 회피). U4 read는 ADR-007 R-1(Meeting↔Enrollment) 범위, U8 read는 화면 조합 전용(ADR-007 범위 밖).
+- `listMyMeetings`(멘토 운영 허브): 자기 모임만(403 경계) — 백엔드는 U3 모임 데이터만 반환. 신청자 목록·멘티 사전설문 게시글은 **운영 허브 화면이 FE에서 U4/U8 엔드포인트를 각각 호출해 조합**(백엔드 U3→U4/U8 의존 없음, 순환 회피). U4 read는 ADR-007 R-1(Meeting↔Enrollment) 범위, U8 read는 화면 조합 전용(ADR-007 범위 밖).
 - 상세 조회: 참여자·멘토·관리자 권한 경계. 비공개 정보(신청자 등)는 소유 멘토/관리자만.
 
-## BR-U3-7. 문항 편집 제약
+## BR-U3-7. 템플릿 편집 제약
 
-- 사전설문 응답 수집이 ②시작 이후 시작(U8, US-3.6)되므로, **status=IN_PROGRESS 이후 문항 틀(SurveyQuestion) 편집 금지** [assumption](응답 정합성). 위반 409/400.
+- 멘티의 사전설문 게시글 작성이 ②시작 이후 시작(U8, US-3.6)되므로, **status=IN_PROGRESS 이후 사전설문 템플릿(SurveyTemplate) 편집 금지** [assumption](작성 정합성). 위반 409/400.
 
 ## 에러 처리 (U1 CC-1 상속)
 
@@ -65,7 +65,7 @@ U3는 모임 상태머신의 **단일 집행자**(unit-of-work.md, ADR-006). U1�
 
 ## Assumptions & Open Questions
 
-- **[assumption]** 문항 없이 개설 허용, ②후 문항 편집 금지, 반려 사유 필수.
+- **[assumption]** 템플릿 없이 개설 허용, 모임당 템플릿 1개, ②후 템플릿 편집 금지, 반려 사유 필수. 멘티 산출물의 게시글 재정의(U8 `survey_answer` 후속 변경)는 본 MR 범위 밖(U8 functional-design 확정).
 - **[decided]** 모집확정=독립 운영 액션(OQ1). ③=관리자 직접(rev-mk).
 - **[open]** 낙관적 락 vs 조건부 UPDATE 상세는 구현. READY_TO_START에서의 신청 취소는 U4(②전 허용).
 - 전이 전제(전 세션 종료)는 U5 계약 read에 의존 — U5 functional-design과 정합 필요.

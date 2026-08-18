@@ -15,7 +15,7 @@ requirements NFR4(단일 인스턴스, HA·백업 범위 밖). U3 신뢰성은 *
 - 상태 전이는 단일 트랜잭션·조건부 UPDATE로 원자적 — 부분 전이·이중 전이 방지(BR-U3-1).
 - 종료 상태 불변(REJECTED/CANCELLED/COMPLETED) — 재전이 불가로 이력 일관.
 - ③완료 전제(전 세션 종료)는 U5 read로 검증 후 전이 — 시점 정합(TOCTOU 최소화: 완료 액션 트랜잭션 내 status 재확인).
-- meeting/survey_question 영속 보존(NFR5).
+- meeting/survey_template 영속 보존(NFR5).
 
 ## 장애 처리
 

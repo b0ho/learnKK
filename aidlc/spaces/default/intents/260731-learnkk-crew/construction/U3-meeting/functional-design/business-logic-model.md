@@ -1,14 +1,14 @@
 # Business Logic Model — U3 Meeting (learnKK / 런크크)
 
-<!-- functional-design 산출물. Unit=U3 Meeting(service, XL). 스토리 US-2.1a/2.1b/2.2/2.3/3.1/3.4/6.1/7.3(unit-of-work-story-map.md). 출처: unit-of-work.md(U3), requirements.md(FR2.x·FR3.4·②=FR2.3/US-6.1·FR7.3), components.md(C2·MeetingService/MeetingApprovalService/SurveyTemplateService·FE meetings feature), component-methods.md(시그니처), services.md(오케스트레이션·③ read U5·운영허브 read U4/U8), U1(MeetingStatus/ErrorPayload/Principal). 상태머신 워크플로우·문항 빌더·운영 허브·FE 화면 정의. -->
+<!-- functional-design 산출물. Unit=U3 Meeting(service, XL). 스토리 US-2.1a/2.1b/2.2/2.3/3.1/3.4/6.1/7.3(unit-of-work-story-map.md). 출처: unit-of-work.md(U3), requirements.md(FR2.x·FR3.4·②=FR2.3/US-6.1·FR7.3), components.md(C2·MeetingService/MeetingApprovalService/SurveyTemplateService·FE meetings feature), component-methods.md(시그니처), services.md(오케스트레이션·③ read U5·운영허브 read U4/U8), U1(MeetingStatus/ErrorPayload/Principal). 상태머신 워크플로우·사전설문 템플릿 작성·운영 허브·FE 화면 정의. -->
 
 ## 개요
 
-U3의 상태머신 전이 워크플로우, 문항 빌더, 운영 허브(read 조합), 목록/상세, FE 화면을 정의한다. 전이는 business-rules BR-U3-1 전이표를 절차로 표현.
+U3의 상태머신 전이 워크플로우, 사전설문 템플릿 작성, 운영 허브(read 조합), 목록/상세, FE 화면을 정의한다. 전이는 business-rules BR-U3-1 전이표를 절차로 표현.
 
 ## 상태 전이 워크플로우
 
-### W1. 모임 개설 (US-2.1a/2.1b / createMeeting + upsertQuestions)
+### W1. 모임 개설 (US-2.1a/2.1b / createMeeting + upsertTemplate)
 
 ```
 createMeeting(mentorId, {title, topic, weeks, recruitPeriod, capacity, format, initialContent}):
@@ -16,9 +16,9 @@ createMeeting(mentorId, {title, topic, weeks, recruitPeriod, capacity, format, i
   2. 필드 검증(weeks>0, capacity>0, 기간 유효). 실패 400
   3. Meeting insert(status=PENDING_APPROVAL, mentorId)
   4. return MeetingResponse
-upsertQuestions(mentorId, meetingId, SurveyQuestion[]):
+upsertTemplate(mentorId, meetingId, {body}):   # 자유형식 템플릿(모임당 1개)
   소유 멘토 확인(403), status가 IN_PROGRESS 이전인지(BR-U3-7, 아니면 409)
-  → 문항 교체/저장
+  → 사전설문 템플릿 저장/갱신(upsert)
 ```
 
 ### W2. 관리자 전이 액션 (MeetingApprovalService)
@@ -55,7 +55,7 @@ getMeeting(meetingId): 존재 확인(404) → 권한별 상세(참여자/멘토/
 
 ### W4. 멘토 운영 허브 (US-2.3) — FE 화면 레벨 조합
 
-백엔드 `listMyMeetings`는 U3 소유 데이터만 반환한다. 신청자·사전설문 응답은 **운영 허브 화면이 FE 단일 API client로 각 소유 Unit 엔드포인트를 호출해 조합**한다 — 백엔드 U3→U4/U8 의존을 만들지 않아 순환을 회피(U8 depends_on에 U3 존재).
+백엔드 `listMyMeetings`는 U3 소유 데이터만 반환한다. 신청자·멘티 사전설문 게시글은 **운영 허브 화면이 FE 단일 API client로 각 소유 Unit 엔드포인트를 호출해 조합**한다 — 백엔드 U3→U4/U8 의존을 만들지 않아 순환을 회피(U8 depends_on에 U3 존재).
 
 ```
 # 백엔드 (U3 소유만)
@@ -66,7 +66,7 @@ listMyMeetings(mentorId):
 hubScreen(meetingId):
   meeting    = U3.getMeeting(meetingId)             # 소유
   applicants = U4.listApplicants(meetingId)         # U4 엔드포인트 호출(ADR-007 R-1 범위)
-  preSurvey  = U8.getAnswers(meetingId, ...)        # U8 엔드포인트 호출(화면 조합 전용, ADR-007 밖)
+  preSurvey  = U8.<사전설문 게시글 조회>(meetingId, ...) # 멘티 사전설문 게시글, U8 엔드포인트 호출(화면 조합 전용, ADR-007 밖; 시그니처는 U8 functional-design 확정)
   → 화면에서 조합 렌더 (각 호출은 소유 Unit이 403 권한 경계 집행)
 ```
 
@@ -74,17 +74,17 @@ hubScreen(meetingId):
 
 ## FE 화면 (meetings feature)
 
-- **멘토 개설 화면:** 모임 기본정보 폼 + 사전설문 문항 빌더(문항 추가/삭제/순서·유형). 검증(weeks/capacity/기간). 개설 → PENDING_APPROVAL 안내.
+- **멘토 개설 화면:** 모임 기본정보 폼 + 사전설문 템플릿 편집기(자유형식 본문 — 멘티가 게시글 작성 시 참고할 안내·뼈대). 검증(weeks/capacity/기간). 개설 → PENDING_APPROVAL 안내.
 - **모임 목록(멘티):** RECRUITING 모임 카드 목록(제목·주제·정원·모집기간·상태 뱃지). 상세 → 신청(U4 화면 연계).
-- **멘토 운영 허브:** 자기 모임 목록 + 상태별 액션. 상세에 신청자 목록·사전설문 응답(read 조합). 상태 뱃지·다음 액션 안내.
+- **멘토 운영 허브:** 자기 모임 목록 + 상태별 액션. 상세에 신청자 목록·멘티 사전설문 게시글(read 조합). 상태 뱃지·다음 액션 안내.
 - **관리자 액션:** 승인 큐(U9 화면)에서 ①/모집확정/②/③ 액션 호출 → 이 Service. (큐 조회는 U9, 액션은 U3.)
 - 접근성(CC-2)·목록 상태(CC-3 로딩/빈/에러) 상속.
 
 ## 통합 지점 요약
 
 - **백엔드 read-in(U3가 호출):** U5 세션 종료 확인만(③완료 서버측 전제, ADR-007 R-2 — 컨트롤러 오케스트레이션 또는 U5 read 포트, 시그니처는 U5 functional-design 확정). ADR-007은 Status: Proposed이며 U1은 아직 read 포트를 정의하지 않음 — 해소 메커니즘(컨트롤러 조합 또는 U1/U5 소유 read 포트)은 U5 functional-design에서 확정.
-- **FE 화면 조합(백엔드 아님):** 운영 허브의 U4(신청자, ADR-007 R-1)·U8(사전설문 응답, ADR-007 밖) read는 화면이 각 Unit 엔드포인트를 호출해 조합. U3 백엔드는 U4/U8을 호출하지 않음 → U3↔U8/U3↔U4 백엔드 순환 없음.
-- **write-out:** 없음(U3는 자기 meeting/survey_question만 write). 관리자 액션 큐 조회는 U9가 U3 read.
+- **FE 화면 조합(백엔드 아님):** 운영 허브의 U4(신청자, ADR-007 R-1)·U8(사전설문 게시글, ADR-007 밖) read는 화면이 각 Unit 엔드포인트를 호출해 조합. U3 백엔드는 U4/U8을 호출하지 않음 → U3↔U8/U3↔U4 백엔드 순환 없음.
+- **write-out:** 없음(U3는 자기 meeting/survey_template만 write). 관리자 액션 큐 조회는 U9가 U3 read.
 - 상태 전이는 U3 단일 집행(다른 Unit이 meeting.status를 직접 쓰지 않음).
 
 ## 에러·엣지 케이스
@@ -93,11 +93,11 @@ hubScreen(meetingId):
 - ③ 완료 시 세션 미종료: 409 `MEETING_SESSIONS_NOT_ENDED`.
 - 모집 미달 + proceed=true: 허용(관리자 판단, READY_TO_START).
 - 종료 상태 재액션: 409.
-- ②후 문항 편집 시도: 409/400(BR-U3-7).
+- ②후 사전설문 템플릿 편집 시도: 409/400(BR-U3-7).
 
 ## Assumptions & Open Questions
 
-- **[assumption]** 조건부 UPDATE로 전이 직렬화(락 상세 구현). 문항 없이 개설 허용.
+- **[assumption]** 조건부 UPDATE로 전이 직렬화(락 상세 구현). 사전설문 템플릿 없이 개설 허용(자유형식·모임당 1개).
 - **[open]** U5 `allScheduledSessionsEnded`·U4 `count/listApplicants` read 포트 시그니처는 U5/U4 functional-design과 확정(계약 정합).
 - READY_TO_START에서 신청 취소는 U4(②전 허용, US-3.3).
 ## Review
