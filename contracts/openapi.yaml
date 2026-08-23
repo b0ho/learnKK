@@ -1,12 +1,13 @@
 openapi: 3.0.3
 info:
   title: learnKK (런크크) API
-  version: 0.3.0-bolt3
+  version: 0.4.0-bolt7
   description: >
-    Bolt 3 contract. Adds first-come-first-served enrollment (U4) on top of Bolt 2: mentee apply
-    (capacity/duplicate control), cancel, the owning-mentor/admin applicant listing, and the
-    mentee's own enrollment listing. Errors use a uniform ErrorPayload body. Enum values are stored
-    as varchar + CHECK in the DB (contract #3).
+    Bolt 7 contract. Adds the pre-application survey answers and course feedback (U8) on top of
+    Bolt 3: mentee submits pre-survey answers (gated to IN_PROGRESS meetings), the owning
+    mentor/admin/self read answers, mentee submits course feedback, and the owning mentor/admin
+    list feedback. SurveyQuestionDto now carries an id (populated on read). Errors use a uniform
+    ErrorPayload body. Enum values are stored as varchar + CHECK in the DB (contract #3).
 servers:
   - url: http://localhost:8080
     description: Local development
@@ -16,6 +17,8 @@ tags:
   - name: users
   - name: meetings
   - name: enrollments
+  - name: survey
+  - name: feedback
   - name: admin
 
 paths:
@@ -369,6 +372,162 @@ paths:
                   $ref: '#/components/schemas/EnrollmentResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
+
+  /api/meetings/{id}/survey-answers:
+    post:
+      tags: [survey]
+      summary: Submit (or re-submit) pre-application survey answers (participating mentee)
+      description: >
+        Participating MENTEE only, and only while the meeting is IN_PROGRESS (else 409
+        PRESURVEY_NOT_OPEN). Every required question must be answered (else 400
+        PRESURVEY_REQUIRED_MISSING). Answers are upserted per (question, mentee).
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/MeetingId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SurveyAnswerRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SurveyAnswerResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /api/meetings/{id}/survey-answers/mine:
+    get:
+      tags: [survey]
+      summary: Read the caller's own pre-application survey answers
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/MeetingId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SurveyAnswerResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/meetings/{id}/mentees/{menteeId}/survey-answers:
+    get:
+      tags: [survey]
+      summary: Read a mentee's pre-application survey answers (owning mentor or admin)
+      description: >
+        Allowed for the owning mentor, an admin, or the mentee themselves. No status gate —
+        mentor/admin can read after the meeting completes. Otherwise 403 PRESURVEY_FORBIDDEN.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/MeetingId'
+        - name: menteeId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SurveyAnswerResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/meetings/{id}/feedback:
+    post:
+      tags: [feedback]
+      summary: Submit (or re-submit) course feedback (participating mentee)
+      description: >
+        Participating MENTEE only, and only while the meeting is IN_PROGRESS or COMPLETED (else 409
+        FEEDBACK_NOT_OPEN / 403 FEEDBACK_FORBIDDEN for non-participants). Feedback is upserted per
+        (meeting, mentee).
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/MeetingId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    get:
+      tags: [feedback]
+      summary: List a meeting's course feedback (owning mentor or admin)
+      description: >
+        Restricted to the owning mentor or an admin; any other caller (including other mentors and
+        mentees) gets 403 FEEDBACK_FORBIDDEN.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/MeetingId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FeedbackResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   /api/admin/meetings/{id}/approve:
     post:
@@ -796,6 +955,11 @@ components:
       type: object
       required: [orderNo, text, type]
       properties:
+        id:
+          type: integer
+          format: int64
+          nullable: true
+          description: Populated on read; ignored on the upsert/write path
         orderNo:
           type: integer
         text:
@@ -808,6 +972,60 @@ components:
             type: string
         required:
           type: boolean
+
+    SurveyAnswerRequest:
+      type: object
+      required: [answers]
+      properties:
+        answers:
+          type: array
+          items:
+            $ref: '#/components/schemas/SurveyAnswerItem'
+
+    SurveyAnswerItem:
+      type: object
+      required: [questionId]
+      properties:
+        questionId:
+          type: integer
+          format: int64
+        answerText:
+          type: string
+          nullable: true
+
+    SurveyAnswerResponse:
+      type: object
+      required: [questionId]
+      properties:
+        questionId:
+          type: integer
+          format: int64
+        answerText:
+          type: string
+          nullable: true
+
+    FeedbackRequest:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+
+    FeedbackResponse:
+      type: object
+      required: [id, menteeId, content, createdAt]
+      properties:
+        id:
+          type: integer
+          format: int64
+        menteeId:
+          type: integer
+          format: int64
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
 
     RejectRequest:
       type: object

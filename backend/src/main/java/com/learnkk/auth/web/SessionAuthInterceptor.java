@@ -30,6 +30,13 @@ public class SessionAuthInterceptor implements HandlerInterceptor {
       Pattern.compile("^/api/meetings/\\d+/enrollments/mine$");
   private static final Pattern MEETING_APPLICANTS =
       Pattern.compile("^/api/meetings/\\d+/applicants$");
+  private static final Pattern MEETING_SURVEY_ANSWERS =
+      Pattern.compile("^/api/meetings/\\d+/survey-answers$");
+  private static final Pattern MEETING_SURVEY_ANSWERS_MINE =
+      Pattern.compile("^/api/meetings/\\d+/survey-answers/mine$");
+  private static final Pattern MEETING_MENTEE_SURVEY_ANSWERS =
+      Pattern.compile("^/api/meetings/\\d+/mentees/\\d+/survey-answers$");
+  private static final Pattern MEETING_FEEDBACK = Pattern.compile("^/api/meetings/\\d+/feedback$");
 
   private final AuthService authService;
 
@@ -94,6 +101,20 @@ public class SessionAuthInterceptor implements HandlerInterceptor {
       return true;
     }
     if ("GET".equalsIgnoreCase(method) && MEETING_APPLICANTS.matcher(path).matches()) {
+      return true;
+    }
+    // Survey/feedback routes (U8) are all authenticated. GET .../questions stays public (above).
+    if ("POST".equalsIgnoreCase(method) && MEETING_SURVEY_ANSWERS.matcher(path).matches()) {
+      return true;
+    }
+    if ("GET".equalsIgnoreCase(method) && MEETING_SURVEY_ANSWERS_MINE.matcher(path).matches()) {
+      return true;
+    }
+    if ("GET".equalsIgnoreCase(method) && MEETING_MENTEE_SURVEY_ANSWERS.matcher(path).matches()) {
+      return true;
+    }
+    if (MEETING_FEEDBACK.matcher(path).matches()
+        && ("POST".equalsIgnoreCase(method) || "GET".equalsIgnoreCase(method))) {
       return true;
     }
     return "GET".equalsIgnoreCase(method) && "/api/enrollments/mine".equals(path);

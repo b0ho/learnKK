@@ -12,6 +12,9 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
 
   int countByMeetingIdAndStatus(Long meetingId, EnrollmentStatus status);
 
+  boolean existsByMeetingIdAndMenteeIdAndStatus(
+      Long meetingId, Long menteeId, EnrollmentStatus status);
+
   Optional<Enrollment> findByMeetingIdAndMenteeId(Long meetingId, Long menteeId);
 
   List<Enrollment> findByMeetingIdAndStatus(Long meetingId, EnrollmentStatus status);

@@ -8,4 +8,7 @@ export const PATHS = {
   adminApproval: '/admin/meetings',
   myLearning: '/my-learning',
   profile: '/me',
+  surveyAnswer: (id: number | string) => `/meetings/${id}/survey-answer`,
+  feedback: (id: number | string) => `/meetings/${id}/feedback`,
+  feedbackView: (id: number | string) => `/meetings/${id}/feedback-view`,
 } as const;

@@ -116,7 +116,7 @@ class OpenApiContractTest {
   @Test
   void surveyQuestion_conformsToSchema() throws Exception {
     assertConforms(
-        "SurveyQuestionDto", new SurveyQuestionDto(1, "질문", "TEXT", List.of("a", "b"), true));
+        "SurveyQuestionDto", new SurveyQuestionDto(1L, 1, "질문", "TEXT", List.of("a", "b"), true));
   }
 
   @Test
@@ -149,6 +149,33 @@ class OpenApiContractTest {
     assertConforms(
         "ConfirmRecruitmentRequest",
         new com.learnkk.meeting.dto.ConfirmRecruitmentRequest(false, "정원 미달"));
+  }
+
+  @Test
+  void surveyAnswerRequest_conformsToSchema() throws Exception {
+    assertConforms(
+        "SurveyAnswerRequest",
+        new com.learnkk.survey.dto.SurveyAnswerRequest(
+            List.of(new com.learnkk.survey.dto.SurveyAnswerRequest.AnswerItem(100L, "답변"))));
+  }
+
+  @Test
+  void surveyAnswerResponse_conformsToSchema() throws Exception {
+    assertConforms(
+        "SurveyAnswerResponse", new com.learnkk.survey.dto.SurveyAnswerResponse(100L, "답변"));
+  }
+
+  @Test
+  void feedbackRequest_conformsToSchema() throws Exception {
+    assertConforms("FeedbackRequest", new com.learnkk.survey.dto.FeedbackRequest("좋았습니다"));
+  }
+
+  @Test
+  void feedbackResponse_conformsToSchema() throws Exception {
+    assertConforms(
+        "FeedbackResponse",
+        new com.learnkk.survey.dto.FeedbackResponse(
+            1L, 2L, "좋았습니다", java.time.OffsetDateTime.parse("2026-01-01T00:00Z")));
   }
 
   @Test

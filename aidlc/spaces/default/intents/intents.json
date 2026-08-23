@@ -26,5 +26,12 @@
     "dirName": "260823-bolt3-enrollment",
     "scope": "feature",
     "status": "complete"
+  },
+  {
+    "uuid": "01a02f3f-bc0b-70f5-a791-61f00e4b1273",
+    "slug": "bolt7-survey",
+    "dirName": "260823-bolt7-survey",
+    "scope": "feature",
+    "status": "complete"
   }
 ]

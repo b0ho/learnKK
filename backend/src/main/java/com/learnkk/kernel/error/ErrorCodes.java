@@ -42,4 +42,12 @@ public final class ErrorCodes {
   public static final String ENROLLMENT_DUPLICATE = "ENROLLMENT_DUPLICATE";
   public static final String ENROLLMENT_NOT_OPEN = "ENROLLMENT_NOT_OPEN";
   public static final String ENROLLMENT_CANCEL_FORBIDDEN = "ENROLLMENT_CANCEL_FORBIDDEN";
+
+  // --- Survey / feedback domain ---
+  public static final String PRESURVEY_NOT_OPEN = "PRESURVEY_NOT_OPEN";
+  public static final String PRESURVEY_REQUIRED_MISSING = "PRESURVEY_REQUIRED_MISSING";
+  public static final String PRESURVEY_FORBIDDEN = "PRESURVEY_FORBIDDEN";
+  public static final String PRESURVEY_NOT_FOUND = "PRESURVEY_NOT_FOUND";
+  public static final String FEEDBACK_FORBIDDEN = "FEEDBACK_FORBIDDEN";
+  public static final String FEEDBACK_NOT_OPEN = "FEEDBACK_NOT_OPEN";
 }

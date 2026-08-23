@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   enrollmentsApi,
   meetingsApi,
@@ -13,6 +14,7 @@ import { useAuth } from '@/auth/useAuth';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { PATHS } from '@/routes/paths';
 import { meetingStatusLabel, meetingStatusVariant } from '@/features/shared/meetingStatus';
 
 /**
@@ -162,6 +164,27 @@ function MenteeLearning() {
                         {cancellingId === enrollment.meetingId ? '취소 중...' : '신청 취소'}
                       </Button>
                     )}
+                    {enrollment.status === 'APPLIED' && meeting?.status === 'IN_PROGRESS' && (
+                      <div className="flex gap-2">
+                        <Button
+                          asChild
+                          size="sm"
+                          className="self-start"
+                          data-testid={`mentee-survey-answer-${enrollment.id}`}
+                        >
+                          <Link to={PATHS.surveyAnswer(enrollment.meetingId)}>사전설문 응답</Link>
+                        </Button>
+                        <Button
+                          asChild
+                          size="sm"
+                          variant="outline"
+                          className="self-start"
+                          data-testid={`mentee-feedback-${enrollment.id}`}
+                        >
+                          <Link to={PATHS.feedback(enrollment.meetingId)}>피드백</Link>
+                        </Button>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </li>
@@ -226,8 +249,8 @@ function MentorHub() {
     <div className="flex flex-col gap-4">
       <h2 className="text-xl font-bold">내 모임 (운영)</h2>
       <p className="text-sm text-muted-foreground" data-testid="mentor-hub-note">
-        내가 개설한 모임의 상태와 신청자 목록을 확인할 수 있습니다. 사전 설문 응답은 다음 단계에서
-        제공될 예정입니다.
+        내가 개설한 모임의 상태와 신청자 목록을 확인하고, 각 모임의 피드백과 사전설문 응답을 열람할 수
+        있습니다.
       </p>
 
       {loading && (
@@ -273,6 +296,16 @@ function MentorHub() {
                     <span>기간: {m.weeks}주</span>
                     <span>정원: {m.capacity}명</span>
                     <span data-testid={`mentor-meeting-next-${m.id}`}>{NEXT_ACTION[m.status]}</span>
+
+                    <Button
+                      asChild
+                      size="sm"
+                      variant="outline"
+                      className="self-start"
+                      data-testid={`mentor-feedback-view-${m.id}`}
+                    >
+                      <Link to={PATHS.feedbackView(m.id)}>피드백·사전설문 열람</Link>
+                    </Button>
 
                     <div className="flex flex-col gap-1">
                       <span data-testid={`applicant-count-${m.id}`}>

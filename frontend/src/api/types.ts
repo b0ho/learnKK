@@ -96,11 +96,39 @@ export interface MeetingSummary {
 }
 
 export interface SurveyQuestionDto {
+  /** Populated on read; the upsert/write path ignores it. */
+  id?: number | null;
   orderNo: number;
   text: string;
   type: string;
   options?: string[];
   required?: boolean;
+}
+
+/** A single pre-application survey answer (U8). */
+export interface SurveyAnswerItem {
+  questionId: number;
+  answerText?: string | null;
+}
+
+export interface SurveyAnswerRequest {
+  answers: SurveyAnswerItem[];
+}
+
+export interface SurveyAnswerResponse {
+  questionId: number;
+  answerText?: string | null;
+}
+
+export interface FeedbackRequest {
+  content: string;
+}
+
+export interface FeedbackResponse {
+  id: number;
+  menteeId: number;
+  content: string;
+  createdAt: string;
 }
 
 export interface RejectRequest {
