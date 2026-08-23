@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.util.regex.Pattern;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+import org.springframework.web.cors.CorsUtils;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 /**
@@ -33,6 +34,11 @@ public class SessionAuthInterceptor implements HandlerInterceptor {
   @Override
   public boolean preHandle(
       HttpServletRequest request, HttpServletResponse response, Object handler) {
+    // CORS preflight (OPTIONS) requests carry no credentials and must never be rejected here;
+    // otherwise the browser blocks the real request to protected routes (e.g. /api/users/**).
+    if (CorsUtils.isPreFlightRequest(request)) {
+      return true;
+    }
     String token = extractToken(request);
     boolean requiresAuth = isProtected(request.getMethod(), request.getRequestURI());
 

@@ -47,7 +47,7 @@ export function MeetingListPage() {
         )}
         {role === 'ADMIN' && (
           <Button asChild size="sm" variant="outline" data-testid="open-admin-queue">
-            <Link to={PATHS.adminApproval}>승인 큐</Link>
+            <Link to={PATHS.adminApproval}>개설 승인</Link>
           </Button>
         )}
       </div>

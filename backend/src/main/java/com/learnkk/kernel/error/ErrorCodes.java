@@ -11,6 +11,7 @@ public final class ErrorCodes {
   // --- Common / validation ---
   public static final String VALIDATION_FAILED = "VALIDATION_FAILED";
   public static final String INVALID_SORT_FIELD = "INVALID_SORT_FIELD";
+  public static final String INTERNAL_ERROR = "INTERNAL_ERROR";
 
   // --- Auth domain ---
   public static final String AUTH_UNAUTHENTICATED = "AUTH_UNAUTHENTICATED";

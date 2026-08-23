@@ -3,8 +3,10 @@ package com.learnkk.kernel.config;
 import com.learnkk.auth.web.SessionAuthInterceptor;
 import com.learnkk.kernel.security.AuthPrincipalArgumentResolver;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -14,8 +16,25 @@ public class WebConfig implements WebMvcConfigurer {
 
   private final SessionAuthInterceptor sessionAuthInterceptor;
 
+  /**
+   * Browser origins allowed to call the API (comma-separated). Auth uses a Bearer token, not
+   * cookies, so credentials are not required. Defaults to the local Vite dev server.
+   */
+  @Value("${learnkk.cors.allowed-origins:http://localhost:5173}")
+  private String[] allowedOrigins;
+
   public WebConfig(SessionAuthInterceptor sessionAuthInterceptor) {
     this.sessionAuthInterceptor = sessionAuthInterceptor;
+  }
+
+  @Override
+  public void addCorsMappings(CorsRegistry registry) {
+    registry
+        .addMapping("/api/**")
+        .allowedOrigins(allowedOrigins)
+        .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
+        .allowedHeaders("*")
+        .allowCredentials(false);
   }
 
   @Override
