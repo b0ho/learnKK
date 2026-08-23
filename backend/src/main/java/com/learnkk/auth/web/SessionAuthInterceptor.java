@@ -24,6 +24,12 @@ public class SessionAuthInterceptor implements HandlerInterceptor {
   private static final String BEARER_PREFIX = "Bearer ";
   private static final Pattern MEETING_QUESTIONS =
       Pattern.compile("^/api/meetings/\\d+/questions$");
+  private static final Pattern MEETING_ENROLLMENTS =
+      Pattern.compile("^/api/meetings/\\d+/enrollments$");
+  private static final Pattern MEETING_ENROLLMENTS_MINE =
+      Pattern.compile("^/api/meetings/\\d+/enrollments/mine$");
+  private static final Pattern MEETING_APPLICANTS =
+      Pattern.compile("^/api/meetings/\\d+/applicants$");
 
   private final AuthService authService;
 
@@ -77,6 +83,19 @@ public class SessionAuthInterceptor implements HandlerInterceptor {
     if ("POST".equalsIgnoreCase(method) && "/api/meetings".equals(path)) {
       return true;
     }
-    return "PUT".equalsIgnoreCase(method) && MEETING_QUESTIONS.matcher(path).matches();
+    if ("PUT".equalsIgnoreCase(method) && MEETING_QUESTIONS.matcher(path).matches()) {
+      return true;
+    }
+    // Enrollment routes (U4) are all authenticated — none are public.
+    if ("POST".equalsIgnoreCase(method) && MEETING_ENROLLMENTS.matcher(path).matches()) {
+      return true;
+    }
+    if ("DELETE".equalsIgnoreCase(method) && MEETING_ENROLLMENTS_MINE.matcher(path).matches()) {
+      return true;
+    }
+    if ("GET".equalsIgnoreCase(method) && MEETING_APPLICANTS.matcher(path).matches()) {
+      return true;
+    }
+    return "GET".equalsIgnoreCase(method) && "/api/enrollments/mine".equals(path);
   }
 }

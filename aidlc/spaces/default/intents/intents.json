@@ -19,5 +19,12 @@
     "dirName": "260823-bolt2-meeting",
     "scope": "feature",
     "status": "complete"
+  },
+  {
+    "uuid": "01a02e6a-6d0d-759e-9791-343241372d61",
+    "slug": "bolt3-enrollment",
+    "dirName": "260823-bolt3-enrollment",
+    "scope": "feature",
+    "status": "complete"
   }
 ]

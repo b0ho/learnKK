@@ -34,4 +34,12 @@ public final class ErrorCodes {
   public static final String MEETING_INVALID_TRANSITION = "MEETING_INVALID_TRANSITION";
   public static final String MEETING_QUESTIONS_LOCKED = "MEETING_QUESTIONS_LOCKED";
   public static final String MEETING_SESSIONS_NOT_ENDED = "MEETING_SESSIONS_NOT_ENDED";
+
+  // --- Enrollment domain ---
+  public static final String ENROLLMENT_NOT_FOUND = "ENROLLMENT_NOT_FOUND";
+  public static final String ENROLLMENT_FORBIDDEN = "ENROLLMENT_FORBIDDEN";
+  public static final String ENROLLMENT_FULL = "ENROLLMENT_FULL";
+  public static final String ENROLLMENT_DUPLICATE = "ENROLLMENT_DUPLICATE";
+  public static final String ENROLLMENT_NOT_OPEN = "ENROLLMENT_NOT_OPEN";
+  public static final String ENROLLMENT_CANCEL_FORBIDDEN = "ENROLLMENT_CANCEL_FORBIDDEN";
 }

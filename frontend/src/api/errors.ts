@@ -28,6 +28,13 @@ export const ERROR_CODE_MESSAGES: Record<string, string> = {
   MEETING_INVALID_TRANSITION: '현재 상태에서는 처리할 수 없습니다.',
   MEETING_QUESTIONS_LOCKED: '사전 설문은 더 이상 수정할 수 없습니다.',
   MEETING_SESSIONS_NOT_ENDED: '모든 세션이 종료되어야 완료할 수 있습니다.',
+  // Enrollment
+  ENROLLMENT_NOT_FOUND: '신청 내역을 찾을 수 없습니다.',
+  ENROLLMENT_FORBIDDEN: '권한이 없습니다.',
+  ENROLLMENT_FULL: '모집 정원이 마감되었습니다.',
+  ENROLLMENT_DUPLICATE: '이미 신청한 모임입니다.',
+  ENROLLMENT_NOT_OPEN: '모집 중인 모임이 아닙니다.',
+  ENROLLMENT_CANCEL_FORBIDDEN: '모임이 시작된 이후에는 신청을 취소할 수 없습니다.',
 };
 
 const GENERIC_MESSAGE = '요청을 처리하는 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.';

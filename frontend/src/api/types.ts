@@ -15,6 +15,9 @@ export type MeetingStatus =
 /** Survey question type discriminator used by the builder and backend. */
 export type SurveyQuestionType = 'SHORT_TEXT' | 'LONG_TEXT' | 'CHOICE';
 
+/** Enrollment lifecycle status (U4). */
+export type EnrollmentStatus = 'APPLIED' | 'CANCELLED';
+
 export interface ErrorPayload {
   code: string;
   message: string;
@@ -115,4 +118,18 @@ export interface PageResponse<T> {
   size: number;
   totalElements: number;
   totalPages: number;
+}
+
+export interface EnrollmentResponse {
+  id: number;
+  meetingId: number;
+  menteeId: number;
+  status: EnrollmentStatus;
+  appliedAt: string;
+}
+
+export interface ApplicantResponse {
+  menteeId: number;
+  nickname?: string | null;
+  appliedAt: string;
 }
