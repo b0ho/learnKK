@@ -193,3 +193,9 @@
 **Duration ms**: 234
 
 ---
+
+## Human Turn
+**Timestamp**: 2026-08-23T09:36:57Z
+**Event**: HUMAN_TURN
+
+---
