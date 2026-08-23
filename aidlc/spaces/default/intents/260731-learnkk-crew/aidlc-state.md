@@ -18,7 +18,7 @@
 - **Test Strategy**: Standard
 
 ## Workspace State
-- **Project Root**: /Users/b0ho/git/learnKK
+- **Project Root**: c:\Users\ybg48\git\learnKK
 - **Languages**: Unknown
 - **Frameworks**: Unknown
 - **Build System**: Unknown

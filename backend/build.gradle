@@ -1,0 +1,111 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.3.4'
+    id 'io.spring.dependency-management' version '1.1.6'
+    id 'com.diffplug.spotless' version '6.25.0'
+    id 'checkstyle'
+    id 'jacoco'
+}
+
+group = 'com.learnkk'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+ext {
+    testcontainersVersion = '1.20.2'
+    swaggerParserVersion = '2.1.22'
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    // Spring Security crypto only — we use PasswordEncoder (bcrypt); sessions are self-managed tokens.
+    implementation 'org.springframework.security:spring-security-crypto'
+    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.flywaydb:flyway-database-postgresql'
+    runtimeOnly 'org.postgresql:postgresql'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.testcontainers:postgresql'
+    // OpenAPI schema validation for the contract-test layer.
+    testImplementation "io.swagger.parser.v3:swagger-parser:${swaggerParserVersion}"
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.testcontainers:testcontainers-bom:${testcontainersVersion}"
+    }
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+    // Forward Docker / Testcontainers configuration to the forked test JVM so integration tests
+    // work against non-default Docker sockets (e.g. Rancher Desktop). No-op when the vars are unset.
+    ['DOCKER_HOST', 'DOCKER_TLS_VERIFY', 'DOCKER_CERT_PATH', 'TESTCONTAINERS_RYUK_DISABLED']
+        .each { key ->
+            def value = System.getenv(key)
+            if (value != null) {
+                environment key, value
+            }
+        }
+    def dockerApiVersion = System.getenv('DOCKER_API_VERSION')
+    if (dockerApiVersion != null) {
+        systemProperty 'api.version', dockerApiVersion
+    }
+    finalizedBy jacocoTestReport
+}
+
+jacoco {
+    toolVersion = '0.8.12'
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 0.80
+            }
+        }
+    }
+}
+
+check.dependsOn jacocoTestCoverageVerification
+
+spotless {
+    java {
+        googleJavaFormat('1.22.0')
+        target 'src/**/*.java'
+        removeUnusedImports()
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+}
+
+checkstyle {
+    toolVersion = '10.17.0'
+    configFile = file("${rootDir}/config/checkstyle/checkstyle.xml")
+    // Advisory in the walking skeleton: don't fail the build on style violations.
+    ignoreFailures = true
+    maxWarnings = Integer.MAX_VALUE
+}
