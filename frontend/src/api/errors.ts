@@ -35,6 +35,14 @@ export const ERROR_CODE_MESSAGES: Record<string, string> = {
   ENROLLMENT_DUPLICATE: '이미 신청한 모임입니다.',
   ENROLLMENT_NOT_OPEN: '모집 중인 모임이 아닙니다.',
   ENROLLMENT_CANCEL_FORBIDDEN: '모임이 시작된 이후에는 신청을 취소할 수 없습니다.',
+  // Content (U6)
+  POST_NOT_FOUND: '게시글을 찾을 수 없습니다.',
+  CONTENT_FORBIDDEN: '이 모임의 자료를 열람할 권한이 없습니다.',
+  CONTENT_VALIDATION: '입력값을 다시 확인해 주세요.',
+  ATTACHMENT_NOT_FOUND: '첨부 파일을 찾을 수 없습니다.',
+  ATTACHMENT_TYPE_NOT_ALLOWED: '허용되지 않는 파일 형식입니다.',
+  ATTACHMENT_TOO_LARGE: '첨부 파일은 20MB를 초과할 수 없습니다.',
+  ATTACHMENT_LIMIT: '게시글당 첨부 개수 상한을 초과했습니다.',
 };
 
 const GENERIC_MESSAGE = '요청을 처리하는 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.';

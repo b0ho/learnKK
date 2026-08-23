@@ -142,6 +142,20 @@ public class EnrollmentService {
         .toList();
   }
 
+  /**
+   * Read port for cross-unit participant authorization (U6 content). Returns whether {@code userId}
+   * holds an APPLIED enrollment for {@code meetingId} — i.e. is a participating mentee. Callers
+   * reach this via the {@link EnrollmentService} interface only (no direct table access); the U6→U4
+   * read edge is acyclic since U4 never reads U6.
+   */
+  @Transactional(readOnly = true)
+  public boolean isParticipant(Long meetingId, Long userId) {
+    return enrollmentRepository
+        .findByMeetingIdAndMenteeId(meetingId, userId)
+        .filter(e -> e.getStatus() == EnrollmentStatus.APPLIED)
+        .isPresent();
+  }
+
   private String resolveNickname(Long menteeId) {
     return userRepository.findById(menteeId).map(User::getNickname).orElse(null);
   }

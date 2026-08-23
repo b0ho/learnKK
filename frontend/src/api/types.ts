@@ -133,3 +133,43 @@ export interface ApplicantResponse {
   nickname?: string | null;
   appliedAt: string;
 }
+
+// --- Content (U6): week posts, attachments, notices ---
+
+export interface AttachmentResponse {
+  id: number;
+  postId: number;
+  fileName: string;
+  contentType: string;
+  sizeBytes: number;
+  uploaderId?: number | null;
+  createdAt: string;
+}
+
+export interface PostResponse {
+  id: number;
+  meetingId: number;
+  authorId: number;
+  week: number;
+  body: string;
+  attachments: AttachmentResponse[];
+  createdAt: string;
+  updatedAt?: string | null;
+}
+
+export interface PostCreateRequest {
+  week: number;
+  body: string;
+}
+
+export interface NoticeResponse {
+  id: number;
+  meetingId: number;
+  authorId: number;
+  body: string;
+  createdAt: string;
+}
+
+export interface NoticeCreateRequest {
+  body: string;
+}
