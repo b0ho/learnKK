@@ -15,6 +15,7 @@ import com.learnkk.kernel.error.NotFoundException;
 import com.learnkk.kernel.security.Principal;
 import com.learnkk.meeting.dto.MeetingResponse;
 import com.learnkk.meeting.service.MeetingService;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -140,6 +141,35 @@ public class EnrollmentService {
     return enrollmentRepository.findByMenteeIdOrderByAppliedAtDesc(principal.userId()).stream()
         .map(EnrollmentResponse::from)
         .toList();
+  }
+
+  // --- Cross-module reads (U7 messaging authorization; ADR-007 — no cross-table joins) ---
+
+  /** Whether the mentee holds an active (APPLIED) enrollment in any of the given meetings. */
+  @Transactional(readOnly = true)
+  public boolean isActivelyEnrolledInAnyOf(Collection<Long> meetingIds, Long menteeId) {
+    if (meetingIds.isEmpty()) {
+      return false;
+    }
+    return enrollmentRepository.existsByMeetingIdInAndMenteeIdAndStatus(
+        meetingIds, menteeId, EnrollmentStatus.APPLIED);
+  }
+
+  /** Meeting ids in which the mentee currently holds an active enrollment. */
+  @Transactional(readOnly = true)
+  public List<Long> activeMeetingIdsForMentee(Long menteeId) {
+    return enrollmentRepository.findMeetingIdsByMenteeIdAndStatus(
+        menteeId, EnrollmentStatus.APPLIED);
+  }
+
+  /** Distinct mentee ids actively enrolled in any of the given meetings. */
+  @Transactional(readOnly = true)
+  public List<Long> activeMenteeIdsForMeetings(Collection<Long> meetingIds) {
+    if (meetingIds.isEmpty()) {
+      return List.of();
+    }
+    return enrollmentRepository.findMenteeIdsByMeetingIdInAndStatus(
+        meetingIds, EnrollmentStatus.APPLIED);
   }
 
   private String resolveNickname(Long menteeId) {

@@ -35,6 +35,12 @@ export const ERROR_CODE_MESSAGES: Record<string, string> = {
   ENROLLMENT_DUPLICATE: '이미 신청한 모임입니다.',
   ENROLLMENT_NOT_OPEN: '모집 중인 모임이 아닙니다.',
   ENROLLMENT_CANCEL_FORBIDDEN: '모임이 시작된 이후에는 신청을 취소할 수 없습니다.',
+  // Messaging
+  MESSAGING_FORBIDDEN: '이 사용자에게 쪽지를 보낼 권한이 없습니다.',
+  MESSAGING_SELF: '자기 자신에게는 쪽지를 보낼 수 없습니다.',
+  MESSAGING_EMPTY_BODY: '쪽지 내용을 입력해 주세요.',
+  MESSAGING_RECIPIENT_NOT_FOUND: '받는 사람을 찾을 수 없습니다.',
+  MESSAGING_THREAD_NOT_FOUND: '대화를 찾을 수 없습니다.',
 };
 
 const GENERIC_MESSAGE = '요청을 처리하는 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.';

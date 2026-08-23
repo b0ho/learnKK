@@ -42,4 +42,11 @@ public final class ErrorCodes {
   public static final String ENROLLMENT_DUPLICATE = "ENROLLMENT_DUPLICATE";
   public static final String ENROLLMENT_NOT_OPEN = "ENROLLMENT_NOT_OPEN";
   public static final String ENROLLMENT_CANCEL_FORBIDDEN = "ENROLLMENT_CANCEL_FORBIDDEN";
+
+  // --- Messaging domain ---
+  public static final String MESSAGING_FORBIDDEN = "MESSAGING_FORBIDDEN";
+  public static final String MESSAGING_SELF = "MESSAGING_SELF";
+  public static final String MESSAGING_EMPTY_BODY = "MESSAGING_EMPTY_BODY";
+  public static final String MESSAGING_RECIPIENT_NOT_FOUND = "MESSAGING_RECIPIENT_NOT_FOUND";
+  public static final String MESSAGING_THREAD_NOT_FOUND = "MESSAGING_THREAD_NOT_FOUND";
 }

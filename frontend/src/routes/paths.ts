@@ -7,5 +7,7 @@ export const PATHS = {
   meetingDetail: (id: number | string) => `/meetings/${id}`,
   adminApproval: '/admin/meetings',
   myLearning: '/my-learning',
+  messages: '/messages',
+  messageThread: (id: number | string) => `/messages/${id}`,
   profile: '/me',
 } as const;

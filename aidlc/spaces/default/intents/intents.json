@@ -26,5 +26,12 @@
     "dirName": "260823-bolt3-enrollment",
     "scope": "feature",
     "status": "complete"
+  },
+  {
+    "uuid": "01a02f44-0f35-777d-843c-99a5d048b647",
+    "slug": "bolt5-messaging",
+    "dirName": "260823-bolt5-messaging",
+    "scope": "feature",
+    "status": "in-flight"
   }
 ]

@@ -3,7 +3,7 @@
 services:
   db:
     image: postgres:16
-    container_name: learnkk-postgres
+    container_name: ${DB_CONTAINER_NAME:-learnkk-postgres}
     environment:
       POSTGRES_DB: ${DB_NAME:-learnkk}
       POSTGRES_USER: ${DB_USERNAME:-learnkk}

@@ -12,6 +12,8 @@ import com.learnkk.meeting.dto.MeetingResponse;
 import com.learnkk.meeting.dto.MeetingSummary;
 import com.learnkk.meeting.entity.Meeting;
 import com.learnkk.meeting.repository.MeetingRepository;
+import java.util.Collection;
+import java.util.List;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,6 +54,27 @@ public class MeetingService {
   @Transactional(readOnly = true)
   public MeetingResponse getMeeting(Long id) {
     return MeetingResponse.from(loadMeeting(id));
+  }
+
+  /**
+   * Ids of every meeting owned by the given mentor. Cross-module read used by messaging (U7) to
+   * authorize a mentor messaging a mentee enrolled in one of the mentor's meetings (ADR-007).
+   */
+  @Transactional(readOnly = true)
+  public List<Long> meetingIdsOwnedBy(Long mentorId) {
+    return meetingRepository.findMeetingIdsByMentorId(mentorId);
+  }
+
+  /**
+   * Distinct owners (mentor ids) of the given meetings. Cross-module read used by messaging (U7) to
+   * authorize a mentee messaging the mentor of a meeting they applied to (ADR-007).
+   */
+  @Transactional(readOnly = true)
+  public List<Long> mentorIdsForMeetings(Collection<Long> meetingIds) {
+    if (meetingIds.isEmpty()) {
+      return List.of();
+    }
+    return meetingRepository.findMentorIdsByIdIn(meetingIds);
   }
 
   @Transactional(readOnly = true)

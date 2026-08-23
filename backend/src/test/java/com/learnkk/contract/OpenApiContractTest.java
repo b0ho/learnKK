@@ -152,6 +152,34 @@ class OpenApiContractTest {
   }
 
   @Test
+  void messageResponse_conformsToSchema() throws Exception {
+    assertConforms(
+        "MessageResponse",
+        new com.learnkk.messaging.dto.MessageResponse(
+            5L, 100L, 2L, "안녕", null, java.time.OffsetDateTime.parse("2026-01-01T00:00Z")));
+  }
+
+  @Test
+  void threadSummaryResponse_conformsToSchema() throws Exception {
+    assertConforms(
+        "ThreadSummaryResponse",
+        new com.learnkk.messaging.dto.ThreadSummaryResponse(
+            100L, 1L, "멘토", "안녕", java.time.OffsetDateTime.parse("2026-01-01T00:00Z"), 2));
+  }
+
+  @Test
+  void unreadCountResponse_conformsToSchema() throws Exception {
+    assertConforms("UnreadCountResponse", new com.learnkk.messaging.dto.UnreadCountResponse(3L));
+  }
+
+  @Test
+  void recipientResponse_conformsToSchema() throws Exception {
+    assertConforms(
+        "RecipientResponse",
+        new com.learnkk.messaging.dto.RecipientResponse(2L, "멘티", Role.MENTEE));
+  }
+
+  @Test
   void pageMeetingSummary_conformsToSchema() throws Exception {
     PageResponse<MeetingSummary> page =
         new PageResponse<>(
