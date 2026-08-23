@@ -118,4 +118,29 @@ class MeetingServiceTest {
     assertThat(page.content()).hasSize(1);
     assertThat(page.content().get(0).status()).isEqualTo(MeetingStatus.RECRUITING);
   }
+
+  @Test
+  void listMyMeetings_asMentor_returnsOwnMeetings() {
+    Meeting m1 = new Meeting(1L, "내 모임", null, 4, null, null, 5, null, null);
+    m1.setStatus(MeetingStatus.READY_TO_START);
+    Pageable pageable = PageRequest.of(0, 20);
+    when(meetingRepository.findByMentorId(1L, pageable))
+        .thenReturn(new PageImpl<>(List.of(m1), pageable, 1));
+
+    PageResponse<MeetingSummary> page = meetingService.listMyMeetings(mentor, pageable);
+
+    assertThat(page.totalElements()).isEqualTo(1);
+    assertThat(page.content().get(0).title()).isEqualTo("내 모임");
+    assertThat(page.content().get(0).status()).isEqualTo(MeetingStatus.READY_TO_START);
+  }
+
+  @Test
+  void listMyMeetings_nonMentor_forbidden403() {
+    Pageable pageable = PageRequest.of(0, 20);
+
+    assertThatThrownBy(() -> meetingService.listMyMeetings(mentee, pageable))
+        .isInstanceOf(ForbiddenException.class)
+        .extracting("code")
+        .isEqualTo(ErrorCodes.MEETING_FORBIDDEN);
+  }
 }

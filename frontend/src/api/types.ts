@@ -101,6 +101,11 @@ export interface SurveyQuestionDto {
 }
 
 export interface RejectRequest {
+  reason: string;
+}
+
+export interface ConfirmRecruitmentRequest {
+  proceed: boolean;
   reason?: string | null;
 }
 

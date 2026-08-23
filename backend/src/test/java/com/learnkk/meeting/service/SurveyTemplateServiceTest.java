@@ -83,6 +83,50 @@ class SurveyTemplateServiceTest {
   }
 
   @Test
+  void upsert_lockedAfterCompleted_conflict409() {
+    when(meetingRepository.findById(1L))
+        .thenReturn(Optional.of(meeting(1L, MeetingStatus.COMPLETED)));
+
+    assertThatThrownBy(
+            () ->
+                service.upsertQuestions(
+                    1L, 1L, List.of(new SurveyQuestionDto(1, "q", "TEXT", List.of(), true))))
+        .isInstanceOf(ConflictException.class)
+        .extracting("code")
+        .isEqualTo(ErrorCodes.MEETING_QUESTIONS_LOCKED);
+  }
+
+  @Test
+  void upsert_lockedAfterCancelled_conflict409() {
+    when(meetingRepository.findById(1L))
+        .thenReturn(Optional.of(meeting(1L, MeetingStatus.CANCELLED)));
+
+    assertThatThrownBy(
+            () ->
+                service.upsertQuestions(
+                    1L, 1L, List.of(new SurveyQuestionDto(1, "q", "TEXT", List.of(), true))))
+        .isInstanceOf(ConflictException.class)
+        .extracting("code")
+        .isEqualTo(ErrorCodes.MEETING_QUESTIONS_LOCKED);
+  }
+
+  @Test
+  void upsert_editableWhenReadyToStart_succeeds() {
+    // BR-U3-7: questions remain editable up to (but not including) IN_PROGRESS.
+    when(meetingRepository.findById(1L))
+        .thenReturn(Optional.of(meeting(1L, MeetingStatus.READY_TO_START)));
+    when(questionRepository.findByMeetingIdOrderByOrderNoAsc(1L))
+        .thenReturn(List.of(new SurveyQuestion(1L, 1, "질문", "TEXT", List.of(), true)));
+
+    List<SurveyQuestionDto> result =
+        service.upsertQuestions(
+            1L, 1L, List.of(new SurveyQuestionDto(1, "질문", "TEXT", List.of(), true)));
+
+    assertThat(result).hasSize(1);
+    verify(questionRepository).deleteByMeetingId(1L);
+  }
+
+  @Test
   void upsert_meetingMissing_notFound404() {
     when(meetingRepository.findById(99L)).thenReturn(Optional.empty());
 

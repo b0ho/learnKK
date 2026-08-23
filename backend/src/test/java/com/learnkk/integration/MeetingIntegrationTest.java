@@ -102,6 +102,105 @@ class MeetingIntegrationTest extends AbstractIntegrationTest {
         .andExpect(status().isForbidden());
   }
 
+  @Test
+  void fullLifecycle_createApproveConfirmStartComplete() throws Exception {
+    String mentorToken = signupAndLogin("mentorFull", "meng-f", "MENTOR");
+    String adminToken = createAdminAndLogin("adminFull", "adm-f");
+
+    long meetingId = createMeeting(mentorToken);
+
+    // ① approve creation: PENDING_APPROVAL -> RECRUITING.
+    adminAction(adminToken, meetingId, "approve", null)
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value("RECRUITING"));
+
+    // 모집확정 (T3): RECRUITING -> READY_TO_START.
+    adminAction(adminToken, meetingId, "confirm-recruitment", "{\"proceed\":true}")
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value("READY_TO_START"));
+
+    // ② start (T5): READY_TO_START -> IN_PROGRESS.
+    adminAction(adminToken, meetingId, "approve-start", null)
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value("IN_PROGRESS"));
+
+    // ③ complete (T6): IN_PROGRESS -> COMPLETED (session gate stub permits).
+    adminAction(adminToken, meetingId, "complete", null)
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value("COMPLETED"));
+
+    // Illegal transition: completing again from COMPLETED is a 409.
+    adminAction(adminToken, meetingId, "complete", null).andExpect(status().isConflict());
+  }
+
+  @Test
+  void illegalTransition_startBeforeConfirm_returns409() throws Exception {
+    String mentorToken = signupAndLogin("mentorIll", "meng-i", "MENTOR");
+    String adminToken = createAdminAndLogin("adminIll", "adm-i");
+    long meetingId = createMeeting(mentorToken);
+
+    adminAction(adminToken, meetingId, "approve", null).andExpect(status().isOk());
+    // RECRUITING -> IN_PROGRESS skips 모집확정; conditional UPDATE affects 0 rows -> 409.
+    adminAction(adminToken, meetingId, "approve-start", null).andExpect(status().isConflict());
+  }
+
+  @Test
+  void cancelRecruitment_persistsReason() throws Exception {
+    String mentorToken = signupAndLogin("mentorCan", "meng-c", "MENTOR");
+    String adminToken = createAdminAndLogin("adminCan", "adm-c");
+    long meetingId = createMeeting(mentorToken);
+
+    adminAction(adminToken, meetingId, "approve", null).andExpect(status().isOk());
+    adminAction(
+            adminToken,
+            meetingId,
+            "confirm-recruitment",
+            "{\"proceed\":false,\"reason\":\"정원 미달\"}")
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value("CANCELLED"))
+        .andExpect(jsonPath("$.rejectReason").value("정원 미달"));
+  }
+
+  @Test
+  void listMine_returnsOwnMeetings() throws Exception {
+    String mentorToken = signupAndLogin("mentorMine", "meng-m", "MENTOR");
+    createMeeting(mentorToken);
+
+    mockMvc
+        .perform(
+            MockMvcRequestBuilders.get("/api/meetings/mine")
+                .header("Authorization", "Bearer " + mentorToken))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.totalElements").value(1));
+  }
+
+  private long createMeeting(String mentorToken) throws Exception {
+    MvcResult created =
+        mockMvc
+            .perform(
+                MockMvcRequestBuilders.post("/api/meetings")
+                    .header("Authorization", "Bearer " + mentorToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        """
+                        {"title":"Spring 스터디","topic":"backend","weeks":8,"capacity":5,"format":"online"}
+                        """))
+            .andExpect(status().isCreated())
+            .andReturn();
+    return objectMapper.readTree(created.getResponse().getContentAsString()).get("id").asLong();
+  }
+
+  private org.springframework.test.web.servlet.ResultActions adminAction(
+      String adminToken, long meetingId, String action, String body) throws Exception {
+    var request =
+        MockMvcRequestBuilders.post("/api/admin/meetings/" + meetingId + "/" + action)
+            .header("Authorization", "Bearer " + adminToken);
+    if (body != null) {
+      request.contentType(MediaType.APPLICATION_JSON).content(body);
+    }
+    return mockMvc.perform(request);
+  }
+
   private String signupAndLogin(String nickname, String employeeNo, String role) throws Exception {
     mockMvc
         .perform(

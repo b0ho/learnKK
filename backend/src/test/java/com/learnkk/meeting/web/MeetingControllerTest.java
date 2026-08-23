@@ -138,4 +138,110 @@ class MeetingControllerTest {
   void approve_noToken_returns401() throws Exception {
     mockMvc.perform(post("/api/admin/meetings/10/approve")).andExpect(status().isUnauthorized());
   }
+
+  @Test
+  void confirmRecruitment_asAdmin_returns200() throws Exception {
+    when(authService.validateSession("a-tok")).thenReturn(new Principal(9L, Role.ADMIN));
+    when(approvalService.confirmRecruitment(
+            any(), any(), org.mockito.ArgumentMatchers.eq(true), any()))
+        .thenReturn(meeting(MeetingStatus.READY_TO_START));
+
+    mockMvc
+        .perform(
+            post("/api/admin/meetings/10/confirm-recruitment")
+                .header("Authorization", "Bearer a-tok")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {"proceed":true}
+                    """))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value("READY_TO_START"));
+  }
+
+  @Test
+  void confirmRecruitment_missingProceed_returns400() throws Exception {
+    when(authService.validateSession("a-tok")).thenReturn(new Principal(9L, Role.ADMIN));
+
+    mockMvc
+        .perform(
+            post("/api/admin/meetings/10/confirm-recruitment")
+                .header("Authorization", "Bearer a-tok")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {"reason":"x"}
+                    """))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.code").value(ErrorCodes.VALIDATION_FAILED));
+  }
+
+  @Test
+  void approveStart_asAdmin_returns200() throws Exception {
+    when(authService.validateSession("a-tok")).thenReturn(new Principal(9L, Role.ADMIN));
+    when(approvalService.approveStart(any(), any())).thenReturn(meeting(MeetingStatus.IN_PROGRESS));
+
+    mockMvc
+        .perform(
+            post("/api/admin/meetings/10/approve-start").header("Authorization", "Bearer a-tok"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value("IN_PROGRESS"));
+  }
+
+  @Test
+  void complete_asAdmin_returns200() throws Exception {
+    when(authService.validateSession("a-tok")).thenReturn(new Principal(9L, Role.ADMIN));
+    when(approvalService.completeMeeting(any(), any()))
+        .thenReturn(meeting(MeetingStatus.COMPLETED));
+
+    mockMvc
+        .perform(post("/api/admin/meetings/10/complete").header("Authorization", "Bearer a-tok"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value("COMPLETED"));
+  }
+
+  @Test
+  void complete_noToken_returns401() throws Exception {
+    mockMvc.perform(post("/api/admin/meetings/10/complete")).andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  void reject_missingReason_returns400() throws Exception {
+    when(authService.validateSession("a-tok")).thenReturn(new Principal(9L, Role.ADMIN));
+
+    mockMvc
+        .perform(
+            post("/api/admin/meetings/10/reject")
+                .header("Authorization", "Bearer a-tok")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {"reason":""}
+                    """))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.code").value(ErrorCodes.VALIDATION_FAILED));
+  }
+
+  @Test
+  void listMine_asMentor_returns200() throws Exception {
+    when(authService.validateSession("m-tok")).thenReturn(new Principal(1L, Role.MENTOR));
+    PageResponse<MeetingSummary> page =
+        new PageResponse<>(
+            List.of(new MeetingSummary(10L, "내 모임", "backend", 8, 5, MeetingStatus.READY_TO_START)),
+            0,
+            20,
+            1,
+            1);
+    when(meetingService.listMyMeetings(any(), any())).thenReturn(page);
+
+    mockMvc
+        .perform(get("/api/meetings/mine").header("Authorization", "Bearer m-tok"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content[0].status").value("READY_TO_START"));
+  }
+
+  @Test
+  void listMine_noToken_returns401() throws Exception {
+    mockMvc.perform(get("/api/meetings/mine")).andExpect(status().isUnauthorized());
+  }
 }

@@ -71,6 +71,9 @@ public class SessionAuthInterceptor implements HandlerInterceptor {
     if ("/api/auth/logout".equals(path)) {
       return true;
     }
+    if ("GET".equalsIgnoreCase(method) && "/api/meetings/mine".equals(path)) {
+      return true;
+    }
     if ("POST".equalsIgnoreCase(method) && "/api/meetings".equals(path)) {
       return true;
     }

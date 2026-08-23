@@ -62,11 +62,23 @@ public class MeetingController {
       @RequestParam(required = false) Integer size,
       @RequestParam(required = false) String sort) {
     if (!"recruiting".equalsIgnoreCase(status)) {
-      // Bolt 1 only exposes the recruiting listing.
+      // Only the public recruiting listing is exposed here; the full status-filtered queue is U9
+      // (Bolt 8). The mentor's own meetings are served by the dedicated /mine route.
       throw new ValidationException(ErrorCodes.VALIDATION_FAILED, "지원하지 않는 status 값입니다: " + status);
     }
     Pageable pageable = PageRequestFactory.of(page, size, sort, SORTABLE);
     return ResponseEntity.ok(meetingService.listRecruiting(pageable));
+  }
+
+  /** Mentor operations hub: the caller's own meetings across every status (US-2.3). */
+  @GetMapping("/mine")
+  public ResponseEntity<PageResponse<MeetingSummary>> listMine(
+      @AuthPrincipal Principal principal,
+      @RequestParam(required = false) Integer page,
+      @RequestParam(required = false) Integer size,
+      @RequestParam(required = false) String sort) {
+    Pageable pageable = PageRequestFactory.of(page, size, sort, SORTABLE);
+    return ResponseEntity.ok(meetingService.listMyMeetings(principal, pageable));
   }
 
   @PutMapping("/{id}/questions")

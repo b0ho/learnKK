@@ -125,6 +125,13 @@ class OpenApiContractTest {
   }
 
   @Test
+  void confirmRecruitmentRequest_conformsToSchema() throws Exception {
+    assertConforms(
+        "ConfirmRecruitmentRequest",
+        new com.learnkk.meeting.dto.ConfirmRecruitmentRequest(false, "정원 미달"));
+  }
+
+  @Test
   void pageMeetingSummary_conformsToSchema() throws Exception {
     PageResponse<MeetingSummary> page =
         new PageResponse<>(

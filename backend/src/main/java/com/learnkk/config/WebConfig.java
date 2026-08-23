@@ -1,4 +1,4 @@
-package com.learnkk.kernel.config;
+package com.learnkk.config;
 
 import com.learnkk.auth.web.SessionAuthInterceptor;
 import com.learnkk.kernel.security.AuthPrincipalArgumentResolver;
@@ -10,7 +10,14 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-/** Wires the session-auth interceptor and the {@code @AuthPrincipal} argument resolver. */
+/**
+ * Application-level web wiring: registers the session-auth interceptor and the
+ * {@code @AuthPrincipal} argument resolver.
+ *
+ * <p>Lives in the app-level {@code com.learnkk.config} package rather than {@code kernel.config}
+ * because it composes the {@code auth} and {@code kernel} modules; keeping it out of {@code kernel}
+ * preserves the C0 leaf invariant (kernel must not depend on {@code auth}) — see ADR-007.
+ */
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 

@@ -199,3 +199,16 @@
 **Event**: HUMAN_TURN
 
 ---
+
+## Session Start
+**Timestamp**: 2026-08-23T09:41:10Z
+**Event**: SESSION_STARTED
+**Source**: startup
+
+---
+
+## Human Turn
+**Timestamp**: 2026-08-23T09:41:10Z
+**Event**: HUMAN_TURN
+
+---

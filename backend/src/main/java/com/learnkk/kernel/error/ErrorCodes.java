@@ -33,4 +33,5 @@ public final class ErrorCodes {
   public static final String MEETING_VALIDATION = "MEETING_VALIDATION";
   public static final String MEETING_INVALID_TRANSITION = "MEETING_INVALID_TRANSITION";
   public static final String MEETING_QUESTIONS_LOCKED = "MEETING_QUESTIONS_LOCKED";
+  public static final String MEETING_SESSIONS_NOT_ENDED = "MEETING_SESSIONS_NOT_ENDED";
 }

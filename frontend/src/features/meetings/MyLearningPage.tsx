@@ -1,19 +1,17 @@
-import { useState, type FormEvent } from 'react';
-import { meetingsApi, resolveErrorMessage, type MeetingResponse } from '@/api';
+import { useEffect, useState } from 'react';
+import { meetingsApi, resolveErrorMessage, type MeetingSummary } from '@/api';
 import { useAuth } from '@/auth/useAuth';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { meetingStatusLabel, meetingStatusVariant } from '@/features/shared/meetingStatus';
+import type { MeetingStatus } from '@/api';
 
 /**
- * "내 러닝" tab. Role-adaptive minimal slice for Bolt 1:
- *  - MENTOR: lookup-by-id operation hub. The backend exposes no listMyMeetings
- *    endpoint yet, so mentors track a meeting by id (placeholder for the future
- *    "my meetings" listing).
- *  - MENTEE: application area is not implemented in Bolt 1 (guidance only).
+ * "내 러닝" tab. Role-adaptive slice:
+ *  - MENTOR: operations hub listing the mentor's own meetings (listMyMeetings) with status and a
+ *    next-action hint. Applicant list (U4/Bolt 3) and pre-survey answers (U8/Bolt 7) composition
+ *    is deferred — see the placeholder note below.
+ *  - MENTEE: application area is not implemented yet (U4/Bolt 3) — guidance only.
  */
 export function MyLearningPage() {
   const { role } = useAuth();
@@ -37,81 +35,96 @@ export function MyLearningPage() {
   );
 }
 
-function MentorHub() {
-  const [idInput, setIdInput] = useState('');
-  const [meeting, setMeeting] = useState<MeetingResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+/** Mentor-facing next-action guidance keyed by the meeting's current status. */
+const NEXT_ACTION: Record<MeetingStatus, string> = {
+  PENDING_APPROVAL: '관리자 개설 승인을 기다리고 있습니다.',
+  RECRUITING: '모집 중입니다. 관리자의 모집 확정을 기다립니다.',
+  READY_TO_START: '모집이 확정되었습니다. 관리자의 시작 승인을 기다립니다.',
+  IN_PROGRESS: '진행 중입니다. 모든 세션 종료 후 완료 처리됩니다.',
+  COMPLETED: '완료된 모임입니다.',
+  REJECTED: '개설이 반려되었습니다.',
+  CANCELLED: '모집이 취소되었습니다.',
+};
 
-  async function handleLookup(event: FormEvent) {
-    event.preventDefault();
-    setError(null);
-    setMeeting(null);
-    const id = Number(idInput);
-    if (!idInput.trim() || Number.isNaN(id) || id <= 0) {
-      setError('유효한 모임 ID를 입력해 주세요.');
-      return;
-    }
+function MentorHub() {
+  const [meetings, setMeetings] = useState<MeetingSummary[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
     setLoading(true);
-    try {
-      setMeeting(await meetingsApi.get(id));
-    } catch (err) {
-      setError(resolveErrorMessage(err));
-    } finally {
-      setLoading(false);
-    }
-  }
+    setError(null);
+    meetingsApi
+      .listMine({ size: 50 })
+      .then((page) => {
+        if (active) setMeetings(page.content);
+      })
+      .catch((err) => {
+        if (active) setError(resolveErrorMessage(err));
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   return (
     <div className="flex flex-col gap-4">
       <h2 className="text-xl font-bold">내 모임 (운영)</h2>
       <p className="text-sm text-muted-foreground" data-testid="mentor-hub-note">
-        내 모임 목록 조회는 다음 단계에서 제공됩니다. 지금은 개설한 모임 ID로 상태를 확인할 수 있습니다.
+        내가 개설한 모임의 상태와 다음 단계를 확인할 수 있습니다. 신청자 목록·사전 설문 응답은 다음
+        단계에서 제공될 예정입니다.
       </p>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">모임 상태 확인</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form className="flex items-end gap-2" onSubmit={handleLookup} noValidate>
-            <div className="flex flex-1 flex-col gap-1.5">
-              <Label htmlFor="mentor-meeting-id">모임 ID</Label>
-              <Input
-                id="mentor-meeting-id"
-                data-testid="mentor-meeting-id"
-                type="number"
-                min={1}
-                value={idInput}
-                onChange={(e) => setIdInput(e.target.value)}
-              />
-            </div>
-            <Button type="submit" data-testid="mentor-lookup" disabled={loading}>
-              {loading ? '조회 중...' : '조회'}
-            </Button>
-          </form>
-          {error && (
-            <p role="alert" className="mt-2 text-sm text-destructive" data-testid="mentor-lookup-error">
-              {error}
-            </p>
-          )}
-        </CardContent>
-      </Card>
+      {loading && (
+        <p className="text-sm text-muted-foreground" data-testid="mentor-hub-loading">
+          불러오는 중...
+        </p>
+      )}
 
-      {meeting && (
-        <Card data-testid="mentor-meeting-detail">
-          <CardHeader className="flex-row items-start justify-between gap-2 space-y-0">
-            <CardTitle className="text-base">{meeting.title}</CardTitle>
-            <Badge variant={meetingStatusVariant(meeting.status)}>
-              {meetingStatusLabel(meeting.status)}
-            </Badge>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-1 text-sm text-muted-foreground">
-            {meeting.topic && <span>주제: {meeting.topic}</span>}
-            <span>기간: {meeting.weeks}주</span>
-            <span>정원: {meeting.capacity}명</span>
+      {error && (
+        <p role="alert" className="text-sm text-destructive" data-testid="mentor-hub-error">
+          {error}
+        </p>
+      )}
+
+      {!loading && !error && meetings.length === 0 && (
+        <Card>
+          <CardContent className="pt-4">
+            <p className="text-sm text-muted-foreground" data-testid="mentor-hub-empty">
+              아직 개설한 모임이 없습니다. &lsquo;모임 개설&rsquo;에서 새 모임을 만들어 보세요.
+            </p>
           </CardContent>
         </Card>
+      )}
+
+      {!loading && !error && meetings.length > 0 && (
+        <ul className="flex flex-col gap-3" data-testid="mentor-meeting-list">
+          {meetings.map((m) => (
+            <li key={m.id}>
+              <Card data-testid={`mentor-meeting-${m.id}`}>
+                <CardHeader className="flex-row items-start justify-between gap-2 space-y-0">
+                  <CardTitle className="text-base">{m.title}</CardTitle>
+                  <Badge
+                    variant={meetingStatusVariant(m.status)}
+                    data-testid={`mentor-meeting-status-${m.id}`}
+                  >
+                    {meetingStatusLabel(m.status)}
+                  </Badge>
+                </CardHeader>
+                <CardContent className="flex flex-col gap-1 text-sm text-muted-foreground">
+                  {m.topic && <span>주제: {m.topic}</span>}
+                  <span>기간: {m.weeks}주</span>
+                  <span>정원: {m.capacity}명</span>
+                  <span data-testid={`mentor-meeting-next-${m.id}`}>{NEXT_ACTION[m.status]}</span>
+                </CardContent>
+              </Card>
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   );

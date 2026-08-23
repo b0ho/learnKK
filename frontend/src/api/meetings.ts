@@ -7,7 +7,7 @@ import type {
   SurveyQuestionDto,
 } from './types';
 
-interface ListRecruitingParams {
+interface ListParams {
   page?: number;
   size?: number;
   sort?: string;
@@ -22,10 +22,17 @@ export const meetingsApi = {
     return request<MeetingResponse>(`/api/meetings/${id}`, { auth: false });
   },
 
-  listRecruiting(params: ListRecruitingParams = {}): Promise<PageResponse<MeetingSummary>> {
+  listRecruiting(params: ListParams = {}): Promise<PageResponse<MeetingSummary>> {
     return request<PageResponse<MeetingSummary>>('/api/meetings', {
       auth: false,
       query: { status: 'recruiting', page: params.page, size: params.size, sort: params.sort },
+    });
+  },
+
+  /** Mentor operations hub: the current mentor's own meetings across every status. */
+  listMine(params: ListParams = {}): Promise<PageResponse<MeetingSummary>> {
+    return request<PageResponse<MeetingSummary>>('/api/meetings/mine', {
+      query: { page: params.page, size: params.size, sort: params.sort },
     });
   },
 

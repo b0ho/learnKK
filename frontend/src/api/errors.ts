@@ -27,6 +27,7 @@ export const ERROR_CODE_MESSAGES: Record<string, string> = {
   MEETING_VALIDATION: '모임 정보를 다시 확인해 주세요.',
   MEETING_INVALID_TRANSITION: '현재 상태에서는 처리할 수 없습니다.',
   MEETING_QUESTIONS_LOCKED: '사전 설문은 더 이상 수정할 수 없습니다.',
+  MEETING_SESSIONS_NOT_ENDED: '모든 세션이 종료되어야 완료할 수 있습니다.',
 };
 
 const GENERIC_MESSAGE = '요청을 처리하는 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.';

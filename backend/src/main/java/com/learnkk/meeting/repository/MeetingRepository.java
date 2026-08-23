@@ -13,6 +13,8 @@ public interface MeetingRepository extends JpaRepository<Meeting, Long> {
 
   Page<Meeting> findByStatus(MeetingStatus status, Pageable pageable);
 
+  Page<Meeting> findByMentorId(Long mentorId, Pageable pageable);
+
   /**
    * Conditional transition. Updates status only when the meeting is still in the {@code from}
    * state; returns the number of rows affected (0 means the transition was illegal / lost a race).
