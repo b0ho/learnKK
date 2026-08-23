@@ -13,7 +13,6 @@ dist-ssr
 *.local
 
 # Editor directories and files
-.vscode/*
 !.vscode/extensions.json
 .idea
 .DS_Store
@@ -76,3 +75,10 @@ backend/bin/
 
 # --- Gradle wrapper: keep the jar committed (needed to bootstrap), ignore local dists ---
 .gradle/
+
+# --- Frontend (Vite / Vitest) ---
+frontend/coverage/
+coverage/
+
+# --- Playwright MCP (local browser snapshots/screenshots) ---
+.playwright-mcp/
