@@ -44,6 +44,35 @@ class SessionAuthInterceptorTest {
   }
 
   @Test
+  void preHandle_rejectsEnrollmentApply_withoutToken() {
+    MockHttpServletRequest request =
+        new MockHttpServletRequest("POST", "/api/meetings/5/enrollments");
+
+    assertThatThrownBy(
+            () -> interceptor.preHandle(request, new MockHttpServletResponse(), new Object()))
+        .isInstanceOf(UnauthorizedException.class);
+  }
+
+  @Test
+  void preHandle_rejectsMyEnrollments_withoutToken() {
+    MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/enrollments/mine");
+
+    assertThatThrownBy(
+            () -> interceptor.preHandle(request, new MockHttpServletResponse(), new Object()))
+        .isInstanceOf(UnauthorizedException.class);
+  }
+
+  @Test
+  void preHandle_rejectsApplicantList_withoutToken() {
+    MockHttpServletRequest request =
+        new MockHttpServletRequest("GET", "/api/meetings/5/applicants");
+
+    assertThatThrownBy(
+            () -> interceptor.preHandle(request, new MockHttpServletResponse(), new Object()))
+        .isInstanceOf(UnauthorizedException.class);
+  }
+
+  @Test
   void preHandle_bindsPrincipal_whenBearerTokenValid() {
     MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/users/me/profile");
     request.addHeader(HttpHeaders.AUTHORIZATION, "Bearer good-token");

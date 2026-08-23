@@ -12,4 +12,8 @@ public record Principal(Long userId, Role role) {
   public boolean isMentor() {
     return role == Role.MENTOR;
   }
+
+  public boolean isMentee() {
+    return role == Role.MENTEE;
+  }
 }

@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MeetingListPage } from './MeetingListPage';
 import type { MeetingSummary, PageResponse } from '@/api';
 import { errorResponse, jsonResponse, renderWithProviders } from '@/test/test-utils';
@@ -43,5 +44,72 @@ describe('MeetingListPage', () => {
     renderWithProviders(<MeetingListPage />, { auth: { token: 't', role: 'MENTOR' } });
     expect(await screen.findByTestId('open-create-meeting')).toBeInTheDocument();
     expect(screen.queryByTestId('open-admin-queue')).not.toBeInTheDocument();
+  });
+
+  it('shows the apply button only for mentees on recruiting cards', async () => {
+    const meetings: MeetingSummary[] = [
+      { id: 1, title: 'React 스터디', topic: 'FE', weeks: 4, capacity: 6, status: 'RECRUITING' },
+    ];
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse(page(meetings))));
+
+    renderWithProviders(<MeetingListPage />, { auth: { token: 't', role: 'MENTEE' } });
+
+    expect(await screen.findByTestId('apply-button-1')).toBeInTheDocument();
+  });
+
+  it('does not show the apply button for mentors', async () => {
+    const meetings: MeetingSummary[] = [
+      { id: 1, title: 'React 스터디', topic: 'FE', weeks: 4, capacity: 6, status: 'RECRUITING' },
+    ];
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse(page(meetings))));
+
+    renderWithProviders(<MeetingListPage />, { auth: { token: 't', role: 'MENTOR' } });
+
+    await screen.findByTestId('meeting-card-1');
+    expect(screen.queryByTestId('apply-button-1')).not.toBeInTheDocument();
+  });
+
+  it('applies successfully and marks the card as applied', async () => {
+    const meetings: MeetingSummary[] = [
+      { id: 1, title: 'React 스터디', topic: 'FE', weeks: 4, capacity: 6, status: 'RECRUITING' },
+    ];
+    const fetchMock = vi.fn((url: string, init?: RequestInit) => {
+      if (String(url).includes('/enrollments') && init?.method === 'POST') {
+        return Promise.resolve(
+          jsonResponse(
+            { id: 9, meetingId: 1, menteeId: 2, status: 'APPLIED', appliedAt: '2026-01-01T00:00:00Z' },
+            201,
+          ),
+        );
+      }
+      return Promise.resolve(jsonResponse(page(meetings)));
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderWithProviders(<MeetingListPage />, { auth: { token: 't', role: 'MENTEE' } });
+
+    await userEvent.click(await screen.findByTestId('apply-button-1'));
+
+    expect(await screen.findByTestId('apply-feedback-1')).toHaveTextContent('신청이 완료');
+    expect(screen.getByTestId('apply-button-1')).toBeDisabled();
+  });
+
+  it('maps a 409 ENROLLMENT_FULL to a Korean error message', async () => {
+    const meetings: MeetingSummary[] = [
+      { id: 1, title: 'React 스터디', topic: 'FE', weeks: 4, capacity: 6, status: 'RECRUITING' },
+    ];
+    const fetchMock = vi.fn((url: string, init?: RequestInit) => {
+      if (String(url).includes('/enrollments') && init?.method === 'POST') {
+        return Promise.resolve(errorResponse(409, 'ENROLLMENT_FULL', '모집 정원이 마감되었습니다.'));
+      }
+      return Promise.resolve(jsonResponse(page(meetings)));
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderWithProviders(<MeetingListPage />, { auth: { token: 't', role: 'MENTEE' } });
+
+    await userEvent.click(await screen.findByTestId('apply-button-1'));
+
+    expect(await screen.findByTestId('apply-feedback-1')).toHaveTextContent('마감');
   });
 });

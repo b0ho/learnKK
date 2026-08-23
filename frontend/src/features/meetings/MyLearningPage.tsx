@@ -1,17 +1,26 @@
-import { useEffect, useState } from 'react';
-import { meetingsApi, resolveErrorMessage, type MeetingSummary } from '@/api';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  enrollmentsApi,
+  meetingsApi,
+  resolveErrorMessage,
+  type ApplicantResponse,
+  type EnrollmentResponse,
+  type MeetingResponse,
+  type MeetingStatus,
+  type MeetingSummary,
+} from '@/api';
 import { useAuth } from '@/auth/useAuth';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { meetingStatusLabel, meetingStatusVariant } from '@/features/shared/meetingStatus';
-import type { MeetingStatus } from '@/api';
 
 /**
  * "내 러닝" tab. Role-adaptive slice:
- *  - MENTOR: operations hub listing the mentor's own meetings (listMyMeetings) with status and a
- *    next-action hint. Applicant list (U4/Bolt 3) and pre-survey answers (U8/Bolt 7) composition
- *    is deferred — see the placeholder note below.
- *  - MENTEE: application area is not implemented yet (U4/Bolt 3) — guidance only.
+ *  - MENTOR: operations hub listing the mentor's own meetings with status, next-action hint and the
+ *    live applicant list/count per meeting (U4). Pre-survey answers (U8/Bolt 7) stay deferred.
+ *  - MENTEE: the mentee's own enrollments (compose meeting info per enrollment), with a cancel
+ *    action before start ②. Session schedule (U5/Bolt 6) stays a placeholder.
  */
 export function MyLearningPage() {
   const { role } = useAuth();
@@ -20,17 +29,146 @@ export function MyLearningPage() {
     return <MentorHub />;
   }
 
+  return <MenteeLearning />;
+}
+
+/** Meeting states in which a mentee may still cancel (server re-validates — BR-U4-3). */
+const CANCELLABLE: MeetingStatus[] = ['RECRUITING', 'READY_TO_START'];
+
+interface MenteeEntry {
+  enrollment: EnrollmentResponse;
+  meeting: MeetingResponse | null;
+}
+
+function MenteeLearning() {
+  const [entries, setEntries] = useState<MenteeEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [cancellingId, setCancellingId] = useState<number | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const enrollments = await enrollmentsApi.listMine();
+      const composed = await Promise.all(
+        enrollments.map(async (enrollment) => {
+          try {
+            const meeting = await meetingsApi.get(enrollment.meetingId);
+            return { enrollment, meeting };
+          } catch {
+            // A missing/deleted meeting should not break the whole list.
+            return { enrollment, meeting: null };
+          }
+        }),
+      );
+      setEntries(composed);
+    } catch (err) {
+      setError(resolveErrorMessage(err));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  async function handleCancel(meetingId: number) {
+    setCancellingId(meetingId);
+    setActionError(null);
+    try {
+      await enrollmentsApi.cancel(meetingId);
+      await load();
+    } catch (err) {
+      setActionError(resolveErrorMessage(err));
+    } finally {
+      setCancellingId(null);
+    }
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <h2 className="text-xl font-bold">내 러닝</h2>
-      <Card>
-        <CardContent className="pt-4">
-          <p className="text-sm text-muted-foreground" data-testid="my-learning-placeholder">
-            모임 신청/참여 기능은 다음 단계에서 제공될 예정입니다. 지금은 &lsquo;모임&rsquo; 탭에서
-            모집중인 모임을 둘러볼 수 있습니다.
-          </p>
-        </CardContent>
-      </Card>
+      <p className="text-sm text-muted-foreground" data-testid="mentee-session-note">
+        신청한 모임의 세션 일정은 다음 단계에서 제공될 예정입니다.
+      </p>
+
+      {loading && (
+        <p className="text-sm text-muted-foreground" data-testid="mentee-learning-loading">
+          불러오는 중...
+        </p>
+      )}
+
+      {error && (
+        <p role="alert" className="text-sm text-destructive" data-testid="mentee-learning-error">
+          {error}
+        </p>
+      )}
+
+      {actionError && (
+        <p role="alert" className="text-sm text-destructive" data-testid="mentee-cancel-error">
+          {actionError}
+        </p>
+      )}
+
+      {!loading && !error && entries.length === 0 && (
+        <Card>
+          <CardContent className="pt-4">
+            <p className="text-sm text-muted-foreground" data-testid="mentee-learning-empty">
+              아직 신청한 모임이 없습니다. &lsquo;모임&rsquo; 탭에서 모집중인 모임에 신청해 보세요.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {!loading && !error && entries.length > 0 && (
+        <ul className="flex flex-col gap-3" data-testid="mentee-enrollment-list">
+          {entries.map(({ enrollment, meeting }) => {
+            const title = meeting?.title ?? `모임 #${enrollment.meetingId}`;
+            const canCancel =
+              enrollment.status === 'APPLIED' &&
+              meeting != null &&
+              CANCELLABLE.includes(meeting.status);
+            return (
+              <li key={enrollment.id}>
+                <Card data-testid={`mentee-enrollment-${enrollment.id}`}>
+                  <CardHeader className="flex-row items-start justify-between gap-2 space-y-0">
+                    <CardTitle className="text-base">{title}</CardTitle>
+                    {meeting && (
+                      <Badge
+                        variant={meetingStatusVariant(meeting.status)}
+                        data-testid={`mentee-enrollment-meeting-status-${enrollment.id}`}
+                      >
+                        {meetingStatusLabel(meeting.status)}
+                      </Badge>
+                    )}
+                  </CardHeader>
+                  <CardContent className="flex flex-col gap-2 text-sm text-muted-foreground">
+                    <span data-testid={`mentee-enrollment-status-${enrollment.id}`}>
+                      신청 상태: {enrollment.status === 'APPLIED' ? '신청됨' : '취소됨'}
+                    </span>
+                    <span>신청일: {new Date(enrollment.appliedAt).toLocaleDateString('ko-KR')}</span>
+                    {canCancel && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="self-start"
+                        disabled={cancellingId === enrollment.meetingId}
+                        onClick={() => handleCancel(enrollment.meetingId)}
+                        data-testid={`mentee-cancel-${enrollment.id}`}
+                      >
+                        {cancellingId === enrollment.meetingId ? '취소 중...' : '신청 취소'}
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </div>
   );
 }
@@ -48,6 +186,7 @@ const NEXT_ACTION: Record<MeetingStatus, string> = {
 
 function MentorHub() {
   const [meetings, setMeetings] = useState<MeetingSummary[]>([]);
+  const [applicants, setApplicants] = useState<Record<number, ApplicantResponse[]>>({});
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -57,8 +196,20 @@ function MentorHub() {
     setError(null);
     meetingsApi
       .listMine({ size: 50 })
-      .then((page) => {
-        if (active) setMeetings(page.content);
+      .then(async (page) => {
+        if (!active) return;
+        setMeetings(page.content);
+        // Compose the applicant list/count per meeting (U4 read).
+        const pairs = await Promise.all(
+          page.content.map(async (m) => {
+            try {
+              return [m.id, await enrollmentsApi.listApplicants(m.id)] as const;
+            } catch {
+              return [m.id, [] as ApplicantResponse[]] as const;
+            }
+          }),
+        );
+        if (active) setApplicants(Object.fromEntries(pairs));
       })
       .catch((err) => {
         if (active) setError(resolveErrorMessage(err));
@@ -75,8 +226,8 @@ function MentorHub() {
     <div className="flex flex-col gap-4">
       <h2 className="text-xl font-bold">내 모임 (운영)</h2>
       <p className="text-sm text-muted-foreground" data-testid="mentor-hub-note">
-        내가 개설한 모임의 상태와 다음 단계를 확인할 수 있습니다. 신청자 목록·사전 설문 응답은 다음
-        단계에서 제공될 예정입니다.
+        내가 개설한 모임의 상태와 신청자 목록을 확인할 수 있습니다. 사전 설문 응답은 다음 단계에서
+        제공될 예정입니다.
       </p>
 
       {loading && (
@@ -103,27 +254,48 @@ function MentorHub() {
 
       {!loading && !error && meetings.length > 0 && (
         <ul className="flex flex-col gap-3" data-testid="mentor-meeting-list">
-          {meetings.map((m) => (
-            <li key={m.id}>
-              <Card data-testid={`mentor-meeting-${m.id}`}>
-                <CardHeader className="flex-row items-start justify-between gap-2 space-y-0">
-                  <CardTitle className="text-base">{m.title}</CardTitle>
-                  <Badge
-                    variant={meetingStatusVariant(m.status)}
-                    data-testid={`mentor-meeting-status-${m.id}`}
-                  >
-                    {meetingStatusLabel(m.status)}
-                  </Badge>
-                </CardHeader>
-                <CardContent className="flex flex-col gap-1 text-sm text-muted-foreground">
-                  {m.topic && <span>주제: {m.topic}</span>}
-                  <span>기간: {m.weeks}주</span>
-                  <span>정원: {m.capacity}명</span>
-                  <span data-testid={`mentor-meeting-next-${m.id}`}>{NEXT_ACTION[m.status]}</span>
-                </CardContent>
-              </Card>
-            </li>
-          ))}
+          {meetings.map((m) => {
+            const list = applicants[m.id] ?? [];
+            return (
+              <li key={m.id}>
+                <Card data-testid={`mentor-meeting-${m.id}`}>
+                  <CardHeader className="flex-row items-start justify-between gap-2 space-y-0">
+                    <CardTitle className="text-base">{m.title}</CardTitle>
+                    <Badge
+                      variant={meetingStatusVariant(m.status)}
+                      data-testid={`mentor-meeting-status-${m.id}`}
+                    >
+                      {meetingStatusLabel(m.status)}
+                    </Badge>
+                  </CardHeader>
+                  <CardContent className="flex flex-col gap-2 text-sm text-muted-foreground">
+                    {m.topic && <span>주제: {m.topic}</span>}
+                    <span>기간: {m.weeks}주</span>
+                    <span>정원: {m.capacity}명</span>
+                    <span data-testid={`mentor-meeting-next-${m.id}`}>{NEXT_ACTION[m.status]}</span>
+
+                    <div className="flex flex-col gap-1">
+                      <span data-testid={`applicant-count-${m.id}`}>
+                        신청자: {list.length}명 / 정원 {m.capacity}명
+                      </span>
+                      {list.length > 0 && (
+                        <ul
+                          className="flex flex-col gap-0.5 pl-3"
+                          data-testid={`applicant-list-${m.id}`}
+                        >
+                          {list.map((a) => (
+                            <li key={a.menteeId} data-testid={`applicant-${m.id}-${a.menteeId}`}>
+                              {a.nickname ?? `멘티 #${a.menteeId}`}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

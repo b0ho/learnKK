@@ -125,6 +125,26 @@ class OpenApiContractTest {
   }
 
   @Test
+  void enrollmentResponse_conformsToSchema() throws Exception {
+    assertConforms(
+        "EnrollmentResponse",
+        new com.learnkk.enrollment.dto.EnrollmentResponse(
+            1L,
+            10L,
+            2L,
+            com.learnkk.enrollment.domain.EnrollmentStatus.APPLIED,
+            java.time.OffsetDateTime.parse("2026-01-01T00:00Z")));
+  }
+
+  @Test
+  void applicantResponse_conformsToSchema() throws Exception {
+    assertConforms(
+        "ApplicantResponse",
+        new com.learnkk.enrollment.dto.ApplicantResponse(
+            2L, "멘티", java.time.OffsetDateTime.parse("2026-01-01T00:00Z")));
+  }
+
+  @Test
   void confirmRecruitmentRequest_conformsToSchema() throws Exception {
     assertConforms(
         "ConfirmRecruitmentRequest",

@@ -1,12 +1,12 @@
 openapi: 3.0.3
 info:
   title: learnKK (런크크) API
-  version: 0.2.0-bolt2
+  version: 0.3.0-bolt3
   description: >
-    Bolt 2 contract. Completes the meeting state machine on top of Bolt 1: recruitment
-    confirmation (T3/T4), start (T5) and completion (T6) admin transitions, plus the mentor
-    operations hub listing (/api/meetings/mine). Errors use a uniform ErrorPayload body. Enum
-    values are stored as varchar + CHECK in the DB (contract #3).
+    Bolt 3 contract. Adds first-come-first-served enrollment (U4) on top of Bolt 2: mentee apply
+    (capacity/duplicate control), cancel, the owning-mentor/admin applicant listing, and the
+    mentee's own enrollment listing. Errors use a uniform ErrorPayload body. Enum values are stored
+    as varchar + CHECK in the DB (contract #3).
 servers:
   - url: http://localhost:8080
     description: Local development
@@ -15,6 +15,7 @@ tags:
   - name: auth
   - name: users
   - name: meetings
+  - name: enrollments
   - name: admin
 
 paths:
@@ -278,6 +279,97 @@ paths:
         '409':
           $ref: '#/components/responses/Conflict'
 
+  /api/meetings/{id}/enrollments:
+    post:
+      tags: [enrollments]
+      summary: Apply to a meeting (mentee only, first-come-first-served)
+      description: >
+        MENTEE-only. The meeting must be RECRUITING (else 409 ENROLLMENT_NOT_OPEN). Capacity is
+        enforced race-free (409 ENROLLMENT_FULL when full); a duplicate application yields 409
+        ENROLLMENT_DUPLICATE.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/MeetingId'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnrollmentResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /api/meetings/{id}/enrollments/mine:
+    delete:
+      tags: [enrollments]
+      summary: Cancel the caller's own enrollment
+      description: >
+        Allowed only before start ② (meeting in RECRUITING or READY_TO_START); otherwise 409
+        ENROLLMENT_CANCEL_FORBIDDEN. The freed seat returns to capacity.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/MeetingId'
+      responses:
+        '204':
+          description: No Content
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /api/meetings/{id}/applicants:
+    get:
+      tags: [enrollments]
+      summary: List a meeting's applicants (owning mentor or admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/MeetingId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ApplicantResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/enrollments/mine:
+    get:
+      tags: [enrollments]
+      summary: List the caller's own enrollments
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EnrollmentResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
   /api/admin/meetings/{id}/approve:
     post:
       tags: [admin]
@@ -485,6 +577,43 @@ components:
         - COMPLETED
         - REJECTED
         - CANCELLED
+
+    EnrollmentStatus:
+      type: string
+      enum: [APPLIED, CANCELLED]
+
+    EnrollmentResponse:
+      type: object
+      required: [id, meetingId, menteeId, status, appliedAt]
+      properties:
+        id:
+          type: integer
+          format: int64
+        meetingId:
+          type: integer
+          format: int64
+        menteeId:
+          type: integer
+          format: int64
+        status:
+          $ref: '#/components/schemas/EnrollmentStatus'
+        appliedAt:
+          type: string
+          format: date-time
+
+    ApplicantResponse:
+      type: object
+      required: [menteeId, appliedAt]
+      properties:
+        menteeId:
+          type: integer
+          format: int64
+        nickname:
+          type: string
+          nullable: true
+        appliedAt:
+          type: string
+          format: date-time
 
     ErrorPayload:
       type: object
