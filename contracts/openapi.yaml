@@ -1,11 +1,12 @@
 openapi: 3.0.3
 info:
   title: learnKK (런크크) API
-  version: 0.1.0-bolt1
+  version: 0.2.0-bolt2
   description: >
-    Bolt 1 walking skeleton contract. Covers auth, current-user profile, meetings, and admin
-    approval. Errors use a uniform ErrorPayload body. Enum values are stored as varchar + CHECK
-    in the DB (contract #3).
+    Bolt 2 contract. Completes the meeting state machine on top of Bolt 1: recruitment
+    confirmation (T3/T4), start (T5) and completion (T6) admin transitions, plus the mentor
+    operations hub listing (/api/meetings/mine). Errors use a uniform ErrorPayload body. Enum
+    values are stored as varchar + CHECK in the DB (contract #3).
 servers:
   - url: http://localhost:8080
     description: Local development
@@ -175,6 +176,44 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
+  /api/meetings/mine:
+    get:
+      tags: [meetings]
+      summary: List the current mentor's own meetings (any status)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+        - name: sort
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageMeetingSummary'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
   /api/meetings/{id}:
     get:
       tags: [meetings]
@@ -272,11 +311,101 @@ paths:
       parameters:
         - $ref: '#/components/parameters/MeetingId'
       requestBody:
-        required: false
+        required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/RejectRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeetingResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /api/admin/meetings/{id}/confirm-recruitment:
+    post:
+      tags: [admin]
+      summary: Confirm recruitment (T3) or cancel it (T4) — admin only
+      description: >
+        RECRUITING -> READY_TO_START when proceed is true, or RECRUITING -> CANCELLED when proceed
+        is false (reason required). An illegal source state yields 409 MEETING_INVALID_TRANSITION.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/MeetingId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfirmRecruitmentRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeetingResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /api/admin/meetings/{id}/approve-start:
+    post:
+      tags: [admin]
+      summary: Start the meeting (T5, admin only)
+      description: READY_TO_START -> IN_PROGRESS. Illegal source state yields 409.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/MeetingId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeetingResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /api/admin/meetings/{id}/complete:
+    post:
+      tags: [admin]
+      summary: Complete the meeting (T6, admin only)
+      description: >
+        IN_PROGRESS -> COMPLETED. Gated on session completion; if any scheduled session has not
+        ended the transition yields 409 MEETING_SESSIONS_NOT_ENDED. An illegal source state yields
+        409 MEETING_INVALID_TRANSITION.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/MeetingId'
       responses:
         '200':
           description: OK
@@ -553,10 +682,23 @@ components:
 
     RejectRequest:
       type: object
+      required: [reason]
       properties:
         reason:
           type: string
+          description: Rejection / cancellation reason (mandatory since Bolt 2)
+
+    ConfirmRecruitmentRequest:
+      type: object
+      required: [proceed]
+      properties:
+        proceed:
+          type: boolean
+          description: true advances to READY_TO_START (T3); false cancels to CANCELLED (T4)
+        reason:
+          type: string
           nullable: true
+          description: Cancellation reason, required when proceed is false
 
     PageMeetingSummary:
       type: object

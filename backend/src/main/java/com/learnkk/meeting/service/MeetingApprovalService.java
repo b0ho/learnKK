@@ -5,6 +5,7 @@ import com.learnkk.kernel.error.ConflictException;
 import com.learnkk.kernel.error.ErrorCodes;
 import com.learnkk.kernel.error.ForbiddenException;
 import com.learnkk.kernel.error.NotFoundException;
+import com.learnkk.kernel.error.ValidationException;
 import com.learnkk.kernel.security.Principal;
 import com.learnkk.meeting.dto.MeetingResponse;
 import com.learnkk.meeting.entity.Meeting;
@@ -13,16 +14,31 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Admin-only meeting lifecycle transitions. Bolt 1 implements only the creation gate: T1 approve
- * (PENDING_APPROVAL -&gt; RECRUITING) and T2 reject (PENDING_APPROVAL -&gt; REJECTED).
+ * Admin-only meeting lifecycle transitions (ADR-006 state machine owner). Bolt 2 completes the
+ * lifecycle on top of the Bolt 1 creation gate:
+ *
+ * <ul>
+ *   <li>T1 {@link #approveCreation} — PENDING_APPROVAL -&gt; RECRUITING
+ *   <li>T2 {@link #rejectCreation} — PENDING_APPROVAL -&gt; REJECTED
+ *   <li>T3/T4 {@link #confirmRecruitment} — RECRUITING -&gt; READY_TO_START | CANCELLED
+ *   <li>T5 {@link #approveStart} — READY_TO_START -&gt; IN_PROGRESS
+ *   <li>T6 {@link #completeMeeting} — IN_PROGRESS -&gt; COMPLETED (gated on session completion)
+ * </ul>
+ *
+ * <p>Every transition reuses the conditional-UPDATE primitive {@code transitionStatus}; a 0-row
+ * result means the meeting was not in the expected {@code from} state (illegal transition or a lost
+ * race) and always maps to 409 {@code MEETING_INVALID_TRANSITION}.
  */
 @Service
 public class MeetingApprovalService {
 
   private final MeetingRepository meetingRepository;
+  private final SessionCompletionGate sessionCompletionGate;
 
-  public MeetingApprovalService(MeetingRepository meetingRepository) {
+  public MeetingApprovalService(
+      MeetingRepository meetingRepository, SessionCompletionGate sessionCompletionGate) {
     this.meetingRepository = meetingRepository;
+    this.sessionCompletionGate = sessionCompletionGate;
   }
 
   /**
@@ -57,7 +73,73 @@ public class MeetingApprovalService {
     return MeetingResponse.from(reload(meetingId));
   }
 
-  // Bolt 2+: T3-T6 (confirmRecruitment / approveStart / completeMeeting) — not implemented.
+  /**
+   * T3/T4: confirm recruitment. When {@code proceed} is true the meeting advances RECRUITING -&gt;
+   * READY_TO_START (T3); when false it is cancelled RECRUITING -&gt; CANCELLED (T4) and the
+   * mandatory {@code reason} is persisted (reusing the reject_reason column). The proceed/cancel
+   * decision is the admin's input alone — applicant counts are a screen aid only (U4 backend read
+   * is not built in Bolt 2).
+   */
+  @Transactional
+  public MeetingResponse confirmRecruitment(
+      Principal principal, Long meetingId, boolean proceed, String reason) {
+    requireAdmin(principal);
+    ensureExists(meetingId);
+    MeetingStatus target = proceed ? MeetingStatus.READY_TO_START : MeetingStatus.CANCELLED;
+    String rejectReason = null;
+    if (!proceed) {
+      if (reason == null || reason.isBlank()) {
+        throw new ValidationException(ErrorCodes.MEETING_VALIDATION, "취소 사유는 필수입니다.");
+      }
+      rejectReason = reason;
+    }
+    int updated =
+        meetingRepository.transitionStatus(
+            meetingId, MeetingStatus.RECRUITING, target, rejectReason);
+    if (updated == 0) {
+      throw new ConflictException(
+          ErrorCodes.MEETING_INVALID_TRANSITION, "모집 확정을 할 수 없는 상태입니다. 이미 처리되었을 수 있습니다.");
+    }
+    return MeetingResponse.from(reload(meetingId));
+  }
+
+  /** T5: approve start. READY_TO_START -&gt; IN_PROGRESS. */
+  @Transactional
+  public MeetingResponse approveStart(Principal principal, Long meetingId) {
+    requireAdmin(principal);
+    ensureExists(meetingId);
+    int updated =
+        meetingRepository.transitionStatus(
+            meetingId, MeetingStatus.READY_TO_START, MeetingStatus.IN_PROGRESS, null);
+    if (updated == 0) {
+      throw new ConflictException(
+          ErrorCodes.MEETING_INVALID_TRANSITION, "시작할 수 없는 상태입니다. 이미 처리되었을 수 있습니다.");
+    }
+    return MeetingResponse.from(reload(meetingId));
+  }
+
+  /**
+   * T6: complete the meeting. IN_PROGRESS -&gt; COMPLETED, gated on {@link SessionCompletionGate}:
+   * if any scheduled session has not ended the transition is blocked with 409 {@code
+   * MEETING_SESSIONS_NOT_ENDED} (Bolt 2 stub always permits; Bolt 6/U5 supplies the real read).
+   */
+  @Transactional
+  public MeetingResponse completeMeeting(Principal principal, Long meetingId) {
+    requireAdmin(principal);
+    ensureExists(meetingId);
+    if (!sessionCompletionGate.allScheduledSessionsEnded(meetingId)) {
+      throw new ConflictException(
+          ErrorCodes.MEETING_SESSIONS_NOT_ENDED, "모든 세션이 종료되어야 완료할 수 있습니다.");
+    }
+    int updated =
+        meetingRepository.transitionStatus(
+            meetingId, MeetingStatus.IN_PROGRESS, MeetingStatus.COMPLETED, null);
+    if (updated == 0) {
+      throw new ConflictException(
+          ErrorCodes.MEETING_INVALID_TRANSITION, "완료할 수 없는 상태입니다. 이미 처리되었을 수 있습니다.");
+    }
+    return MeetingResponse.from(reload(meetingId));
+  }
 
   private void requireAdmin(Principal principal) {
     if (!principal.isAdmin()) {

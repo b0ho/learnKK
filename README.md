@@ -1,15 +1,18 @@
 # learnKK (런크크)
 
-사내 멘토링 러닝 플랫폼. 이 저장소는 **Bolt 1 Walking Skeleton**으로, 다음 흐름을 end-to-end로 관통합니다:
+사내 멘토링 러닝 플랫폼. 이 저장소는 **Bolt 2 (Meeting 완성)** 까지 반영되어 있습니다. Bolt 1 Walking Skeleton 위에 모임 상태머신을 완결합니다:
 
-> 사번 가입 → 로그인 → (멘토) 모임 개설 → (관리자) ① 개설 승인 → 모집중(RECRUITING) 목록 노출
+> 개설(PENDING_APPROVAL) → ① 승인(RECRUITING) → 모집확정(READY_TO_START | CANCELLED) → ② 시작(IN_PROGRESS) → ③ 완료(COMPLETED) · 반려/취소
+
+불법 전이는 항상 409 `MEETING_INVALID_TRANSITION`(또는 완료 게이트의 `MEETING_SESSIONS_NOT_ENDED`)로 거부됩니다.
 
 ## 구조 (Monorepo)
 
 | 경로 | 내용 |
 | --- | --- |
 | `/backend` | Spring Boot 3.x · Java 21 · Gradle. 3계층(Controller→Service→Repository), 패키지 루트 `com.learnkk` (모듈: `kernel`, `auth`, `meeting`) |
-| `/contracts` | `openapi.yaml` — Bolt 1 API 계약(#1) |
+| `/contracts` | `openapi.yaml` — API 계약(#1), Bolt 2 = `0.2.0-bolt2` |
+| `/frontend` | React · TypeScript · Vite · shadcn/ui. 단일 API 클라이언트(`src/api/client.ts`), Vitest + RTL |
 | `docker-compose.yml` | 로컬 PostgreSQL 16 |
 | `.env.example` | 로컬 환경변수/시크릿 예시 (`.env`는 커밋 금지) |
 
@@ -70,7 +73,7 @@ TESTCONTAINERS_RYUK_DISABLED=true \
 - OpenAPI 스펙: [`contracts/openapi.yaml`](contracts/openapi.yaml)
 - 응답 스키마 계약 테스트: `backend/src/test/java/com/learnkk/contract/OpenApiContractTest.java` — 응답 DTO 직렬화 결과가 스펙과 일치하는지 검증합니다.
 
-### Bolt 1 엔드포인트 요약
+### 엔드포인트 요약
 
 | 메서드 | 경로 | 인증 | 설명 |
 | --- | --- | --- | --- |
@@ -82,17 +85,33 @@ TESTCONTAINERS_RYUK_DISABLED=true \
 | POST | `/api/meetings` | Bearer (MENTOR) | 모임 개설 (PENDING_APPROVAL) |
 | GET | `/api/meetings/{id}` | - | 모임 상세 |
 | GET | `/api/meetings?status=recruiting` | - | 모집중 목록 |
+| GET | `/api/meetings/mine` | Bearer (MENTOR) | 내 모임 목록 (운영 허브, Bolt 2) |
 | PUT | `/api/meetings/{id}/questions` | Bearer (소유 MENTOR) | 사전설문 문항 교체 |
 | GET | `/api/meetings/{id}/questions` | - | 사전설문 문항 조회 |
 | POST | `/api/admin/meetings/{id}/approve` | Bearer (ADMIN) | ① 개설 승인 (T1) |
-| POST | `/api/admin/meetings/{id}/reject` | Bearer (ADMIN) | 반려 (T2) |
+| POST | `/api/admin/meetings/{id}/reject` | Bearer (ADMIN) | 반려 (T2, 사유 필수) |
+| POST | `/api/admin/meetings/{id}/confirm-recruitment` | Bearer (ADMIN) | 모집확정 진행/취소 (T3/T4) |
+| POST | `/api/admin/meetings/{id}/approve-start` | Bearer (ADMIN) | ② 시작 승인 (T5) |
+| POST | `/api/admin/meetings/{id}/complete` | Bearer (ADMIN) | ③ 완료 (T6, 세션 종료 게이트) |
 
 에러 응답 본문은 `ErrorPayload{code, message, details}` 형태이며, 상태코드는 400(검증)/401(인증)/403(인가)/404(미존재)/409(상태충돌·중복)로 매핑됩니다.
 
-## Bolt 1 범위 / 제외
+## Bolt 2 범위 / 제외
 
-- **포함**: U1 Shared Kernel(도메인 enum·에러 규약·인증 경계·페이지네이션), U2 Auth(가입/로그인/세션/프로필), U3 Meeting 최소 슬라이스(개설·조회·모집중 목록·사전설문·상태전이 T1 승인/T2 반려).
-- **제외 (Bolt 2+ 이월)**: 모집 확정, ② 시작 승인(T3~T6), ③ 완료, 신청/세션·출석/자료/쪽지/설문 응답/모니터링, 프론트엔드, CI/CD·배포. `MeetingApprovalService`에 `// Bolt 2+: T3-T6` 자리표시 주석이 있습니다.
+- **포함 (Bolt 2)**: U3 Meeting 상태머신 완결 — 모집확정(T3)/모집취소(T4)/시작 승인(T5)/완료(T6), 반려·취소 사유 필수화, 문항 빌더 게이팅(②시작 이후 잠금, BR-U3-7), 멘토 운영 허브(`listMyMeetings` + FE 목록·상태·다음 액션), 관리자 상태 인지 액션 FE.
+- **이월 (Bolt 3+)**: 신청(U4/Bolt 3), 세션·출석(U5/Bolt 6), 설문 응답(U8/Bolt 7), 관리자 승인 큐 목록 조회(U9/Bolt 8), 자료/쪽지/모니터링, CI/CD·배포.
+- **Forward seam**: 완료(T6)의 "모든 세션 종료" 판정은 `meeting/service/SessionCompletionGate` 인터페이스 뒤로 분리되어 있으며, Bolt 2 스텁(`NoSessionsCompletionGate`)은 통과(true)를 반환합니다. Bolt 6(U5)가 실제 세션 read 구현으로 교체합니다.
+
+## 프론트엔드 (`/frontend`)
+
+```bash
+cd frontend
+npm install
+npm run dev            # Vite 개발 서버 (기본 VITE_API_BASE=http://localhost:8080)
+npm run build          # tsc + vite build (타입 에러 0)
+npm run test -- --run  # Vitest + RTL
+npm run lint           # ESLint
+```
 
 ## 주요 규약
 

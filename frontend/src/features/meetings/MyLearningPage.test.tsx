@@ -1,11 +1,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { MyLearningPage } from './MyLearningPage';
-import type { MeetingResponse } from '@/api';
-import { jsonResponse, renderWithProviders } from '@/test/test-utils';
+import type { MeetingSummary, PageResponse } from '@/api';
+import { errorResponse, jsonResponse, renderWithProviders } from '@/test/test-utils';
 
 afterEach(() => vi.unstubAllGlobals());
+
+function page(content: MeetingSummary[]): PageResponse<MeetingSummary> {
+  return { content, page: 0, size: 50, totalElements: content.length, totalPages: 1 };
+}
 
 describe('MyLearningPage', () => {
   it('shows the mentee placeholder for mentees', () => {
@@ -14,30 +17,37 @@ describe('MyLearningPage', () => {
     expect(screen.getByTestId('my-learning-placeholder')).toBeInTheDocument();
   });
 
-  it('renders the mentor hub and looks up a meeting by id', async () => {
-    const meeting: MeetingResponse = {
-      id: 3,
-      mentorId: 1,
-      title: '내 모임',
-      topic: null,
-      weeks: 4,
-      recruitStart: null,
-      recruitEnd: null,
-      capacity: 6,
-      format: null,
-      initialContent: null,
-      status: 'PENDING_APPROVAL',
-      rejectReason: null,
-    };
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse(meeting)));
-    const user = userEvent.setup();
+  it('lists the mentor own meetings with status and next action', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        jsonResponse(
+          page([
+            { id: 3, title: '내 모임', topic: null, weeks: 4, capacity: 6, status: 'RECRUITING' },
+          ]),
+        ),
+      ),
+    );
 
     renderWithProviders(<MyLearningPage />, { auth: { token: 't', role: 'MENTOR' } });
-    expect(screen.getByTestId('mentor-hub-note')).toBeInTheDocument();
 
-    await user.type(screen.getByTestId('mentor-meeting-id'), '3');
-    await user.click(screen.getByTestId('mentor-lookup'));
+    expect(await screen.findByTestId('mentor-meeting-3')).toHaveTextContent('내 모임');
+    expect(screen.getByTestId('mentor-meeting-status-3')).toHaveTextContent('모집중');
+    expect(screen.getByTestId('mentor-meeting-next-3')).toHaveTextContent('모집 확정');
+  });
 
-    expect(await screen.findByTestId('mentor-meeting-detail')).toHaveTextContent('내 모임');
+  it('shows the empty state when the mentor has no meetings', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse(page([]))));
+    renderWithProviders(<MyLearningPage />, { auth: { token: 't', role: 'MENTOR' } });
+    expect(await screen.findByTestId('mentor-hub-empty')).toBeInTheDocument();
+  });
+
+  it('shows an error state when the listing fails', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(errorResponse(403, 'MEETING_FORBIDDEN', '권한이 없습니다.')),
+    );
+    renderWithProviders(<MyLearningPage />, { auth: { token: 't', role: 'MENTOR' } });
+    expect(await screen.findByTestId('mentor-hub-error')).toHaveTextContent('권한이 없습니다.');
   });
 });

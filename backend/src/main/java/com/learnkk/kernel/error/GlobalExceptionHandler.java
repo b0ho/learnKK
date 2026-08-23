@@ -17,9 +17,9 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 
 /**
  * Translates domain exceptions and Bean Validation failures into the uniform {@link ErrorPayload}
- * body with the correct HTTP status (400/401/403/404/409). Any other unexpected exception is
- * mapped to a uniform 500 body so the {@code {code,message,details}} contract (NFR8) holds for
- * every non-2xx response.
+ * body with the correct HTTP status (400/401/403/404/409). Any other unexpected exception is mapped
+ * to a uniform 500 body so the {@code {code,message,details}} contract (NFR8) holds for every
+ * non-2xx response.
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -61,8 +61,8 @@ public class GlobalExceptionHandler {
   }
 
   /**
-   * Catch-all for unexpected exceptions. Logs the cause server-side and returns the uniform
-   * {@link ErrorPayload} without leaking internal details to the client.
+   * Catch-all for unexpected exceptions. Logs the cause server-side and returns the uniform {@link
+   * ErrorPayload} without leaking internal details to the client.
    */
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ErrorPayload> handleUnexpected(Exception ex) {

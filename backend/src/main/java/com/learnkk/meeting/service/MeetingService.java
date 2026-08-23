@@ -62,6 +62,19 @@ public class MeetingService {
             .map(MeetingSummary::from));
   }
 
+  /**
+   * Mentor operations hub: lists the caller's own meetings (any status) so the mentor can see each
+   * meeting's status and next action. Only mentors may call this (BR-U3-6, US-2.3).
+   */
+  @Transactional(readOnly = true)
+  public PageResponse<MeetingSummary> listMyMeetings(Principal principal, Pageable pageable) {
+    if (!principal.isMentor()) {
+      throw new ForbiddenException(ErrorCodes.MEETING_FORBIDDEN, "멘토만 자신의 모임 목록을 조회할 수 있습니다.");
+    }
+    return PageResponse.from(
+        meetingRepository.findByMentorId(principal.userId(), pageable).map(MeetingSummary::from));
+  }
+
   Meeting loadMeeting(Long id) {
     return meetingRepository
         .findById(id)

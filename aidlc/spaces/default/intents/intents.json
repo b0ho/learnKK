@@ -12,5 +12,12 @@
     "dirName": "260817-bolt1-skeleton",
     "scope": "feature",
     "status": "complete"
+  },
+  {
+    "uuid": "01a02e00-eaca-7fbc-bcf0-3801badd3aaf",
+    "slug": "bolt2-meeting",
+    "dirName": "260823-bolt2-meeting",
+    "scope": "feature",
+    "status": "complete"
   }
 ]
