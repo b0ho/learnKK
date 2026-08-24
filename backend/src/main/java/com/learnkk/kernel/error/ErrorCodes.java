@@ -51,4 +51,11 @@ public final class ErrorCodes {
   public static final String ATTACHMENT_TYPE_NOT_ALLOWED = "ATTACHMENT_TYPE_NOT_ALLOWED";
   public static final String ATTACHMENT_TOO_LARGE = "ATTACHMENT_TOO_LARGE";
   public static final String ATTACHMENT_LIMIT = "ATTACHMENT_LIMIT";
+
+  // --- Messaging domain ---
+  public static final String MESSAGING_FORBIDDEN = "MESSAGING_FORBIDDEN";
+  public static final String MESSAGING_SELF = "MESSAGING_SELF";
+  public static final String MESSAGING_EMPTY_BODY = "MESSAGING_EMPTY_BODY";
+  public static final String MESSAGING_RECIPIENT_NOT_FOUND = "MESSAGING_RECIPIENT_NOT_FOUND";
+  public static final String MESSAGING_THREAD_NOT_FOUND = "MESSAGING_THREAD_NOT_FOUND";
 }

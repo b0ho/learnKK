@@ -173,3 +173,38 @@ export interface NoticeResponse {
 export interface NoticeCreateRequest {
   body: string;
 }
+
+// --- Messaging (U7) ---
+
+export interface SendMessageRequest {
+  recipientId: number;
+  body: string;
+}
+
+export interface MessageResponse {
+  id: number;
+  threadId: number;
+  senderId: number;
+  body: string;
+  readAt?: string | null;
+  createdAt: string;
+}
+
+export interface ThreadSummaryResponse {
+  threadId: number;
+  partnerId: number;
+  partnerNickname?: string | null;
+  lastMessageBody?: string | null;
+  lastMessageAt?: string | null;
+  unreadCount: number;
+}
+
+export interface UnreadCountResponse {
+  count: number;
+}
+
+export interface RecipientResponse {
+  userId: number;
+  nickname: string;
+  role: Role;
+}

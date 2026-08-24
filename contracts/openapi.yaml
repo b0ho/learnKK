@@ -1,13 +1,16 @@
 openapi: 3.0.3
 info:
   title: learnKK (런크크) API
-  version: 0.4.0-bolt4
+  version: 0.5.0-bolt5
   description: >
-    Bolt 4 contract. Adds content (U6) on top of Bolt 3: week posts (body required, attachments
-    0..n), attachment upload/download as PostgreSQL bytea BLOBs (format whitelist + 20MB cap), and
-    notices. Reading is restricted to participants (owning mentor, APPLIED mentee, admin — else 403
-    CONTENT_FORBIDDEN); writing is restricted to the owning mentor. Errors use a uniform ErrorPayload
-    body. Enum values are stored as varchar + CHECK in the DB (contract #3).
+    Integrated contract (Bolt 3 + Bolt 4 + Bolt 5). Content (U6): week posts (body required,
+    attachments 0..n), attachment upload/download as PostgreSQL bytea BLOBs (format whitelist + 20MB
+    cap), and notices — reading restricted to participants (owning mentor, APPLIED mentee, admin —
+    else 403 CONTENT_FORBIDDEN), writing restricted to the owning mentor. Direct messaging (U7): 1:1
+    threads, send, thread transcript (with idempotent read-receipt), polling unread count and the
+    permitted-recipient picker; the messaging boundary (ADMIN↔everyone, MENTOR↔own active mentees,
+    MENTEE↔applied mentors) is enforced server-side as 403 MESSAGING_FORBIDDEN. Errors use a uniform
+    ErrorPayload body. Enum values are stored as varchar + CHECK in the DB (contract #3).
 servers:
   - url: http://localhost:8080
     description: Local development
@@ -18,6 +21,7 @@ tags:
   - name: meetings
   - name: enrollments
   - name: content
+  - name: messaging
   - name: admin
 
 paths:
@@ -713,6 +717,131 @@ paths:
         '409':
           $ref: '#/components/responses/Conflict'
 
+  /api/messages:
+    post:
+      tags: [messaging]
+      summary: Send a direct message
+      description: >
+        Sends a message to another user. Empty body or self-send → 400; unknown recipient → 404; a
+        recipient outside the caller's messaging boundary → 403 MESSAGING_FORBIDDEN. The
+        (sender, recipient) thread is found or created (normalized pair).
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendMessageRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/messages/threads:
+    get:
+      tags: [messaging]
+      summary: List the caller's threads (most-recently-active first)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ThreadSummaryResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/messages/threads/{id}:
+    get:
+      tags: [messaging]
+      summary: Read a thread transcript (marks received messages read)
+      description: >
+        Returns the thread's messages oldest-first and idempotently marks every message the caller
+        received as read. A non-participant gets 403; an unknown thread 404.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/MeetingId'
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: sort
+          in: query
+          required: false
+          description: "Sort expression; only 'createdAt' is allowed."
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageMessageResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/messages/unread-count:
+    get:
+      tags: [messaging]
+      summary: Total unread messages for the caller (polling badge)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnreadCountResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/messages/recipients:
+    get:
+      tags: [messaging]
+      summary: Users the caller is permitted to message (FE picker)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RecipientResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
 components:
   securitySchemes:
     bearerAuth:
@@ -1132,6 +1261,101 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/MeetingSummary'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+
+    SendMessageRequest:
+      type: object
+      required: [recipientId, body]
+      properties:
+        recipientId:
+          type: integer
+          format: int64
+        body:
+          type: string
+          description: Message text (non-blank)
+
+    MessageResponse:
+      type: object
+      required: [id, threadId, senderId, body, createdAt]
+      properties:
+        id:
+          type: integer
+          format: int64
+        threadId:
+          type: integer
+          format: int64
+        senderId:
+          type: integer
+          format: int64
+        body:
+          type: string
+        readAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    ThreadSummaryResponse:
+      type: object
+      required: [threadId, partnerId, unreadCount]
+      properties:
+        threadId:
+          type: integer
+          format: int64
+        partnerId:
+          type: integer
+          format: int64
+        partnerNickname:
+          type: string
+          nullable: true
+        lastMessageBody:
+          type: string
+          nullable: true
+        lastMessageAt:
+          type: string
+          format: date-time
+          nullable: true
+        unreadCount:
+          type: integer
+
+    UnreadCountResponse:
+      type: object
+      required: [count]
+      properties:
+        count:
+          type: integer
+          format: int64
+
+    RecipientResponse:
+      type: object
+      required: [userId, nickname, role]
+      properties:
+        userId:
+          type: integer
+          format: int64
+        nickname:
+          type: string
+        role:
+          $ref: '#/components/schemas/Role'
+
+    PageMessageResponse:
+      type: object
+      required: [content, page, size, totalElements, totalPages]
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/MessageResponse'
         page:
           type: integer
         size:

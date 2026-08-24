@@ -96,6 +96,10 @@ public class SessionAuthInterceptor implements HandlerInterceptor {
     if ("GET".equalsIgnoreCase(method) && MEETING_APPLICANTS.matcher(path).matches()) {
       return true;
     }
-    return "GET".equalsIgnoreCase(method) && "/api/enrollments/mine".equals(path);
+    if ("GET".equalsIgnoreCase(method) && "/api/enrollments/mine".equals(path)) {
+      return true;
+    }
+    // Messaging routes (U7) are all authenticated — none are public.
+    return path.startsWith("/api/messages");
   }
 }

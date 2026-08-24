@@ -48,6 +48,7 @@
 - 멘티 수료는 출석률 80% 기준으로 시스템이 자동 판정하고 관리자가 승인(④)하여 확정한다. 멘토는 멘티 수료를 인정하지 않으며, 멘토는 모임 정상 완료 인정 신청(관리자 승인③)과 멘티 피드백 확인만 담당한다 (Stage rough-mockups, 2026-07-31) (learned 2026-07-31) <!-- cid:rough-mockups:u2 -->
 - 멘티 피드백(과정 설문)은 멘토가 확인하며 시스템 관리자도 열람할 수 있다 (Stage rough-mockups, 2026-07-31) (learned 2026-07-31) <!-- cid:rough-mockups:u3 -->
 - 사전 설문(신청 설문)의 문항 틀은 멘토가 모임 개설 시 자유롭게(문항을 임의로 구성) 지정하며, 멘티는 신청 시 그 설문에 응답한다 (Stage rough-mockups, 2026-07-31) (learned 2026-07-31) <!-- cid:rough-mockups:u4 -->
+- 크로스모듈에서 '활성(active) 신청 관계'는 enrollment status=APPLIED로 판정한다 — U4 현행 enum의 유일 비취소 리터럴이며 시작·완료 후에도 유지됨. U7 messaging의 canMessage(멘토=자기 모임 활성 멘티 / 멘티=신청 모임 멘토)가 이를 사용. U4에 시작후 상태가 추가되면 이 판정을 재검토한다. (learned 2026-08-23) <!-- cid:code-generation:c5 -->
 ## Scope Overrides
 
 <!-- Custom scope rules for this project. -->

@@ -2,6 +2,7 @@ package com.learnkk.enrollment.repository;
 
 import com.learnkk.enrollment.domain.EnrollmentStatus;
 import com.learnkk.enrollment.entity.Enrollment;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -17,6 +18,22 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
   List<Enrollment> findByMeetingIdAndStatus(Long meetingId, EnrollmentStatus status);
 
   List<Enrollment> findByMenteeIdOrderByAppliedAtDesc(Long menteeId);
+
+  /** Whether a mentee holds an active (APPLIED) enrollment in any of the given meetings. */
+  boolean existsByMeetingIdInAndMenteeIdAndStatus(
+      Collection<Long> meetingIds, Long menteeId, EnrollmentStatus status);
+
+  /** Meeting ids in which the mentee holds an active enrollment. */
+  @Query("SELECT e.meetingId FROM Enrollment e WHERE e.menteeId = :menteeId AND e.status = :status")
+  List<Long> findMeetingIdsByMenteeIdAndStatus(
+      @Param("menteeId") Long menteeId, @Param("status") EnrollmentStatus status);
+
+  /** Distinct mentee ids holding an active enrollment in any of the given meetings. */
+  @Query(
+      "SELECT DISTINCT e.menteeId FROM Enrollment e "
+          + "WHERE e.meetingId IN :meetingIds AND e.status = :status")
+  List<Long> findMenteeIdsByMeetingIdInAndStatus(
+      @Param("meetingIds") Collection<Long> meetingIds, @Param("status") EnrollmentStatus status);
 
   /**
    * Acquires a transaction-scoped PostgreSQL advisory lock keyed by the meeting id (BR-U4-1). The
