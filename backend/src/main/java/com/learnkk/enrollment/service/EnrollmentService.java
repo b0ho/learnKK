@@ -135,6 +135,17 @@ public class EnrollmentService {
         .toList();
   }
 
+  /**
+   * Cross-module participant check (U8 read-in): true when the mentee holds an APPLIED enrollment
+   * for the meeting. U8 (survey/feedback) calls this to gate answer/feedback submission to actual
+   * participants without touching the enrollment table directly (ADR-007 R-1 precedent).
+   */
+  @Transactional(readOnly = true)
+  public boolean isActiveParticipant(Long meetingId, Long menteeId) {
+    return enrollmentRepository.existsByMeetingIdAndMenteeIdAndStatus(
+        meetingId, menteeId, EnrollmentStatus.APPLIED);
+  }
+
   /** List the caller's own enrollments (US-3.5). Meeting details are composed on the FE. */
   @Transactional(readOnly = true)
   public List<EnrollmentResponse> listMyEnrollments(Principal principal) {

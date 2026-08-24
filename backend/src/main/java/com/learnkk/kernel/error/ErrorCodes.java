@@ -69,4 +69,12 @@ public final class ErrorCodes {
   public static final String COMPLETION_FORBIDDEN = "COMPLETION_FORBIDDEN";
   public static final String COMPLETION_NOT_ELIGIBLE = "COMPLETION_NOT_ELIGIBLE";
   public static final String COMPLETION_ALREADY_APPROVED = "COMPLETION_ALREADY_APPROVED";
+
+  // --- Survey / feedback domain (U8) ---
+  public static final String PRESURVEY_NOT_OPEN = "PRESURVEY_NOT_OPEN";
+  public static final String PRESURVEY_REQUIRED_MISSING = "PRESURVEY_REQUIRED_MISSING";
+  public static final String PRESURVEY_FORBIDDEN = "PRESURVEY_FORBIDDEN";
+  public static final String PRESURVEY_NOT_FOUND = "PRESURVEY_NOT_FOUND";
+  public static final String FEEDBACK_FORBIDDEN = "FEEDBACK_FORBIDDEN";
+  public static final String FEEDBACK_NOT_OPEN = "FEEDBACK_NOT_OPEN";
 }

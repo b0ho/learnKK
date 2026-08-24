@@ -11,4 +11,7 @@ export const PATHS = {
   messages: '/messages',
   messageThread: (id: number | string) => `/messages/${id}`,
   profile: '/me',
+  surveyAnswer: (id: number | string) => `/meetings/${id}/survey-answer`,
+  feedback: (id: number | string) => `/meetings/${id}/feedback`,
+  feedbackView: (id: number | string) => `/meetings/${id}/feedback-view`,
 } as const;

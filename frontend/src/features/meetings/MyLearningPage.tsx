@@ -198,6 +198,27 @@ function MenteeLearning() {
                       </Button>
                     )}
                     {showSessions && <MenteeSessions meetingId={enrollment.meetingId} />}
+                    {enrollment.status === 'APPLIED' && meeting?.status === 'IN_PROGRESS' && (
+                      <div className="flex gap-2">
+                        <Button
+                          asChild
+                          size="sm"
+                          className="self-start"
+                          data-testid={`mentee-survey-answer-${enrollment.id}`}
+                        >
+                          <Link to={PATHS.surveyAnswer(enrollment.meetingId)}>사전설문 응답</Link>
+                        </Button>
+                        <Button
+                          asChild
+                          size="sm"
+                          variant="outline"
+                          className="self-start"
+                          data-testid={`mentee-feedback-${enrollment.id}`}
+                        >
+                          <Link to={PATHS.feedback(enrollment.meetingId)}>피드백</Link>
+                        </Button>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </li>
@@ -423,7 +444,8 @@ function MentorHub() {
     <div className="flex flex-col gap-4">
       <h2 className="text-xl font-bold">내 모임 (운영)</h2>
       <p className="text-sm text-muted-foreground" data-testid="mentor-hub-note">
-        내가 개설한 모임의 상태·신청자와 진행 중 모임의 세션 일정을 관리할 수 있습니다.
+        내가 개설한 모임의 상태·신청자와 진행 중 모임의 세션 일정을 관리하고, 각 모임의 피드백과 사전설문
+        응답을 열람할 수 있습니다.
       </p>
 
       {loading && (
@@ -477,6 +499,15 @@ function MentorHub() {
                     >
                       자료실 · 공지 관리
                     </Link>
+                    <Button
+                      asChild
+                      size="sm"
+                      variant="outline"
+                      className="self-start"
+                      data-testid={`mentor-feedback-view-${m.id}`}
+                    >
+                      <Link to={PATHS.feedbackView(m.id)}>피드백·사전설문 열람</Link>
+                    </Button>
 
                     <div className="flex flex-col gap-1">
                       <span data-testid={`applicant-count-${m.id}`}>

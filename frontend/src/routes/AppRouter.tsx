@@ -9,6 +9,9 @@ import { MyLearningPage } from '@/features/meetings/MyLearningPage';
 import { MeetingContentPage } from '@/features/content/MeetingContentPage';
 import { MessagesPage } from '@/features/messaging/MessagesPage';
 import { ThreadView } from '@/features/messaging/ThreadView';
+import { PreSurveyAnswerPage } from '@/features/survey/PreSurveyAnswerPage';
+import { FeedbackPage } from '@/features/survey/FeedbackPage';
+import { FeedbackViewPage } from '@/features/survey/FeedbackViewPage';
 import { AppShell } from './AppShell';
 import { RequireAuth } from './RequireAuth';
 import { RequireRole } from './RequireRole';
@@ -34,6 +37,11 @@ export function AppRouter() {
           <Route path="/meetings/:id/content" element={<MeetingContentPage />} />
           <Route path={PATHS.messages} element={<MessagesPage />} />
           <Route path="/messages/:id" element={<ThreadView />} />
+          <Route path="/meetings/:id/survey-answer" element={<PreSurveyAnswerPage />} />
+          <Route path="/meetings/:id/feedback" element={<FeedbackPage />} />
+          <Route element={<RequireRole allow={['MENTOR', 'ADMIN']} />}>
+            <Route path="/meetings/:id/feedback-view" element={<FeedbackViewPage />} />
+          </Route>
           <Route path={PATHS.profile} element={<ProfilePage />} />
         </Route>
       </Route>

@@ -48,7 +48,7 @@ class SurveyTemplateServiceTest {
 
     List<SurveyQuestionDto> result =
         service.upsertQuestions(
-            1L, 1L, List.of(new SurveyQuestionDto(1, "질문", "TEXT", List.of(), true)));
+            1L, 1L, List.of(new SurveyQuestionDto(null, 1, "질문", "TEXT", List.of(), true)));
 
     assertThat(result).hasSize(1);
     assertThat(result.get(0).text()).isEqualTo("질문");
@@ -76,7 +76,7 @@ class SurveyTemplateServiceTest {
     assertThatThrownBy(
             () ->
                 service.upsertQuestions(
-                    1L, 1L, List.of(new SurveyQuestionDto(1, "q", "TEXT", List.of(), true))))
+                    1L, 1L, List.of(new SurveyQuestionDto(null, 1, "q", "TEXT", List.of(), true))))
         .isInstanceOf(ConflictException.class)
         .extracting("code")
         .isEqualTo(ErrorCodes.MEETING_QUESTIONS_LOCKED);
@@ -90,7 +90,7 @@ class SurveyTemplateServiceTest {
     assertThatThrownBy(
             () ->
                 service.upsertQuestions(
-                    1L, 1L, List.of(new SurveyQuestionDto(1, "q", "TEXT", List.of(), true))))
+                    1L, 1L, List.of(new SurveyQuestionDto(null, 1, "q", "TEXT", List.of(), true))))
         .isInstanceOf(ConflictException.class)
         .extracting("code")
         .isEqualTo(ErrorCodes.MEETING_QUESTIONS_LOCKED);
@@ -104,7 +104,7 @@ class SurveyTemplateServiceTest {
     assertThatThrownBy(
             () ->
                 service.upsertQuestions(
-                    1L, 1L, List.of(new SurveyQuestionDto(1, "q", "TEXT", List.of(), true))))
+                    1L, 1L, List.of(new SurveyQuestionDto(null, 1, "q", "TEXT", List.of(), true))))
         .isInstanceOf(ConflictException.class)
         .extracting("code")
         .isEqualTo(ErrorCodes.MEETING_QUESTIONS_LOCKED);
@@ -120,7 +120,7 @@ class SurveyTemplateServiceTest {
 
     List<SurveyQuestionDto> result =
         service.upsertQuestions(
-            1L, 1L, List.of(new SurveyQuestionDto(1, "질문", "TEXT", List.of(), true)));
+            1L, 1L, List.of(new SurveyQuestionDto(null, 1, "질문", "TEXT", List.of(), true)));
 
     assertThat(result).hasSize(1);
     verify(questionRepository).deleteByMeetingId(1L);
