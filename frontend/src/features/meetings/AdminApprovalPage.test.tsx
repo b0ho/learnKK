@@ -2,192 +2,131 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AdminApprovalPage } from './AdminApprovalPage';
-import type { MeetingResponse, MeetingStatus } from '@/api';
+import type { MeetingStatus, MeetingSummary } from '@/api';
 import { errorResponse, jsonResponse, renderWithProviders } from '@/test/test-utils';
 
 afterEach(() => vi.unstubAllGlobals());
 
-function meeting(status: MeetingStatus, rejectReason: string | null = null): MeetingResponse {
-  return {
-    id: 7,
-    mentorId: 1,
-    title: '모임 제목',
-    topic: null,
-    weeks: 4,
-    recruitStart: null,
-    recruitEnd: null,
-    capacity: 6,
-    format: null,
-    initialContent: null,
-    status,
-    rejectReason,
-  };
+function summary(status: MeetingStatus): MeetingSummary {
+  return { id: 7, title: '모임 제목', topic: null, weeks: 4, capacity: 6, status };
 }
 
-async function lookup(user: ReturnType<typeof userEvent.setup>) {
-  await user.type(screen.getByTestId('admin-meeting-id'), '7');
-  await user.click(screen.getByTestId('admin-lookup'));
+function page(content: MeetingSummary[]) {
+  return jsonResponse({
+    content,
+    page: 0,
+    size: 100,
+    totalElements: content.length,
+    totalPages: 1,
+  });
 }
 
-/** Fetch mock: GET returns a meeting in `initial`; a POST to `/{action}` returns `next`. */
-function transitionFetch(initial: MeetingStatus, action: string, next: MeetingResponse) {
-  return vi.fn(async (url: string, init?: RequestInit) => {
-    if (String(url).endsWith(`/${action}`) && init?.method === 'POST') {
-      return jsonResponse(next);
+/**
+ * Fetch mock: the admin queue GETs `/api/admin/meetings?status=X` per section — return the meeting
+ * only for `showIn`. A POST to `/{action}` returns `nextStatus` (used for reload assertions).
+ */
+function queueFetch(showIn: MeetingStatus, opts: { completions?: unknown[] } = {}) {
+  return vi.fn(async (url: string) => {
+    const u = String(url);
+    if (u.includes('/api/admin/meetings?status=')) {
+      const status = new URL(u).searchParams.get('status');
+      return page(status === showIn ? [summary(showIn)] : []);
     }
-    return jsonResponse(meeting(initial));
+    if (u.endsWith('/completions')) return jsonResponse(opts.completions ?? []);
+    // any POST transition
+    return jsonResponse({});
   });
 }
 
-describe('AdminApprovalPage', () => {
-  it('shows approve/reject actions only for a pending meeting', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse(meeting('PENDING_APPROVAL'))));
-    const user = userEvent.setup();
+describe('AdminApprovalPage (queue)', () => {
+  it('lists a pending meeting in its section with approve/reject actions', async () => {
+    vi.stubGlobal('fetch', queueFetch('PENDING_APPROVAL'));
     renderWithProviders(<AdminApprovalPage />, { auth: { token: 't', role: 'ADMIN' } });
-    await lookup(user);
 
-    expect(await screen.findByTestId('admin-approve')).toBeInTheDocument();
-    expect(screen.getByTestId('admin-reject-open')).toBeInTheDocument();
-    expect(screen.queryByTestId('admin-confirm-recruitment')).not.toBeInTheDocument();
+    expect(await screen.findByTestId('admin-approve-7')).toBeInTheDocument();
+    expect(screen.getByTestId('admin-reject-7')).toBeInTheDocument();
+    // no forward action from another section
+    expect(screen.queryByTestId('admin-start-7')).not.toBeInTheDocument();
   });
 
-  it('approves a pending meeting and reflects the new status', async () => {
-    vi.stubGlobal('fetch', transitionFetch('PENDING_APPROVAL', 'approve', meeting('RECRUITING')));
+  it('approve requires a confirm dialog before firing the request', async () => {
+    const fetchMock = queueFetch('PENDING_APPROVAL');
+    vi.stubGlobal('fetch', fetchMock);
     const user = userEvent.setup();
     renderWithProviders(<AdminApprovalPage />, { auth: { token: 't', role: 'ADMIN' } });
-    await lookup(user);
 
-    await user.click(await screen.findByTestId('admin-approve'));
-    await waitFor(() =>
-      expect(screen.getByTestId('admin-meeting-status')).toHaveTextContent('모집중'),
-    );
+    await user.click(await screen.findByTestId('admin-approve-7'));
+    // confirm dialog appears; no POST yet
+    expect(await screen.findByTestId('confirm-dialog')).toBeInTheDocument();
+    const postsBefore = fetchMock.mock.calls.filter((c) => c[1]?.method === 'POST').length;
+    expect(postsBefore).toBe(0);
+
+    await user.click(screen.getByTestId('confirm-ok'));
+    await waitFor(() => {
+      const posts = fetchMock.mock.calls.filter(
+        (c) => String(c[0]).endsWith('/approve') && c[1]?.method === 'POST',
+      );
+      expect(posts.length).toBe(1);
+    });
   });
 
   it('rejects via the reason dialog', async () => {
-    vi.stubGlobal(
-      'fetch',
-      transitionFetch('PENDING_APPROVAL', 'reject', meeting('REJECTED', '기준 미달')),
-    );
+    const fetchMock = queueFetch('PENDING_APPROVAL');
+    vi.stubGlobal('fetch', fetchMock);
     const user = userEvent.setup();
     renderWithProviders(<AdminApprovalPage />, { auth: { token: 't', role: 'ADMIN' } });
-    await lookup(user);
 
-    await user.click(await screen.findByTestId('admin-reject-open'));
+    await user.click(await screen.findByTestId('admin-reject-7'));
     await user.type(await screen.findByTestId('reason-input'), '기준 미달');
     await user.click(screen.getByTestId('reason-confirm'));
 
-    await waitFor(() =>
-      expect(screen.getByTestId('admin-meeting-status')).toHaveTextContent('반려'),
-    );
+    await waitFor(() => {
+      const posts = fetchMock.mock.calls.filter(
+        (c) => String(c[0]).endsWith('/reject') && c[1]?.method === 'POST',
+      );
+      expect(posts.length).toBe(1);
+    });
   });
 
-  it('confirms recruitment (T3) for a recruiting meeting', async () => {
-    vi.stubGlobal(
-      'fetch',
-      transitionFetch('RECRUITING', 'confirm-recruitment', meeting('READY_TO_START')),
-    );
+  it('shows a revert action for a recruiting meeting and fires revert after confirm', async () => {
+    const fetchMock = queueFetch('RECRUITING');
+    vi.stubGlobal('fetch', fetchMock);
     const user = userEvent.setup();
     renderWithProviders(<AdminApprovalPage />, { auth: { token: 't', role: 'ADMIN' } });
-    await lookup(user);
 
-    await user.click(await screen.findByTestId('admin-confirm-recruitment'));
-    await waitFor(() =>
-      expect(screen.getByTestId('admin-meeting-status')).toHaveTextContent('시작대기'),
-    );
+    expect(await screen.findByTestId('admin-revert-7')).toBeInTheDocument();
+    await user.click(screen.getByTestId('admin-revert-7'));
+    await user.click(await screen.findByTestId('confirm-ok'));
+
+    await waitFor(() => {
+      const posts = fetchMock.mock.calls.filter(
+        (c) => String(c[0]).endsWith('/revert') && c[1]?.method === 'POST',
+      );
+      expect(posts.length).toBe(1);
+    });
   });
 
-  it('cancels recruitment (T4) via the reason dialog', async () => {
-    vi.stubGlobal(
-      'fetch',
-      transitionFetch('RECRUITING', 'confirm-recruitment', meeting('CANCELLED', '정원 미달')),
-    );
-    const user = userEvent.setup();
+  it('renders the completion panel for an in-progress meeting', async () => {
+    vi.stubGlobal('fetch', queueFetch('IN_PROGRESS'));
     renderWithProviders(<AdminApprovalPage />, { auth: { token: 't', role: 'ADMIN' } });
-    await lookup(user);
 
-    await user.click(await screen.findByTestId('admin-cancel-recruitment-open'));
-    await user.type(await screen.findByTestId('reason-input'), '정원 미달');
-    await user.click(screen.getByTestId('reason-confirm'));
-
-    await waitFor(() =>
-      expect(screen.getByTestId('admin-meeting-status')).toHaveTextContent('취소'),
-    );
+    expect(await screen.findByTestId('admin-completion-7')).toBeInTheDocument();
+    expect(screen.getByTestId('admin-complete-7')).toBeInTheDocument();
   });
 
-  it('starts a ready meeting (T5)', async () => {
-    vi.stubGlobal(
-      'fetch',
-      transitionFetch('READY_TO_START', 'approve-start', meeting('IN_PROGRESS')),
-    );
+  it('validates a required reason before rejecting', async () => {
+    vi.stubGlobal('fetch', queueFetch('PENDING_APPROVAL'));
     const user = userEvent.setup();
     renderWithProviders(<AdminApprovalPage />, { auth: { token: 't', role: 'ADMIN' } });
-    await lookup(user);
 
-    await user.click(await screen.findByTestId('admin-approve-start'));
-    await waitFor(() =>
-      expect(screen.getByTestId('admin-meeting-status')).toHaveTextContent('진행중'),
-    );
-  });
-
-  it('completes an in-progress meeting (T6)', async () => {
-    vi.stubGlobal('fetch', transitionFetch('IN_PROGRESS', 'complete', meeting('COMPLETED')));
-    const user = userEvent.setup();
-    renderWithProviders(<AdminApprovalPage />, { auth: { token: 't', role: 'ADMIN' } });
-    await lookup(user);
-
-    await user.click(await screen.findByTestId('admin-complete'));
-    await waitFor(() =>
-      expect(screen.getByTestId('admin-meeting-status')).toHaveTextContent('완료'),
-    );
-  });
-
-  it('shows no actions for a terminal (completed) meeting', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse(meeting('COMPLETED'))));
-    const user = userEvent.setup();
-    renderWithProviders(<AdminApprovalPage />, { auth: { token: 't', role: 'ADMIN' } });
-    await lookup(user);
-
-    expect(await screen.findByTestId('admin-no-action')).toBeInTheDocument();
-  });
-
-  it('surfaces a 409 sessions-not-ended error on complete', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async (url: string, init?: RequestInit) => {
-        if (String(url).endsWith('/complete') && init?.method === 'POST') {
-          return errorResponse(
-            409,
-            'MEETING_SESSIONS_NOT_ENDED',
-            '모든 세션이 종료되어야 완료할 수 있습니다.',
-          );
-        }
-        return jsonResponse(meeting('IN_PROGRESS'));
-      }),
-    );
-    const user = userEvent.setup();
-    renderWithProviders(<AdminApprovalPage />, { auth: { token: 't', role: 'ADMIN' } });
-    await lookup(user);
-
-    await user.click(await screen.findByTestId('admin-complete'));
-    expect(await screen.findByTestId('admin-action-error')).toHaveTextContent(
-      '모든 세션이 종료되어야 완료할 수 있습니다.',
-    );
-  });
-
-  it('validates a required reason before cancelling recruitment', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse(meeting('RECRUITING'))));
-    const user = userEvent.setup();
-    renderWithProviders(<AdminApprovalPage />, { auth: { token: 't', role: 'ADMIN' } });
-    await lookup(user);
-
-    await user.click(await screen.findByTestId('admin-cancel-recruitment-open'));
+    await user.click(await screen.findByTestId('admin-reject-7'));
     await user.click(await screen.findByTestId('reason-confirm'));
     expect(await screen.findByTestId('reason-error')).toBeInTheDocument();
   });
 });
 
 describe('AdminApprovalPage — completion ④', () => {
-  it('computes candidates and approves a candidate for an in-progress meeting', async () => {
+  it('computes candidates and approves a candidate', async () => {
     let approved = false;
     const candidate = {
       meetingId: 7,
@@ -199,6 +138,10 @@ describe('AdminApprovalPage — completion ④', () => {
     };
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
       const u = String(url);
+      if (u.includes("/api/admin/meetings?status=")) {
+        const status = new URL(u, 'http://x').searchParams.get('status');
+        return page(status === 'IN_PROGRESS' ? [summary('IN_PROGRESS')] : []);
+      }
       if (u.endsWith('/completions/compute') && init?.method === 'POST') {
         return jsonResponse([candidate]);
       }
@@ -209,22 +152,18 @@ describe('AdminApprovalPage — completion ④', () => {
       if (u.endsWith('/completions')) {
         return jsonResponse(approved ? [{ ...candidate, status: 'COMPLETED', approvedAt: 'x' }] : []);
       }
-      return jsonResponse(meeting('IN_PROGRESS'));
+      return jsonResponse({});
     });
     vi.stubGlobal('fetch', fetchMock);
     const user = userEvent.setup();
     renderWithProviders(<AdminApprovalPage />, { auth: { token: 't', role: 'ADMIN' } });
-    await lookup(user);
 
-    // Initially empty until judged.
-    expect(await screen.findByTestId('admin-completion-empty')).toBeInTheDocument();
+    await user.click(await screen.findByTestId('admin-completion-compute-7'));
+    expect(await screen.findByTestId('admin-completion-status-7-2')).toHaveTextContent('수료후보');
 
-    await user.click(screen.getByTestId('admin-completion-compute'));
-    expect(await screen.findByTestId('admin-completion-status-2')).toHaveTextContent('수료후보');
-
-    await user.click(screen.getByTestId('admin-completion-approve-2'));
+    await user.click(screen.getByTestId('admin-completion-approve-7-2'));
     await waitFor(() =>
-      expect(screen.getByTestId('admin-completion-status-2')).toHaveTextContent('수료확정'),
+      expect(screen.getByTestId('admin-completion-status-7-2')).toHaveTextContent('수료확정'),
     );
   });
 
@@ -239,19 +178,22 @@ describe('AdminApprovalPage — completion ④', () => {
     };
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
       const u = String(url);
+      if (u.includes("/api/admin/meetings?status=")) {
+        const status = new URL(u, 'http://x').searchParams.get('status');
+        return page(status === 'IN_PROGRESS' ? [summary('IN_PROGRESS')] : []);
+      }
       if (u.includes('/completions/2/approve') && init?.method === 'POST') {
         return errorResponse(409, 'COMPLETION_ALREADY_APPROVED', '이미 확정됨');
       }
       if (u.endsWith('/completions')) return jsonResponse([candidate]);
-      return jsonResponse(meeting('IN_PROGRESS'));
+      return jsonResponse({});
     });
     vi.stubGlobal('fetch', fetchMock);
     const user = userEvent.setup();
     renderWithProviders(<AdminApprovalPage />, { auth: { token: 't', role: 'ADMIN' } });
-    await lookup(user);
 
-    await user.click(await screen.findByTestId('admin-completion-approve-2'));
-    expect(await screen.findByTestId('admin-completion-action-error')).toHaveTextContent(
+    await user.click(await screen.findByTestId('admin-completion-approve-7-2'));
+    expect(await screen.findByTestId('admin-completion-action-error-7')).toHaveTextContent(
       '이미 수료 확정된 멘티입니다',
     );
   });
