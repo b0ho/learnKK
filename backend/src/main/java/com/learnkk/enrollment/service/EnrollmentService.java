@@ -136,9 +136,9 @@ public class EnrollmentService {
   }
 
   /**
-   * Cross-module participant check (U8 read-in): true when the mentee holds an APPLIED enrollment
-   * for the meeting. U8 (survey/feedback) calls this to gate answer/feedback submission to actual
-   * participants without touching the enrollment table directly (ADR-007 R-1 precedent).
+   * Cross-module participant check (U5 attendance/completion + U8 survey/feedback read-in): true
+   * when the mentee holds an APPLIED enrollment for the meeting. Callers gate their own actions on
+   * actual participants without touching the enrollment table directly (ADR-007 R-1).
    */
   @Transactional(readOnly = true)
   public boolean isActiveParticipant(Long meetingId, Long menteeId) {
@@ -208,16 +208,6 @@ public class EnrollmentService {
         .stream()
         .map(Enrollment::getMenteeId)
         .toList();
-  }
-
-  /**
-   * 무권한 cross-module read 포트(U5→U4): 멘티가 해당 모임의 활성 참여자(APPLIED)인지 여부. 출석 참여자 게이트로
-   * 사용된다.
-   */
-  @Transactional(readOnly = true)
-  public boolean isActiveParticipant(Long meetingId, Long menteeId) {
-    return enrollmentRepository.existsByMeetingIdAndMenteeIdAndStatus(
-        meetingId, menteeId, EnrollmentStatus.APPLIED);
   }
 
   private String resolveNickname(Long menteeId) {
