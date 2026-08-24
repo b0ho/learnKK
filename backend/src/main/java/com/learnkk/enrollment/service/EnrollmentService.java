@@ -142,6 +142,29 @@ public class EnrollmentService {
         .toList();
   }
 
+  /**
+   * 무권한 cross-module read 포트(U5→U4, ADR-007 R-1): 해당 모임의 참여 멘티(APPLIED) id 목록을 반환한다.
+   * 수료 판정 대상 집합(computeCompletion)으로 사용된다. 인가는 호출 측(U5)이 담당한다.
+   */
+  @Transactional(readOnly = true)
+  public List<Long> listActiveMenteeIds(Long meetingId) {
+    return enrollmentRepository
+        .findByMeetingIdAndStatus(meetingId, EnrollmentStatus.APPLIED)
+        .stream()
+        .map(Enrollment::getMenteeId)
+        .toList();
+  }
+
+  /**
+   * 무권한 cross-module read 포트(U5→U4): 멘티가 해당 모임의 활성 참여자(APPLIED)인지 여부. 출석 참여자 게이트로
+   * 사용된다.
+   */
+  @Transactional(readOnly = true)
+  public boolean isActiveParticipant(Long meetingId, Long menteeId) {
+    return enrollmentRepository.existsByMeetingIdAndMenteeIdAndStatus(
+        meetingId, menteeId, EnrollmentStatus.APPLIED);
+  }
+
   private String resolveNickname(Long menteeId) {
     return userRepository.findById(menteeId).map(User::getNickname).orElse(null);
   }

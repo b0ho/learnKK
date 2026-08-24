@@ -152,6 +152,42 @@ class OpenApiContractTest {
   }
 
   @Test
+  void meetingSessionResponse_conformsToSchema() throws Exception {
+    assertConforms(
+        "MeetingSessionResponse",
+        new com.learnkk.session.dto.SessionResponse(
+            5L, 10L, 1, java.time.OffsetDateTime.parse("2026-01-01T10:00Z"), 120));
+  }
+
+  @Test
+  void attendanceResponse_conformsToSchema() throws Exception {
+    assertConforms(
+        "AttendanceResponse",
+        new com.learnkk.session.dto.AttendanceResponse(
+            5L, 2L, java.time.OffsetDateTime.parse("2026-01-01T10:05Z")));
+  }
+
+  @Test
+  void attendanceSummaryResponse_conformsToSchema() throws Exception {
+    assertConforms(
+        "AttendanceSummaryResponse",
+        com.learnkk.session.dto.AttendanceSummaryResponse.of(3, 4));
+  }
+
+  @Test
+  void menteeCompletionResponse_conformsToSchema() throws Exception {
+    assertConforms(
+        "MenteeCompletionResponse",
+        new com.learnkk.session.dto.MenteeCompletionResponse(
+            10L,
+            2L,
+            com.learnkk.kernel.domain.CompletionStatus.COMPLETION_CANDIDATE,
+            4,
+            5,
+            null));
+  }
+
+  @Test
   void pageMeetingSummary_conformsToSchema() throws Exception {
     PageResponse<MeetingSummary> page =
         new PageResponse<>(

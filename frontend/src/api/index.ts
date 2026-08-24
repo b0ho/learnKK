@@ -12,4 +12,5 @@ export { authApi } from './auth';
 export { usersApi } from './users';
 export { meetingsApi } from './meetings';
 export { enrollmentsApi } from './enrollments';
+export { sessionsApi } from './sessions';
 export { adminApi } from './admin';

@@ -42,4 +42,15 @@ public final class ErrorCodes {
   public static final String ENROLLMENT_DUPLICATE = "ENROLLMENT_DUPLICATE";
   public static final String ENROLLMENT_NOT_OPEN = "ENROLLMENT_NOT_OPEN";
   public static final String ENROLLMENT_CANCEL_FORBIDDEN = "ENROLLMENT_CANCEL_FORBIDDEN";
+
+  // --- Session domain (U5) ---
+  public static final String SESSION_NOT_FOUND = "SESSION_NOT_FOUND";
+  public static final String SESSION_FORBIDDEN = "SESSION_FORBIDDEN";
+  public static final String SESSION_MEETING_NOT_ACTIVE = "SESSION_MEETING_NOT_ACTIVE";
+  public static final String ATTENDANCE_WINDOW_CLOSED = "ATTENDANCE_WINDOW_CLOSED";
+  public static final String ATTENDANCE_NOT_PARTICIPANT = "ATTENDANCE_NOT_PARTICIPANT";
+  public static final String COMPLETION_NOT_FOUND = "COMPLETION_NOT_FOUND";
+  public static final String COMPLETION_FORBIDDEN = "COMPLETION_FORBIDDEN";
+  public static final String COMPLETION_NOT_ELIGIBLE = "COMPLETION_NOT_ELIGIBLE";
+  public static final String COMPLETION_ALREADY_APPROVED = "COMPLETION_ALREADY_APPROVED";
 }

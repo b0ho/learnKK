@@ -26,5 +26,12 @@
     "dirName": "260823-bolt3-enrollment",
     "scope": "feature",
     "status": "complete"
+  },
+  {
+    "uuid": "01a02f41-33c4-7d5a-8e9e-843d014bf68a",
+    "slug": "bolt6-session",
+    "dirName": "260823-bolt6-session",
+    "scope": "feature",
+    "status": "complete"
   }
 ]
