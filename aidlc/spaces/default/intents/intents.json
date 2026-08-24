@@ -47,5 +47,12 @@
     "dirName": "260823-bolt7-survey",
     "scope": "feature",
     "status": "complete"
+  },
+  {
+    "uuid": "01a0342b-8e90-7799-962f-67cd6ab3df96",
+    "slug": "ux-bugfixes",
+    "dirName": "260824-ux-bugfixes",
+    "scope": "bugfix",
+    "status": "in-flight"
   }
 ]
