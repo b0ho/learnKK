@@ -13,5 +13,6 @@ export { usersApi } from './users';
 export { meetingsApi } from './meetings';
 export { enrollmentsApi } from './enrollments';
 export { messagesApi } from './messages';
+export { sessionsApi } from './sessions';
 export { adminApi } from './admin';
 export { contentApi } from './content';

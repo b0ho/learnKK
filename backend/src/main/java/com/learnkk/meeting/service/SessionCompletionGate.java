@@ -6,7 +6,7 @@ package com.learnkk.meeting.service;
  *
  * <p>The session module (U5) is not built until Bolt 6, so completion cannot yet be gated on real
  * session state. This interface isolates that forward dependency: Bolt 2 ships a permissive stub
- * ({@link NoSessionsCompletionGate}) and Bolt 6 replaces it with an implementation backed by the
+ * (a permissive no-op) and Bolt 6 replaces it with an implementation backed by the
  * real {@code SessionService} read (ADR-007 R-2). The status write (COMPLETED) stays owned by U3
  * regardless.
  */

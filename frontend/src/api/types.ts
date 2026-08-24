@@ -208,3 +208,51 @@ export interface RecipientResponse {
   nickname: string;
   role: Role;
 }
+
+// --- Session / attendance / completion (U5, Bolt 6) ---
+
+/** Mentee completion status (contract #3). */
+export type CompletionStatus = 'NOT_COMPLETED' | 'COMPLETION_CANDIDATE' | 'COMPLETED';
+
+export interface CreateSessionRequest {
+  week: number;
+  scheduledAt: string;
+  checkInWindowMinutes?: number | null;
+}
+
+export interface UpdateSessionRequest {
+  scheduledAt: string;
+}
+
+/**
+ * A meeting session (U5). Named MeetingSessionResponse to avoid colliding with the auth
+ * SessionResponse (login token) type — mirrors the OpenAPI MeetingSessionResponse schema.
+ */
+export interface MeetingSessionResponse {
+  id: number;
+  meetingId: number;
+  week: number;
+  scheduledAt: string;
+  checkInWindowMinutes: number;
+}
+
+export interface AttendanceResponse {
+  sessionId: number;
+  menteeId: number;
+  checkedInAt: string;
+}
+
+export interface AttendanceSummaryResponse {
+  attended: number;
+  totalScheduled: number;
+  rate: number;
+}
+
+export interface MenteeCompletionResponse {
+  meetingId: number;
+  menteeId: number;
+  status: CompletionStatus;
+  attendedCount: number;
+  totalScheduled: number;
+  approvedAt?: string | null;
+}

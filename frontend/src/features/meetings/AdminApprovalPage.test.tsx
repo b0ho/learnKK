@@ -185,3 +185,74 @@ describe('AdminApprovalPage', () => {
     expect(await screen.findByTestId('reason-error')).toBeInTheDocument();
   });
 });
+
+describe('AdminApprovalPage — completion ④', () => {
+  it('computes candidates and approves a candidate for an in-progress meeting', async () => {
+    let approved = false;
+    const candidate = {
+      meetingId: 7,
+      menteeId: 2,
+      status: 'COMPLETION_CANDIDATE' as const,
+      attendedCount: 4,
+      totalScheduled: 5,
+      approvedAt: null,
+    };
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      const u = String(url);
+      if (u.endsWith('/completions/compute') && init?.method === 'POST') {
+        return jsonResponse([candidate]);
+      }
+      if (u.includes('/completions/2/approve') && init?.method === 'POST') {
+        approved = true;
+        return jsonResponse({ ...candidate, status: 'COMPLETED', approvedAt: 'x' });
+      }
+      if (u.endsWith('/completions')) {
+        return jsonResponse(approved ? [{ ...candidate, status: 'COMPLETED', approvedAt: 'x' }] : []);
+      }
+      return jsonResponse(meeting('IN_PROGRESS'));
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const user = userEvent.setup();
+    renderWithProviders(<AdminApprovalPage />, { auth: { token: 't', role: 'ADMIN' } });
+    await lookup(user);
+
+    // Initially empty until judged.
+    expect(await screen.findByTestId('admin-completion-empty')).toBeInTheDocument();
+
+    await user.click(screen.getByTestId('admin-completion-compute'));
+    expect(await screen.findByTestId('admin-completion-status-2')).toHaveTextContent('수료후보');
+
+    await user.click(screen.getByTestId('admin-completion-approve-2'));
+    await waitFor(() =>
+      expect(screen.getByTestId('admin-completion-status-2')).toHaveTextContent('수료확정'),
+    );
+  });
+
+  it('surfaces a 409 already-approved error on approve', async () => {
+    const candidate = {
+      meetingId: 7,
+      menteeId: 2,
+      status: 'COMPLETION_CANDIDATE' as const,
+      attendedCount: 5,
+      totalScheduled: 5,
+      approvedAt: null,
+    };
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      const u = String(url);
+      if (u.includes('/completions/2/approve') && init?.method === 'POST') {
+        return errorResponse(409, 'COMPLETION_ALREADY_APPROVED', '이미 확정됨');
+      }
+      if (u.endsWith('/completions')) return jsonResponse([candidate]);
+      return jsonResponse(meeting('IN_PROGRESS'));
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const user = userEvent.setup();
+    renderWithProviders(<AdminApprovalPage />, { auth: { token: 't', role: 'ADMIN' } });
+    await lookup(user);
+
+    await user.click(await screen.findByTestId('admin-completion-approve-2'));
+    expect(await screen.findByTestId('admin-completion-action-error')).toHaveTextContent(
+      '이미 수료 확정된 멘티입니다',
+    );
+  });
+});

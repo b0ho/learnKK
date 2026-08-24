@@ -1,18 +1,19 @@
 # learnKK (런크크)
 
-사내 멘토링 러닝 플랫폼. 이 저장소는 **Bolt 3 (Enrollment 신청)** 까지 반영되어 있습니다. Bolt 2 모임 상태머신 위에 선착순 신청(U4)을 얹습니다:
+사내 멘토링 러닝 플랫폼. 이 저장소는 **Bolt 6 (Session/Attendance 세션·출석·수료)** 까지 반영되어 있습니다. Bolt 2 모임 상태머신·Bolt 3 신청 위에 세션 일정·팝업 출석·80% 수료 판정(U5)을 얹습니다:
 
 > 개설(PENDING_APPROVAL) → ① 승인(RECRUITING) → 모집확정(READY_TO_START | CANCELLED) → ② 시작(IN_PROGRESS) → ③ 완료(COMPLETED) · 반려/취소
 
 - 불법 전이는 항상 409 `MEETING_INVALID_TRANSITION`(또는 완료 게이트의 `MEETING_SESSIONS_NOT_ENDED`)로 거부됩니다.
 - **신청(Bolt 3)**: 멘티는 RECRUITING 모임에 선착순으로 신청합니다. 정원 초과 금지(overbooking 없음, BR-U4-1)는 모임 단위 어드바이저리 락(`pg_advisory_xact_lock`) + 활성 신청 수 판정으로 보장하고, 중복 신청은 `UNIQUE(meeting_id, mentee_id)`로 차단합니다. ②시작 전에는 취소 가능(취소 시 빈자리 복귀).
+- **세션·출석·수료(Bolt 6)**: 소유 멘토가 IN_PROGRESS 모임에 주차별 세션(`meeting_session`)을 등록·변경합니다. 멘티는 스케줄러 없이(ADR-005) 요청 시점 시간창 `[scheduledAt, scheduledAt+checkInWindowMinutes]` 안에서만 self check-in 하며(창 밖 409 `ATTENDANCE_WINDOW_CLOSED`), `UNIQUE(session_id, mentee_id)`로 멱등을 보장합니다. 출석율은 `a/S`(S=0이면 0), 수료 판정은 정수식 `a*100 >= 80*S`로 후보(COMPLETION_CANDIDATE)를 매기고 관리자 ④가 확정(COMPLETED)합니다. 완료(T6) 게이트는 `SessionBackedCompletionGate`가 실제 세션 종료 여부로 판정합니다(세션 없으면 vacuous-true).
 
 ## 구조 (Monorepo)
 
 | 경로 | 내용 |
 | --- | --- |
-| `/backend` | Spring Boot 3.x · Java 21 · Gradle. 3계층(Controller→Service→Repository), 패키지 루트 `com.learnkk` (모듈: `kernel`, `auth`, `meeting`, `enrollment`) |
-| `/contracts` | `openapi.yaml` — API 계약(#1), Bolt 3 = `0.3.0-bolt3` |
+| `/backend` | Spring Boot 3.x · Java 21 · Gradle. 3계층(Controller→Service→Repository), 패키지 루트 `com.learnkk` (모듈: `kernel`, `auth`, `meeting`, `enrollment`, `session`) |
+| `/contracts` | `openapi.yaml` — API 계약(#1), Bolt 6 = `0.4.0-bolt6` |
 | `/frontend` | React · TypeScript · Vite · shadcn/ui. 단일 API 클라이언트(`src/api/client.ts`), Vitest + RTL |
 | `docker-compose.yml` | 로컬 PostgreSQL 16 |
 | `.env.example` | 로컬 환경변수/시크릿 예시 (`.env`는 커밋 금지) |
@@ -98,15 +99,23 @@ TESTCONTAINERS_RYUK_DISABLED=true \
 | POST | `/api/admin/meetings/{id}/confirm-recruitment` | Bearer (ADMIN) | 모집확정 진행/취소 (T3/T4) |
 | POST | `/api/admin/meetings/{id}/approve-start` | Bearer (ADMIN) | ② 시작 승인 (T5) |
 | POST | `/api/admin/meetings/{id}/complete` | Bearer (ADMIN) | ③ 완료 (T6, 세션 종료 게이트) |
+| POST | `/api/meetings/{id}/sessions` | Bearer (소유 MENTOR) | 세션 추가 (IN_PROGRESS, Bolt 6) |
+| GET | `/api/meetings/{id}/sessions` | Bearer | 세션 목록 (Bolt 6) |
+| PUT | `/api/sessions/{id}` | Bearer (소유 MENTOR) | 세션 일정 변경 (Bolt 6) |
+| POST | `/api/sessions/{id}/attendance` | Bearer (참여 MENTEE) | 팝업 출석 체크 (시간창, 멱등, Bolt 6) |
+| GET | `/api/meetings/{id}/my-attendance` | Bearer | 내 출석 현황 (a/S·출석율, Bolt 6) |
+| POST | `/api/meetings/{id}/completions/compute` | Bearer (소유 MENTOR/ADMIN) | 80% 수료 자동 판정 (Bolt 6) |
+| GET | `/api/meetings/{id}/completions` | Bearer (소유 MENTOR/ADMIN) | 수료 판정 결과 조회 (Bolt 6) |
+| POST | `/api/admin/meetings/{id}/completions/{menteeId}/approve` | Bearer (ADMIN) | ④ 멘티 수료 확정 (Bolt 6) |
 
 에러 응답 본문은 `ErrorPayload{code, message, details}` 형태이며, 상태코드는 400(검증)/401(인증)/403(인가)/404(미존재)/409(상태충돌·중복)로 매핑됩니다.
 
-## Bolt 3 범위 / 제외
+## Bolt 6 범위 / 제외
 
-- **포함 (Bolt 3)**: U4 Enrollment — 멘티 선착순 신청(정원/중복 제어, BR-U4-1/2), 신청 취소(②시작 전, BR-U4-3), 신청자 목록(소유 멘토/관리자, US-2.3), 멘티 신청 현황(`listMyEnrollments`, US-3.5). FE: 모집중 목록의 인라인 신청 버튼(MENTEE), 내 러닝의 신청 현황·취소, 멘토 운영 허브의 신청자 목록/수 배선.
-- **동시성 불변식(BR-U4-1)**: 신청 트랜잭션에서 `pg_advisory_xact_lock(meetingId)` → 활성(APPLIED) 신청 수 count → 정원 미만이면 insert. 락은 트랜잭션 종료까지 유지되어 잔여 1석 경합에서도 1건만 성공합니다. U3 `meetings` 행은 잠그지 않고 `MeetingService.getMeeting` read로만 접근합니다(모듈 소유 규칙).
-- **이월 (Bolt 4+)**: 멘티 현황의 세션 일정 조합(U5/Bolt 6), 설문 응답(U8/Bolt 7), 관리자 승인 큐 목록 조회(U9/Bolt 8), 자료/쪽지/모니터링, CI/CD·배포. 대기열(waitlist)·취소 후 재신청은 설계상 없음(unique 유지).
-- **Forward seam**: 완료(T6)의 "모든 세션 종료" 판정은 `meeting/service/SessionCompletionGate` 인터페이스 뒤로 분리되어 있으며, 현재 스텁(`NoSessionsCompletionGate`)은 통과(true)를 반환합니다. Bolt 6(U5)가 실제 세션 read 구현으로 교체합니다.
+- **포함 (Bolt 6)**: U5 Session/Attendance — 세션 일정(추가·변경, W1/BR-U5-1), 스케줄러리스 시간창 팝업 출석(멱등, W2/BR-U5-2, ADR-005), 출석율 산출(a/S, S=0→0, BR-U5-3), 80% 수료 자동 판정(정수식 `a*100>=80*S`, W3/BR-U5-4), ④ 관리자 수료 확정(W4/BR-U5-5). FE: 멘토 운영 허브의 세션 관리(MentorHub), 내 러닝의 멘티 세션·출석·출석율(MenteeLearning), 관리자 페이지의 수료 판정·④ 확정(AdminApprovalPage).
+- **통합 지점**: U5→U3는 `MeetingService.getMeeting` read(모임 상태·소유 멘토), U5→U4는 `EnrollmentService.listActiveMenteeIds`/`isActiveParticipant` 무권한 read 포트로 참여자를 조회합니다. 세션 테이블은 auth 토큰 테이블 `sessions`(V2)와의 충돌을 피해 `meeting_session`(V5)으로 격리하고, 엔티티는 `com.learnkk.session.entity.Session` + `@Table(name="meeting_session")`.
+- **완료 게이트 배선**: Bolt 2 스텁 `NoSessionsCompletionGate`를 제거하고 `session/service/SessionBackedCompletionGate`(implements `meeting/service/SessionCompletionGate`)로 교체했습니다. 완료(T6) 판정은 실제 세션 종료 여부(`allScheduledSessionsEnded`)로 이뤄지며, 세션이 없으면 vacuous-true로 무회귀입니다. 상태 쓰기(COMPLETED)는 U3 소유로 유지됩니다(ADR-007 R-2).
+- **이월 (Bolt 7+)**: 설문 응답(U8/Bolt 7), 관리자 승인 큐 목록 조회·종합 모니터링(U9/Bolt 8), 자료/쪽지, CI/CD·배포. 세션 변경 통지(A6)는 인앱 현황 갱신으로 대체합니다.
 
 ## 프론트엔드 (`/frontend`)
 

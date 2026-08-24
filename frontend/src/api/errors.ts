@@ -49,6 +49,18 @@ export const ERROR_CODE_MESSAGES: Record<string, string> = {
   MESSAGING_EMPTY_BODY: '쪽지 내용을 입력해 주세요.',
   MESSAGING_RECIPIENT_NOT_FOUND: '받는 사람을 찾을 수 없습니다.',
   MESSAGING_THREAD_NOT_FOUND: '대화를 찾을 수 없습니다.',
+  // Session (U5)
+  SESSION_NOT_FOUND: '세션을 찾을 수 없습니다.',
+  SESSION_FORBIDDEN: '세션을 관리할 권한이 없습니다.',
+  SESSION_MEETING_NOT_ACTIVE: '진행 중인 모임에서만 세션을 관리할 수 있습니다.',
+  // Attendance (U5)
+  ATTENDANCE_WINDOW_CLOSED: '출석 가능 시간이 아닙니다.',
+  ATTENDANCE_NOT_PARTICIPANT: '모임 참여자만 출석할 수 있습니다.',
+  // Completion (U5)
+  COMPLETION_NOT_FOUND: '수료 판정 내역을 찾을 수 없습니다.',
+  COMPLETION_FORBIDDEN: '수료 현황을 조회할 권한이 없습니다.',
+  COMPLETION_NOT_ELIGIBLE: '수료 기준을 충족하지 않았습니다.',
+  COMPLETION_ALREADY_APPROVED: '이미 수료 확정된 멘티입니다.',
 };
 
 const GENERIC_MESSAGE = '요청을 처리하는 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.';

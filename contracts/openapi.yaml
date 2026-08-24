@@ -842,6 +842,220 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
+  /api/meetings/{id}/sessions:
+    post:
+      tags: [sessions]
+      summary: Add a session to a meeting (owning mentor only)
+      description: >
+        The caller must be the owning mentor (else 403 SESSION_FORBIDDEN) and the meeting must be
+        IN_PROGRESS (else 409 SESSION_MEETING_NOT_ACTIVE).
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/MeetingId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSessionRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeetingSessionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    get:
+      tags: [sessions]
+      summary: List a meeting's sessions
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/MeetingId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MeetingSessionResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/sessions/{id}:
+    put:
+      tags: [sessions]
+      summary: Reschedule a session (owning mentor only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSessionRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeetingSessionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/sessions/{id}/attendance:
+    post:
+      tags: [attendance]
+      summary: Pop-up self check-in for a session (participant mentee only)
+      description: >
+        Valid only within the check-in window [scheduledAt, scheduledAt + checkInWindowMinutes]
+        (else 409 ATTENDANCE_WINDOW_CLOSED). Non-participants get 403 ATTENDANCE_NOT_PARTICIPANT;
+        a non-IN_PROGRESS meeting gets 409 SESSION_MEETING_NOT_ACTIVE. Idempotent per
+        (session, mentee).
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '201':
+          description: Created (or existing attendance returned idempotently)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttendanceResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /api/meetings/{id}/my-attendance:
+    get:
+      tags: [attendance]
+      summary: The caller's attendance summary for a meeting
+      description: "rate = attended / totalScheduled when totalScheduled > 0, else 0 (S=0 guard)."
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/MeetingId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttendanceSummaryResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/meetings/{id}/completions/compute:
+    post:
+      tags: [completions]
+      summary: Run the 80% completion auto-judgement (owning mentor or admin)
+      description: >
+        For each participant a*100 >= 80*S marks COMPLETION_CANDIDATE (integer test); S=0 withholds
+        candidacy (NOT_COMPLETED). Already COMPLETED rows are not re-judged.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/MeetingId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MenteeCompletionResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/meetings/{id}/completions:
+    get:
+      tags: [completions]
+      summary: List a meeting's completion judgements (owning mentor or admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/MeetingId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MenteeCompletionResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/admin/meetings/{id}/completions/{menteeId}/approve:
+    post:
+      tags: [completions]
+      summary: Approve a mentee's completion (④, admin only)
+      description: >
+        Already COMPLETED yields 409 COMPLETION_ALREADY_APPROVED (checked first); a
+        non-COMPLETION_CANDIDATE yields 409 COMPLETION_NOT_ELIGIBLE.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/MeetingId'
+        - name: menteeId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MenteeCompletionResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+
 components:
   securitySchemes:
     bearerAuth:
@@ -851,6 +1065,14 @@ components:
 
   parameters:
     MeetingId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+
+    SessionId:
       name: id
       in: path
       required: true
@@ -1365,3 +1587,96 @@ components:
           format: int64
         totalPages:
           type: integer
+    CompletionStatus:
+      type: string
+      enum: [NOT_COMPLETED, COMPLETION_CANDIDATE, COMPLETED]
+
+
+    CreateSessionRequest:
+      type: object
+      required: [week, scheduledAt]
+      properties:
+        week:
+          type: integer
+          minimum: 1
+        scheduledAt:
+          type: string
+          format: date-time
+        checkInWindowMinutes:
+          type: integer
+          minimum: 1
+          nullable: true
+          description: Check-in window length in minutes (defaults to 120 when omitted)
+
+    UpdateSessionRequest:
+      type: object
+      required: [scheduledAt]
+      properties:
+        scheduledAt:
+          type: string
+          format: date-time
+
+    MeetingSessionResponse:
+      type: object
+      required: [id, meetingId, week, scheduledAt, checkInWindowMinutes]
+      properties:
+        id:
+          type: integer
+          format: int64
+        meetingId:
+          type: integer
+          format: int64
+        week:
+          type: integer
+        scheduledAt:
+          type: string
+          format: date-time
+        checkInWindowMinutes:
+          type: integer
+
+    AttendanceResponse:
+      type: object
+      required: [sessionId, menteeId, checkedInAt]
+      properties:
+        sessionId:
+          type: integer
+          format: int64
+        menteeId:
+          type: integer
+          format: int64
+        checkedInAt:
+          type: string
+          format: date-time
+
+    AttendanceSummaryResponse:
+      type: object
+      required: [attended, totalScheduled, rate]
+      properties:
+        attended:
+          type: integer
+        totalScheduled:
+          type: integer
+        rate:
+          type: number
+          format: double
+
+    MenteeCompletionResponse:
+      type: object
+      required: [meetingId, menteeId, status, attendedCount, totalScheduled]
+      properties:
+        meetingId:
+          type: integer
+          format: int64
+        menteeId:
+          type: integer
+          format: int64
+        status:
+          $ref: '#/components/schemas/CompletionStatus'
+        attendedCount:
+          type: integer
+        totalScheduled:
+          type: integer
+        approvedAt:
+          type: string
+          format: date-time
+          nullable: true

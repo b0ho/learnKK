@@ -25,6 +25,8 @@
 
 <!-- Project-specific specialisation. -->
 
+- 신규 모듈/도메인은 슬라이스 테스트(@WebMvcTest·@Mock)만으로 검증을 끝내지 말고, 최소 1개의 부팅형 검증(통합 테스트 또는 실행 앱 대상 라이브 E2E)으로 ApplicationContext·JPA·JPQL 배선을 확인한다 — 슬라이스는 빈 등록·엔티티명·JPQL 파싱을 커버하지 못한다 (learned 2026-08-24) <!-- cid:code-generation:boot-verification -->
+
 ## Deployment
 
 <!-- Project-specific specialisation. -->
@@ -32,6 +34,8 @@
 ## Code Style
 
 <!-- Project-specific specialisation. -->
+
+- 신규 도메인 타입(JPA 엔티티·Spring Data 리포지토리)의 simple name은 기존 도메인(특히 auth의 `Session`/`SessionRepository`)과 겹치지 않게 도메인 접두를 붙인다 — 같은 simple name은 Spring 빈 이름·JPA 엔티티명·JPQL 참조가 전역 네임스페이스에서 충돌해 기동 실패를 유발한다 (예: U5는 `MeetingSession`/`MeetingSessionRepository`, 테이블 `meeting_session`) (learned 2026-08-24) <!-- cid:code-generation:name-collision -->
 
 ## Tech Stack
 

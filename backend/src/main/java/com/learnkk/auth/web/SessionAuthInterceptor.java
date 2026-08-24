@@ -30,6 +30,18 @@ public class SessionAuthInterceptor implements HandlerInterceptor {
       Pattern.compile("^/api/meetings/\\d+/enrollments/mine$");
   private static final Pattern MEETING_APPLICANTS =
       Pattern.compile("^/api/meetings/\\d+/applicants$");
+  // Session routes (U5) — all authenticated.
+  private static final Pattern MEETING_SESSIONS =
+      Pattern.compile("^/api/meetings/\\d+/sessions$");
+  private static final Pattern SESSION_BY_ID = Pattern.compile("^/api/sessions/\\d+$");
+  private static final Pattern SESSION_ATTENDANCE =
+      Pattern.compile("^/api/sessions/\\d+/attendance$");
+  private static final Pattern MEETING_MY_ATTENDANCE =
+      Pattern.compile("^/api/meetings/\\d+/my-attendance$");
+  private static final Pattern MEETING_COMPLETIONS =
+      Pattern.compile("^/api/meetings/\\d+/completions$");
+  private static final Pattern MEETING_COMPLETIONS_COMPUTE =
+      Pattern.compile("^/api/meetings/\\d+/completions/compute$");
 
   private final AuthService authService;
 
@@ -100,6 +112,28 @@ public class SessionAuthInterceptor implements HandlerInterceptor {
       return true;
     }
     // Messaging routes (U7) are all authenticated — none are public.
-    return path.startsWith("/api/messages");
+    if (path.startsWith("/api/messages")) {
+      return true;
+    }
+    // Session routes (U5) — all authenticated (POST 세션생성/출석, PUT 일정변경, GET 현황/조회).
+    if ("POST".equalsIgnoreCase(method) && MEETING_SESSIONS.matcher(path).matches()) {
+      return true;
+    }
+    if ("GET".equalsIgnoreCase(method) && MEETING_SESSIONS.matcher(path).matches()) {
+      return true;
+    }
+    if ("PUT".equalsIgnoreCase(method) && SESSION_BY_ID.matcher(path).matches()) {
+      return true;
+    }
+    if ("POST".equalsIgnoreCase(method) && SESSION_ATTENDANCE.matcher(path).matches()) {
+      return true;
+    }
+    if ("GET".equalsIgnoreCase(method) && MEETING_MY_ATTENDANCE.matcher(path).matches()) {
+      return true;
+    }
+    if ("GET".equalsIgnoreCase(method) && MEETING_COMPLETIONS.matcher(path).matches()) {
+      return true;
+    }
+    return "POST".equalsIgnoreCase(method) && MEETING_COMPLETIONS_COMPUTE.matcher(path).matches();
   }
 }

@@ -1,5 +1,13 @@
-import { useState, type FormEvent } from 'react';
-import { adminApi, meetingsApi, resolveErrorMessage, type MeetingResponse } from '@/api';
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import {
+  adminApi,
+  isApiErrorCode,
+  meetingsApi,
+  resolveErrorMessage,
+  sessionsApi,
+  type MeetingResponse,
+  type MenteeCompletionResponse,
+} from '@/api';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,6 +22,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { meetingStatusLabel, meetingStatusVariant } from '@/features/shared/meetingStatus';
+import {
+  completionStatusLabel,
+  completionStatusVariant,
+  formatRate,
+} from '@/features/shared/completionStatus';
 
 /**
  * Admin meeting lifecycle actions. The approval-queue listing is U9 (Bolt 8); until then the admin
@@ -239,10 +252,15 @@ export function AdminApprovalPage() {
                 종료된 모임입니다. 추가 작업이 없습니다.
               </p>
             )}
+
+            {(status === 'IN_PROGRESS' || status === 'COMPLETED') && (
+              <CompletionPanel meetingId={meeting.id} />
+            )}
           </CardContent>
         </Card>
       )}
 
+      {/* Completion ④ panel is rendered inside the meeting detail card above. */}
       <Dialog open={reasonOpen} onOpenChange={setReasonOpen}>
         <DialogContent data-testid="reason-dialog">
           <DialogHeader>
@@ -274,6 +292,143 @@ export function AdminApprovalPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+/**
+ * ④ Completion panel (admin). Runs the 80% auto-judgement (computeCompletions), lists the resulting
+ * mentee statuses, and lets the admin approve each COMPLETION_CANDIDATE (approveCompletion). Already
+ * COMPLETED / not-eligible attempts surface the server's 409 Korean message.
+ */
+function CompletionPanel({ meetingId }: { meetingId: number }) {
+  const [rows, setRows] = useState<MenteeCompletionResponse[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [computing, setComputing] = useState(false);
+  const [approvingId, setApprovingId] = useState<number | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      setRows(await sessionsApi.listCompletions(meetingId));
+    } catch (err) {
+      setError(resolveErrorMessage(err));
+    } finally {
+      setLoading(false);
+    }
+  }, [meetingId]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  async function handleCompute() {
+    setComputing(true);
+    setActionError(null);
+    try {
+      setRows(await sessionsApi.computeCompletions(meetingId));
+    } catch (err) {
+      setActionError(resolveErrorMessage(err));
+    } finally {
+      setComputing(false);
+    }
+  }
+
+  async function handleApprove(menteeId: number) {
+    setApprovingId(menteeId);
+    setActionError(null);
+    try {
+      await sessionsApi.approveCompletion(meetingId, menteeId);
+      await load();
+    } catch (err) {
+      if (isApiErrorCode(err, 'COMPLETION_ALREADY_APPROVED')) {
+        setActionError('이미 수료 확정된 멘티입니다.');
+      } else if (isApiErrorCode(err, 'COMPLETION_NOT_ELIGIBLE')) {
+        setActionError('수료 기준을 충족하지 않아 확정할 수 없습니다.');
+      } else {
+        setActionError(resolveErrorMessage(err));
+      }
+    } finally {
+      setApprovingId(null);
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-2 border-t pt-3" data-testid={`admin-completion-${meetingId}`}>
+      <div className="flex items-center justify-between gap-2">
+        <span className="font-medium">수료 판정 (④)</span>
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={computing}
+          onClick={handleCompute}
+          data-testid="admin-completion-compute"
+        >
+          {computing ? '판정 중...' : '수료 판정 실행'}
+        </Button>
+      </div>
+
+      {loading && (
+        <p className="text-sm text-muted-foreground" data-testid="admin-completion-loading">
+          불러오는 중...
+        </p>
+      )}
+
+      {error && (
+        <p role="alert" className="text-sm text-destructive" data-testid="admin-completion-error">
+          {error}
+        </p>
+      )}
+
+      {actionError && (
+        <p role="alert" className="text-sm text-destructive" data-testid="admin-completion-action-error">
+          {actionError}
+        </p>
+      )}
+
+      {!loading && !error && rows.length === 0 && (
+        <p className="text-sm text-muted-foreground" data-testid="admin-completion-empty">
+          아직 판정 내역이 없습니다. &lsquo;수료 판정 실행&rsquo;을 눌러 판정하세요.
+        </p>
+      )}
+
+      {rows.length > 0 && (
+        <ul className="flex flex-col gap-1.5" data-testid="admin-completion-list">
+          {rows.map((r) => (
+            <li
+              key={r.menteeId}
+              className="flex items-center justify-between gap-2 text-sm"
+              data-testid={`admin-completion-row-${r.menteeId}`}
+            >
+              <span>
+                멘티 #{r.menteeId} · {r.attendedCount}/{r.totalScheduled} (
+                {formatRate(r.totalScheduled > 0 ? r.attendedCount / r.totalScheduled : 0)})
+              </span>
+              <div className="flex items-center gap-2">
+                <Badge
+                  variant={completionStatusVariant(r.status)}
+                  data-testid={`admin-completion-status-${r.menteeId}`}
+                >
+                  {completionStatusLabel(r.status)}
+                </Badge>
+                {r.status === 'COMPLETION_CANDIDATE' && (
+                  <Button
+                    size="sm"
+                    disabled={approvingId === r.menteeId}
+                    onClick={() => handleApprove(r.menteeId)}
+                    data-testid={`admin-completion-approve-${r.menteeId}`}
+                  >
+                    {approvingId === r.menteeId ? '확정 중...' : '수료 확정'}
+                  </Button>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
