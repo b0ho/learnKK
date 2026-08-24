@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   enrollmentsApi,
   meetingsApi,
@@ -14,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { meetingStatusLabel, meetingStatusVariant } from '@/features/shared/meetingStatus';
+import { PATHS } from '@/routes/paths';
 
 /**
  * "내 러닝" tab. Role-adaptive slice:
@@ -149,7 +151,18 @@ function MenteeLearning() {
                     <span data-testid={`mentee-enrollment-status-${enrollment.id}`}>
                       신청 상태: {enrollment.status === 'APPLIED' ? '신청됨' : '취소됨'}
                     </span>
-                    <span>신청일: {new Date(enrollment.appliedAt).toLocaleDateString('ko-KR')}</span>
+                    <span>
+                      신청일: {new Date(enrollment.appliedAt).toLocaleDateString('ko-KR')}
+                    </span>
+                    {enrollment.status === 'APPLIED' && (
+                      <Link
+                        to={PATHS.meetingContent(enrollment.meetingId)}
+                        className="self-start text-sm font-medium text-primary hover:underline"
+                        data-testid={`mentee-content-link-${enrollment.id}`}
+                      >
+                        자료실 · 공지 보기
+                      </Link>
+                    )}
                     {canCancel && (
                       <Button
                         size="sm"
@@ -273,6 +286,14 @@ function MentorHub() {
                     <span>기간: {m.weeks}주</span>
                     <span>정원: {m.capacity}명</span>
                     <span data-testid={`mentor-meeting-next-${m.id}`}>{NEXT_ACTION[m.status]}</span>
+
+                    <Link
+                      to={PATHS.meetingContent(m.id)}
+                      className="self-start text-sm font-medium text-primary hover:underline"
+                      data-testid={`mentor-content-link-${m.id}`}
+                    >
+                      자료실 · 공지 관리
+                    </Link>
 
                     <div className="flex flex-col gap-1">
                       <span data-testid={`applicant-count-${m.id}`}>

@@ -42,4 +42,13 @@ public final class ErrorCodes {
   public static final String ENROLLMENT_DUPLICATE = "ENROLLMENT_DUPLICATE";
   public static final String ENROLLMENT_NOT_OPEN = "ENROLLMENT_NOT_OPEN";
   public static final String ENROLLMENT_CANCEL_FORBIDDEN = "ENROLLMENT_CANCEL_FORBIDDEN";
+
+  // --- Content domain (U6: posts / attachments / notices) ---
+  public static final String POST_NOT_FOUND = "POST_NOT_FOUND";
+  public static final String CONTENT_FORBIDDEN = "CONTENT_FORBIDDEN";
+  public static final String CONTENT_VALIDATION = "CONTENT_VALIDATION";
+  public static final String ATTACHMENT_NOT_FOUND = "ATTACHMENT_NOT_FOUND";
+  public static final String ATTACHMENT_TYPE_NOT_ALLOWED = "ATTACHMENT_TYPE_NOT_ALLOWED";
+  public static final String ATTACHMENT_TOO_LARGE = "ATTACHMENT_TOO_LARGE";
+  public static final String ATTACHMENT_LIMIT = "ATTACHMENT_LIMIT";
 }

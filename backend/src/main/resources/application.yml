@@ -24,6 +24,13 @@ spring:
     property-naming-strategy: LOWER_CAMEL_CASE
     serialization:
       write-dates-as-timestamps: false
+  # Attachment uploads (U6): the 20MB business cap (A1) is enforced in AttachmentService so it
+  # returns a clean 400 ATTACHMENT_TOO_LARGE. The container limits sit slightly above as a hard
+  # ceiling guarding against extreme uploads (mapped to 413 by GlobalExceptionHandler).
+  servlet:
+    multipart:
+      max-file-size: 25MB
+      max-request-size: 26MB
 
 server:
   port: ${SERVER_PORT:8080}

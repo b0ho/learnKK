@@ -14,6 +14,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 /**
  * Translates domain exceptions and Bean Validation failures into the uniform {@link ErrorPayload}
@@ -58,6 +59,17 @@ public class GlobalExceptionHandler {
   public ResponseEntity<ErrorPayload> handleBadRequest(Exception ex) {
     return ResponseEntity.status(HttpStatus.BAD_REQUEST)
         .body(ErrorPayload.of(ErrorCodes.VALIDATION_FAILED, "요청 파라미터가 올바르지 않습니다."));
+  }
+
+  /**
+   * Upload exceeding the multipart container ceiling (a hard stop above the 20MB business cap).
+   * Mapped to 413 with the same {@code ATTACHMENT_TOO_LARGE} code the service uses at the cap so
+   * clients see one consistent contract for oversized attachments (BR-U6-2).
+   */
+  @ExceptionHandler(MaxUploadSizeExceededException.class)
+  public ResponseEntity<ErrorPayload> handleUploadTooLarge(MaxUploadSizeExceededException ex) {
+    return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
+        .body(ErrorPayload.of(ErrorCodes.ATTACHMENT_TOO_LARGE, "첨부 파일은 20MB를 초과할 수 없습니다."));
   }
 
   /**
