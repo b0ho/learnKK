@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { FileText, FolderOpen } from 'lucide-react';
 import {
   enrollmentsApi,
   isApiErrorCode,
@@ -177,13 +178,18 @@ function MenteeLearning() {
                       신청일: {new Date(enrollment.appliedAt).toLocaleDateString('ko-KR')}
                     </span>
                     {enrollment.status === 'APPLIED' && (
-                      <Link
-                        to={PATHS.meetingContent(enrollment.meetingId)}
-                        className="self-start text-sm font-medium text-primary hover:underline"
+                      <Button
+                        asChild
+                        size="sm"
+                        variant="outline"
+                        className="self-start"
                         data-testid={`mentee-content-link-${enrollment.id}`}
                       >
-                        자료실 · 공지 보기
-                      </Link>
+                        <Link to={PATHS.meetingContent(enrollment.meetingId)}>
+                          <FolderOpen className="mr-1 h-4 w-4" aria-hidden="true" />
+                          자료실 · 공지 보기
+                        </Link>
+                      </Button>
                     )}
                     {canCancel && (
                       <Button
@@ -492,13 +498,34 @@ function MentorHub() {
                     <span>정원: {m.capacity}명</span>
                     <span data-testid={`mentor-meeting-next-${m.id}`}>{NEXT_ACTION[m.status]}</span>
 
-                    <Link
-                      to={PATHS.meetingContent(m.id)}
-                      className="self-start text-sm font-medium text-primary hover:underline"
+                    <Button
+                      asChild
+                      size="sm"
+                      variant="outline"
+                      className="self-start"
                       data-testid={`mentor-content-link-${m.id}`}
                     >
-                      자료실 · 공지 관리
-                    </Link>
+                      <Link to={PATHS.meetingContent(m.id)}>
+                        <FolderOpen className="mr-1 h-4 w-4" aria-hidden="true" />
+                        자료실 · 공지 관리
+                      </Link>
+                    </Button>
+                    {(m.status === 'PENDING_APPROVAL' ||
+                      m.status === 'RECRUITING' ||
+                      m.status === 'READY_TO_START') && (
+                      <Button
+                        asChild
+                        size="sm"
+                        variant="outline"
+                        className="self-start"
+                        data-testid={`mentor-questions-edit-${m.id}`}
+                      >
+                        <Link to={PATHS.meetingQuestions(m.id)}>
+                          <FileText className="mr-1 h-4 w-4" aria-hidden="true" />
+                          사전설문 문항 관리
+                        </Link>
+                      </Button>
+                    )}
                     <Button
                       asChild
                       size="sm"
@@ -621,6 +648,35 @@ function MentorSessions({ meetingId }: { meetingId: number }) {
     }
   }
 
+  async function handleComplete(sessionId: number) {
+    setBusy(true);
+    setActionError(null);
+    try {
+      await sessionsApi.completeSession(sessionId);
+      await load();
+    } catch (err) {
+      setActionError(resolveErrorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleDelete(sessionId: number) {
+    if (!window.confirm('이 세션을 삭제할까요? 관련 출석 기록도 함께 삭제됩니다.')) {
+      return;
+    }
+    setBusy(true);
+    setActionError(null);
+    try {
+      await sessionsApi.deleteSession(sessionId);
+      await load();
+    } catch (err) {
+      setActionError(resolveErrorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="flex flex-col gap-2 border-t pt-2" data-testid={`mentor-sessions-${meetingId}`}>
       <span className="font-medium text-foreground">세션 관리</span>
@@ -654,18 +710,45 @@ function MentorSessions({ meetingId }: { meetingId: number }) {
           {sessions.map((s) => (
             <li key={s.id} className="flex flex-col gap-1" data-testid={`mentor-session-${s.id}`}>
               <div className="flex items-center justify-between gap-2">
-                <span>
+                <span className="flex items-center gap-1.5">
                   {s.week}주차 · {formatWhen(s.scheduledAt)}
+                  {s.completed && (
+                    <Badge variant="secondary" data-testid={`mentor-session-completed-${s.id}`}>
+                      완료
+                    </Badge>
+                  )}
                 </span>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={busy}
-                  onClick={() => startEdit(s)}
-                  data-testid={`mentor-session-edit-${s.id}`}
-                >
-                  시간 변경
-                </Button>
+                <div className="flex gap-1">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={busy}
+                    onClick={() => startEdit(s)}
+                    data-testid={`mentor-session-edit-${s.id}`}
+                  >
+                    시간 변경
+                  </Button>
+                  {!s.completed && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={busy}
+                      onClick={() => handleComplete(s.id)}
+                      data-testid={`mentor-session-complete-${s.id}`}
+                    >
+                      완료 처리
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    disabled={busy}
+                    onClick={() => handleDelete(s.id)}
+                    data-testid={`mentor-session-delete-${s.id}`}
+                  >
+                    삭제
+                  </Button>
+                </div>
               </div>
               {editingId === s.id && (
                 <div className="flex items-end gap-2" data-testid={`mentor-session-edit-form-${s.id}`}>

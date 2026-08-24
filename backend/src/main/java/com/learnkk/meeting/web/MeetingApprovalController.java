@@ -1,17 +1,27 @@
 package com.learnkk.meeting.web;
 
+import com.learnkk.kernel.domain.MeetingStatus;
+import com.learnkk.kernel.error.ErrorCodes;
+import com.learnkk.kernel.error.ValidationException;
 import com.learnkk.kernel.security.AuthPrincipal;
 import com.learnkk.kernel.security.Principal;
+import com.learnkk.kernel.web.PageRequestFactory;
+import com.learnkk.kernel.web.PageResponse;
 import com.learnkk.meeting.dto.ConfirmRecruitmentRequest;
 import com.learnkk.meeting.dto.MeetingResponse;
+import com.learnkk.meeting.dto.MeetingSummary;
 import com.learnkk.meeting.dto.RejectRequest;
 import com.learnkk.meeting.service.MeetingApprovalService;
 import jakarta.validation.Valid;
+import java.util.Set;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -65,4 +75,31 @@ public class MeetingApprovalController {
       @AuthPrincipal Principal principal, @PathVariable Long id) {
     return ResponseEntity.ok(approvalService.completeMeeting(principal, id));
   }
+
+  /** FR-5: 승인 되돌리기(직전 상태로 역전이, 관리자 전용). */
+  @PostMapping("/{id}/revert")
+  public ResponseEntity<MeetingResponse> revert(
+      @AuthPrincipal Principal principal, @PathVariable Long id) {
+    return ResponseEntity.ok(approvalService.revert(principal, id));
+  }
+
+  /** FR-2/FR-3: 상태별 모임 목록(관리자 승인 큐). */
+  @GetMapping
+  public ResponseEntity<PageResponse<MeetingSummary>> listByStatus(
+      @AuthPrincipal Principal principal,
+      @RequestParam String status,
+      @RequestParam(required = false) Integer page,
+      @RequestParam(required = false) Integer size,
+      @RequestParam(required = false) String sort) {
+    MeetingStatus parsed;
+    try {
+      parsed = MeetingStatus.valueOf(status.trim().toUpperCase());
+    } catch (IllegalArgumentException e) {
+      throw new ValidationException(ErrorCodes.VALIDATION_FAILED, "지원하지 않는 status 값입니다: " + status);
+    }
+    Pageable pageable = PageRequestFactory.of(page, size, sort, SORTABLE);
+    return ResponseEntity.ok(approvalService.listByStatus(principal, parsed, pageable));
+  }
+
+  private static final Set<String> SORTABLE = Set.of("id", "createdAt", "title");
 }

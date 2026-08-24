@@ -184,7 +184,7 @@ class OpenApiContractTest {
     assertConforms(
         "MeetingSessionResponse",
         new com.learnkk.session.dto.SessionResponse(
-            5L, 10L, 1, java.time.OffsetDateTime.parse("2026-01-01T10:00Z"), 120));
+            5L, 10L, 1, java.time.OffsetDateTime.parse("2026-01-01T10:00Z"), 120, false));
   }
 
   @Test

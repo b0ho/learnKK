@@ -69,6 +69,25 @@ public class SessionService {
     return SessionResponse.from(sessionRepository.save(session));
   }
 
+  /** 세션 삭제(FR-7). 소유 멘토만. 출석 기록은 FK ON DELETE CASCADE 로 함께 삭제된다. */
+  @Transactional
+  public void deleteSession(Principal principal, Long sessionId) {
+    MeetingSession session = loadSession(sessionId);
+    MeetingResponse meeting = meetingService.getMeeting(session.getMeetingId());
+    requireOwningMentor(principal, meeting);
+    sessionRepository.delete(session);
+  }
+
+  /** 세션 완료 처리(FR-8). 소유 멘토만. 완료된 세션은 시간과 무관하게 종료로 간주된다. */
+  @Transactional
+  public SessionResponse completeSession(Principal principal, Long sessionId) {
+    MeetingSession session = loadSession(sessionId);
+    MeetingResponse meeting = meetingService.getMeeting(session.getMeetingId());
+    requireOwningMentor(principal, meeting);
+    session.markCompleted();
+    return SessionResponse.from(sessionRepository.save(session));
+  }
+
   /** 세션 목록(주차·예정시각 오름차순). 멘티/멘토/관리자 현황 read. */
   @Transactional(readOnly = true)
   public List<SessionResponse> listSessions(Long meetingId) {
@@ -85,7 +104,7 @@ public class SessionService {
   public boolean allScheduledSessionsEnded(Long meetingId) {
     OffsetDateTime now = OffsetDateTime.now();
     return sessionRepository.findByMeetingIdOrderByWeekAscScheduledAtAsc(meetingId).stream()
-        .allMatch(s -> s.windowEnd().isBefore(now));
+        .allMatch(s -> s.isEnded(now));
   }
 
   private void requireOwningMentor(Principal principal, MeetingResponse meeting) {

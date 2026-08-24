@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -47,5 +48,20 @@ public class SessionController {
   @GetMapping("/api/meetings/{id}/sessions")
   public ResponseEntity<List<SessionResponse>> listSessions(@PathVariable Long id) {
     return ResponseEntity.ok(sessionService.listSessions(id));
+  }
+
+  /** 세션 삭제(FR-7, 소유 멘토). 출석 기록은 CASCADE 로 함께 삭제. */
+  @DeleteMapping("/api/sessions/{id}")
+  public ResponseEntity<Void> deleteSession(
+      @AuthPrincipal Principal principal, @PathVariable Long id) {
+    sessionService.deleteSession(principal, id);
+    return ResponseEntity.noContent().build();
+  }
+
+  /** 세션 완료 처리(FR-8, 소유 멘토). */
+  @PostMapping("/api/sessions/{id}/complete")
+  public ResponseEntity<SessionResponse> completeSession(
+      @AuthPrincipal Principal principal, @PathVariable Long id) {
+    return ResponseEntity.ok(sessionService.completeSession(principal, id));
   }
 }

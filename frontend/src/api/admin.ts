@@ -1,7 +1,19 @@
 import { request } from './client';
-import type { MeetingResponse } from './types';
+import type { MeetingResponse, MeetingSummary, MeetingStatus, PageResponse } from './types';
 
 export const adminApi = {
+  /** FR-2/FR-3: 상태별 모임 목록(관리자 승인 큐). */
+  listByStatus(status: MeetingStatus, params: { size?: number } = {}): Promise<PageResponse<MeetingSummary>> {
+    return request<PageResponse<MeetingSummary>>('/api/admin/meetings', {
+      query: { status, size: params.size },
+    });
+  },
+
+  /** FR-5: 승인 되돌리기(직전 상태로 역전이). */
+  revert(id: number): Promise<MeetingResponse> {
+    return request<MeetingResponse>(`/api/admin/meetings/${id}/revert`, { method: 'POST' });
+  },
+
   approveMeeting(id: number): Promise<MeetingResponse> {
     return request<MeetingResponse>(`/api/admin/meetings/${id}/approve`, { method: 'POST' });
   },

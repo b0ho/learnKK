@@ -275,4 +275,66 @@ class MeetingApprovalServiceTest {
         .extracting("code")
         .isEqualTo(ErrorCodes.MEETING_FORBIDDEN);
   }
+
+  // --- FR-5: 승인 되돌리기(역전이) ---
+
+  @Test
+  void revert_recruiting_toPendingApproval() {
+    when(meetingRepository.findById(1L))
+        .thenReturn(
+            Optional.of(withStatus(MeetingStatus.RECRUITING)),
+            Optional.of(withStatus(MeetingStatus.PENDING_APPROVAL)));
+    when(meetingRepository.transitionStatus(
+            eq(1L), eq(MeetingStatus.RECRUITING), eq(MeetingStatus.PENDING_APPROVAL), isNull()))
+        .thenReturn(1);
+
+    MeetingResponse response = approvalService.revert(admin, 1L);
+
+    assertThat(response.status()).isEqualTo(MeetingStatus.PENDING_APPROVAL);
+  }
+
+  @Test
+  void revert_completed_toInProgress() {
+    when(meetingRepository.findById(1L))
+        .thenReturn(
+            Optional.of(withStatus(MeetingStatus.COMPLETED)),
+            Optional.of(withStatus(MeetingStatus.IN_PROGRESS)));
+    when(meetingRepository.transitionStatus(
+            eq(1L), eq(MeetingStatus.COMPLETED), eq(MeetingStatus.IN_PROGRESS), isNull()))
+        .thenReturn(1);
+
+    MeetingResponse response = approvalService.revert(admin, 1L);
+
+    assertThat(response.status()).isEqualTo(MeetingStatus.IN_PROGRESS);
+  }
+
+  @Test
+  void revert_pendingApproval_notRevertible_conflict409() {
+    when(meetingRepository.findById(1L))
+        .thenReturn(Optional.of(withStatus(MeetingStatus.PENDING_APPROVAL)));
+
+    assertThatThrownBy(() -> approvalService.revert(admin, 1L))
+        .isInstanceOf(ConflictException.class)
+        .extracting("code")
+        .isEqualTo(ErrorCodes.MEETING_INVALID_TRANSITION);
+  }
+
+  @Test
+  void revert_rejected_notRevertible_conflict409() {
+    when(meetingRepository.findById(1L))
+        .thenReturn(Optional.of(withStatus(MeetingStatus.REJECTED)));
+
+    assertThatThrownBy(() -> approvalService.revert(admin, 1L))
+        .isInstanceOf(ConflictException.class)
+        .extracting("code")
+        .isEqualTo(ErrorCodes.MEETING_INVALID_TRANSITION);
+  }
+
+  @Test
+  void revert_nonAdmin_forbidden403() {
+    assertThatThrownBy(() -> approvalService.revert(mentor, 1L))
+        .isInstanceOf(ForbiddenException.class)
+        .extracting("code")
+        .isEqualTo(ErrorCodes.MEETING_FORBIDDEN);
+  }
 }

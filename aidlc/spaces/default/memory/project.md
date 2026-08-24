@@ -36,6 +36,7 @@
 <!-- Project-specific specialisation. -->
 
 - 신규 도메인 타입(JPA 엔티티·Spring Data 리포지토리)의 simple name은 기존 도메인(특히 auth의 `Session`/`SessionRepository`)과 겹치지 않게 도메인 접두를 붙인다 — 같은 simple name은 Spring 빈 이름·JPA 엔티티명·JPQL 참조가 전역 네임스페이스에서 충돌해 기동 실패를 유발한다 (예: U5는 `MeetingSession`/`MeetingSessionRepository`, 테이블 `meeting_session`) (learned 2026-08-24) <!-- cid:code-generation:name-collision -->
+- controlled 입력(React)의 표시값을 매 키 입력마다 파싱된 배열/구조에서 되도출하지 말 것 — 입력 도중 구분자 문자(쉼표 등)가 즉시 제거되어 타이핑이 불가능해진다. 로컬 raw-text 상태를 두고 표시하며, 파싱(trim·필터) 결과만 부모/상위 상태에 전달한다 (예: SurveyBuilder의 CHOICE 선택지 `ChoiceOptionsInput`) (learned 2026-08-24) <!-- cid:code-generation:controlled-input-rawtext -->
 
 ## Tech Stack
 

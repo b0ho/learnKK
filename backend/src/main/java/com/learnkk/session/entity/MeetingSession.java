@@ -35,6 +35,10 @@ public class MeetingSession {
   @Column(name = "check_in_window_minutes", nullable = false)
   private int checkInWindowMinutes;
 
+  /** 멘토가 세션을 명시적으로 완료 처리했는지(FR-8). true 면 시간과 무관하게 종료로 간주. */
+  @Column(nullable = false)
+  private boolean completed = false;
+
   @CreationTimestamp
   @Column(name = "created_at", nullable = false, updatable = false)
   private OffsetDateTime createdAt;
@@ -68,6 +72,20 @@ public class MeetingSession {
   /** 예정 일시 변경(A6). 멘티 현황에 반영된다. */
   public void reschedule(OffsetDateTime newScheduledAt) {
     this.scheduledAt = newScheduledAt;
+  }
+
+  /** 멘토가 세션을 완료 처리한다(FR-8). 이후 종료된 세션으로 간주된다. */
+  public void markCompleted() {
+    this.completed = true;
+  }
+
+  public boolean isCompleted() {
+    return completed;
+  }
+
+  /** 세션이 종료되었는가: 수동 완료했거나 출석 시간창이 경과했으면 종료(FR-8). */
+  public boolean isEnded(OffsetDateTime now) {
+    return completed || windowEnd().isBefore(now);
   }
 
   public Long getId() {

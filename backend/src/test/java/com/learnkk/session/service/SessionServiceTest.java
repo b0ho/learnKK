@@ -3,6 +3,7 @@ package com.learnkk.session.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.learnkk.kernel.domain.MeetingStatus;
@@ -152,6 +153,56 @@ class SessionServiceTest {
   void allScheduledSessionsEnded_noSessions_vacuousTrue() {
     when(sessionRepository.findByMeetingIdOrderByWeekAscScheduledAtAsc(10L))
         .thenReturn(List.of());
+
+    assertThat(sessionService.allScheduledSessionsEnded(10L)).isTrue();
+  }
+
+  // --- FR-7 세션 삭제 ---
+
+  @Test
+  void deleteSession_owningMentor_deletes() {
+    MeetingSession s = new MeetingSession(10L, 1, OffsetDateTime.parse("2026-01-01T10:00Z"), 120);
+    when(sessionRepository.findById(5L)).thenReturn(Optional.of(s));
+    when(meetingService.getMeeting(10L)).thenReturn(meeting(MeetingStatus.IN_PROGRESS));
+
+    sessionService.deleteSession(owningMentor, 5L);
+
+    verify(sessionRepository).delete(s);
+  }
+
+  @Test
+  void deleteSession_nonOwner_forbidden403() {
+    MeetingSession s = new MeetingSession(10L, 1, OffsetDateTime.parse("2026-01-01T10:00Z"), 120);
+    when(sessionRepository.findById(5L)).thenReturn(Optional.of(s));
+    when(meetingService.getMeeting(10L)).thenReturn(meeting(MeetingStatus.IN_PROGRESS));
+
+    assertThatThrownBy(() -> sessionService.deleteSession(otherMentor, 5L))
+        .isInstanceOf(ForbiddenException.class)
+        .extracting("code")
+        .isEqualTo(ErrorCodes.SESSION_FORBIDDEN);
+  }
+
+  // --- FR-8 세션 완료 처리 ---
+
+  @Test
+  void completeSession_owningMentor_marksCompleted() {
+    MeetingSession s = new MeetingSession(10L, 1, OffsetDateTime.parse("2026-01-01T10:00Z"), 120);
+    when(sessionRepository.findById(5L)).thenReturn(Optional.of(s));
+    when(meetingService.getMeeting(10L)).thenReturn(meeting(MeetingStatus.IN_PROGRESS));
+    when(sessionRepository.save(any(MeetingSession.class))).thenAnswer(inv -> inv.getArgument(0));
+
+    SessionResponse res = sessionService.completeSession(owningMentor, 5L);
+
+    assertThat(res.completed()).isTrue();
+  }
+
+  @Test
+  void allScheduledSessionsEnded_futureButCompleted_true() {
+    // 미래 시각이지만 수동 완료된 세션은 종료로 간주(FR-8).
+    MeetingSession future = new MeetingSession(10L, 1, OffsetDateTime.now().plusDays(1), 120);
+    future.markCompleted();
+    when(sessionRepository.findByMeetingIdOrderByWeekAscScheduledAtAsc(10L))
+        .thenReturn(List.of(future));
 
     assertThat(sessionService.allScheduledSessionsEnded(10L)).isTrue();
   }

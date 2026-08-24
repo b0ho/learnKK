@@ -138,6 +138,26 @@ class EnrollmentServiceTest {
         .isEqualTo(ErrorCodes.ENROLLMENT_DUPLICATE);
   }
 
+  @Test
+  void apply_afterCancel_reactivatesExisting() {
+    // FR-12: 취소(CANCELLED)했던 신청이 있으면 재활성화(APPLIED 복귀)하며 새 행을 만들지 않는다.
+    Enrollment cancelled = applied(1L, 10L, 2L);
+    cancelled.cancel();
+    when(meetingService.getMeeting(10L)).thenReturn(meeting(MeetingStatus.RECRUITING, 5));
+    when(enrollmentRepository.findByMeetingIdAndMenteeId(10L, 2L))
+        .thenReturn(Optional.of(cancelled));
+    when(enrollmentRepository.countByMeetingIdAndStatus(10L, EnrollmentStatus.APPLIED))
+        .thenReturn(1);
+    when(enrollmentRepository.saveAndFlush(any(Enrollment.class)))
+        .thenAnswer(inv -> inv.getArgument(0));
+
+    EnrollmentResponse response = enrollmentService.apply(mentee, 10L);
+
+    assertThat(response.status()).isEqualTo(EnrollmentStatus.APPLIED);
+    verify(enrollmentRepository).lockMeeting(10L);
+    verify(enrollmentRepository).saveAndFlush(cancelled);
+  }
+
   // --- cancel ---
 
   @Test

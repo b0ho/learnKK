@@ -64,11 +64,10 @@ public class EnrollmentService {
       throw new ConflictException(ErrorCodes.ENROLLMENT_NOT_OPEN, "모집 중인 모임이 아닙니다.");
     }
 
-    // Friendly pre-check before entering the atomic section (a CANCELLED row still occupies the
-    // (meeting, mentee) pair — re-application is not supported).
-    if (enrollmentRepository
-        .findByMeetingIdAndMenteeId(meetingId, principal.userId())
-        .isPresent()) {
+    // Friendly pre-check before the atomic section. A CANCELLED row is REUSED (FR-12 재신청):
+    // only an already-APPLIED row is a true duplicate.
+    var existing = enrollmentRepository.findByMeetingIdAndMenteeId(meetingId, principal.userId());
+    if (existing.isPresent() && existing.get().getStatus() == EnrollmentStatus.APPLIED) {
       throw new ConflictException(ErrorCodes.ENROLLMENT_DUPLICATE, "이미 신청한 모임입니다.");
     }
 
@@ -81,8 +80,12 @@ public class EnrollmentService {
     }
 
     try {
-      Enrollment saved =
-          enrollmentRepository.saveAndFlush(new Enrollment(meetingId, principal.userId()));
+      // 취소했던 신청이 있으면 재활성화, 없으면 신규 생성(FR-12).
+      Enrollment enrollment = existing.orElseGet(() -> new Enrollment(meetingId, principal.userId()));
+      if (existing.isPresent()) {
+        enrollment.reactivate();
+      }
+      Enrollment saved = enrollmentRepository.saveAndFlush(enrollment);
       return EnrollmentResponse.from(saved);
     } catch (DataIntegrityViolationException e) {
       // Concurrent duplicate lost the UNIQUE race.

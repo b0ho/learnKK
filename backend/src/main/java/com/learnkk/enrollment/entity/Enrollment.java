@@ -65,6 +65,13 @@ public class Enrollment {
     this.cancelledAt = OffsetDateTime.now();
   }
 
+  /** 취소했던 신청을 다시 활성화(FR-12). 신청일 갱신, 취소시각 초기화. */
+  public void reactivate() {
+    this.status = EnrollmentStatus.APPLIED;
+    this.appliedAt = OffsetDateTime.now();
+    this.cancelledAt = null;
+  }
+
   public Long getId() {
     return id;
   }

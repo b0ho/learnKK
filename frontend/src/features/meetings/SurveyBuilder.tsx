@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -143,19 +144,10 @@ export function SurveyBuilder({ questions, onChange }: SurveyBuilderProps) {
           {question.type === 'CHOICE' && (
             <div className="flex flex-col gap-1.5">
               <Label htmlFor={`survey-options-${index}`}>선택지 (쉼표로 구분)</Label>
-              <Input
-                id={`survey-options-${index}`}
-                data-testid={`survey-options-${index}`}
-                value={question.options.join(', ')}
-                placeholder="예: 초급, 중급, 고급"
-                onChange={(e) =>
-                  update(index, {
-                    options: e.target.value
-                      .split(',')
-                      .map((o) => o.trim())
-                      .filter(Boolean),
-                  })
-                }
+              <ChoiceOptionsInput
+                index={index}
+                options={question.options}
+                onOptionsChange={(options) => update(index, { options })}
               />
             </div>
           )}
@@ -172,5 +164,41 @@ export function SurveyBuilder({ questions, onChange }: SurveyBuilderProps) {
         </div>
       ))}
     </div>
+  );
+}
+
+/**
+ * CHOICE 선택지 입력. 표시값은 로컬 raw 텍스트로 유지해 쉼표/공백을 그대로 입력할 수 있게 하고(FR-1),
+ * 부모에는 쉼표 기준 trim·빈값 제거한 배열만 전달한다. 매 입력마다 배열로 되접어 표시하지 않으므로 쉼표가
+ * 사라지지 않는다.
+ */
+function ChoiceOptionsInput({
+  index,
+  options,
+  onOptionsChange,
+}: {
+  index: number;
+  options: string[];
+  onOptionsChange: (options: string[]) => void;
+}) {
+  const [text, setText] = useState(options.join(', '));
+
+  return (
+    <Input
+      id={`survey-options-${index}`}
+      data-testid={`survey-options-${index}`}
+      value={text}
+      placeholder="예: 초급, 중급, 고급"
+      onChange={(e) => {
+        const raw = e.target.value;
+        setText(raw);
+        onOptionsChange(
+          raw
+            .split(',')
+            .map((o) => o.trim())
+            .filter(Boolean),
+        );
+      }}
+    />
   );
 }

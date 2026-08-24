@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom';
-import { BookOpen, GraduationCap, MessageSquare, User } from 'lucide-react';
+import { BookOpen, GraduationCap, MessageSquare, Shield, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/auth/useAuth';
 import { useUnreadCount } from '@/features/messaging/useUnreadCount';
 import { PATHS } from './paths';
 
@@ -11,16 +12,23 @@ interface TabDef {
   testId: string;
 }
 
-const TABS: TabDef[] = [
-  { to: PATHS.meetings, label: '모임', icon: BookOpen, testId: 'tab-meetings' },
-  { to: PATHS.myLearning, label: '내 러닝', icon: GraduationCap, testId: 'tab-my-learning' },
-  { to: PATHS.messages, label: '쪽지', icon: MessageSquare, testId: 'tab-messages' },
-  { to: PATHS.profile, label: '내정보', icon: User, testId: 'tab-profile' },
-];
-
 /** Mobile-first app frame: scrollable content + fixed bottom navigation with an unread badge. */
 export function AppShell() {
   const { count: unread } = useUnreadCount();
+  const { role } = useAuth();
+
+  // 관리자는 '내 러닝'이 없으므로 그 자리에 '관리'(승인 큐) 진입점을 노출한다(FR-4).
+  const secondTab: TabDef =
+    role === 'ADMIN'
+      ? { to: PATHS.adminApproval, label: '관리', icon: Shield, testId: 'tab-admin' }
+      : { to: PATHS.myLearning, label: '내 러닝', icon: GraduationCap, testId: 'tab-my-learning' };
+
+  const TABS: TabDef[] = [
+    { to: PATHS.meetings, label: '모임', icon: BookOpen, testId: 'tab-meetings' },
+    secondTab,
+    { to: PATHS.messages, label: '쪽지', icon: MessageSquare, testId: 'tab-messages' },
+    { to: PATHS.profile, label: '내정보', icon: User, testId: 'tab-profile' },
+  ];
 
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col bg-background">

@@ -35,6 +35,20 @@ describe('SurveyBuilder', () => {
     expect(screen.getByTestId('survey-empty')).toBeInTheDocument();
   });
 
+  it('keeps commas while typing CHOICE options (FR-1 regression)', async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+
+    await user.click(screen.getByTestId('survey-add'));
+    await user.selectOptions(screen.getByTestId('survey-type-0'), 'CHOICE');
+
+    const options = screen.getByTestId('survey-options-0');
+    await user.type(options, '초급, 중급');
+
+    // 쉼표가 입력 도중 사라지지 않고 그대로 유지된다.
+    expect(options).toHaveValue('초급, 중급');
+  });
+
   it('reorders questions with the up control', async () => {
     const user = userEvent.setup();
     render(<Harness />);

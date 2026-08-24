@@ -7,9 +7,12 @@ import com.learnkk.kernel.error.ForbiddenException;
 import com.learnkk.kernel.error.NotFoundException;
 import com.learnkk.kernel.error.ValidationException;
 import com.learnkk.kernel.security.Principal;
+import com.learnkk.kernel.web.PageResponse;
 import com.learnkk.meeting.dto.MeetingResponse;
+import com.learnkk.meeting.dto.MeetingSummary;
 import com.learnkk.meeting.entity.Meeting;
 import com.learnkk.meeting.repository.MeetingRepository;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -139,6 +142,48 @@ public class MeetingApprovalService {
           ErrorCodes.MEETING_INVALID_TRANSITION, "완료할 수 없는 상태입니다. 이미 처리되었을 수 있습니다.");
     }
     return MeetingResponse.from(reload(meetingId));
+  }
+
+  /**
+   * 승인 되돌리기(FR-5): 전진 승인을 직전 상태로 원자적 역전이한다(관리자 전용). RECRUITING→PENDING_APPROVAL,
+   * READY_TO_START→RECRUITING, IN_PROGRESS→READY_TO_START, COMPLETED→IN_PROGRESS. 반려(REJECTED)·모집취소
+   * (CANCELLED)·최초 상태(PENDING_APPROVAL)는 되돌리기 대상이 아니며 409 {@code MEETING_INVALID_TRANSITION}.
+   */
+  @Transactional
+  public MeetingResponse revert(Principal principal, Long meetingId) {
+    requireAdmin(principal);
+    Meeting meeting = reload(meetingId);
+    MeetingStatus from = meeting.getStatus();
+    MeetingStatus to = priorStatus(from);
+    if (to == null) {
+      throw new ConflictException(
+          ErrorCodes.MEETING_INVALID_TRANSITION, "되돌릴 수 없는 상태입니다.");
+    }
+    int updated = meetingRepository.transitionStatus(meetingId, from, to, null);
+    if (updated == 0) {
+      throw new ConflictException(
+          ErrorCodes.MEETING_INVALID_TRANSITION, "되돌릴 수 없는 상태입니다. 이미 처리되었을 수 있습니다.");
+    }
+    return MeetingResponse.from(reload(meetingId));
+  }
+
+  private MeetingStatus priorStatus(MeetingStatus current) {
+    return switch (current) {
+      case RECRUITING -> MeetingStatus.PENDING_APPROVAL;
+      case READY_TO_START -> MeetingStatus.RECRUITING;
+      case IN_PROGRESS -> MeetingStatus.READY_TO_START;
+      case COMPLETED -> MeetingStatus.IN_PROGRESS;
+      default -> null; // PENDING_APPROVAL / REJECTED / CANCELLED — 되돌리기 대상 아님
+    };
+  }
+
+  /** 관리자 승인 큐(FR-2/FR-3): 특정 상태의 모임 목록. 관리자 전용. */
+  @Transactional(readOnly = true)
+  public PageResponse<MeetingSummary> listByStatus(
+      Principal principal, MeetingStatus status, Pageable pageable) {
+    requireAdmin(principal);
+    return PageResponse.from(
+        meetingRepository.findByStatus(status, pageable).map(MeetingSummary::from));
   }
 
   private void requireAdmin(Principal principal) {

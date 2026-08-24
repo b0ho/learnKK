@@ -727,6 +727,76 @@ paths:
         '409':
           $ref: '#/components/responses/Conflict'
 
+  /api/admin/meetings/{id}/revert:
+    post:
+      tags: [admin]
+      summary: Revert the last forward approval by one step (FR-5, admin only)
+      description: >
+        RECRUITING->PENDING_APPROVAL, READY_TO_START->RECRUITING, IN_PROGRESS->READY_TO_START,
+        COMPLETED->IN_PROGRESS. Non-revertible states (PENDING_APPROVAL / REJECTED / CANCELLED)
+        yield 409 MEETING_INVALID_TRANSITION.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/MeetingId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeetingResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /api/admin/meetings:
+    get:
+      tags: [admin]
+      summary: List meetings by status (admin approval queue, FR-2/FR-3)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          required: true
+          schema:
+            type: string
+          description: MeetingStatus (PENDING_APPROVAL / RECRUITING / READY_TO_START / IN_PROGRESS / COMPLETED / REJECTED / CANCELLED)
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: sort
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageMeetingSummary'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
   /api/messages:
     post:
       tags: [messaging]
@@ -928,6 +998,44 @@ paths:
                 $ref: '#/components/schemas/MeetingSessionResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [sessions]
+      summary: Delete a session (owning mentor only; attendance cascades)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '204':
+          description: No Content
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/sessions/{id}/complete:
+    post:
+      tags: [sessions]
+      summary: Mark a session complete (owning mentor only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeetingSessionResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -1790,7 +1898,7 @@ components:
 
     MeetingSessionResponse:
       type: object
-      required: [id, meetingId, week, scheduledAt, checkInWindowMinutes]
+      required: [id, meetingId, week, scheduledAt, checkInWindowMinutes, completed]
       properties:
         id:
           type: integer
@@ -1805,6 +1913,9 @@ components:
           format: date-time
         checkInWindowMinutes:
           type: integer
+        completed:
+          type: boolean
+          description: 멘토가 세션을 완료 처리했는지 (FR-8). true면 시간과 무관하게 종료로 간주.
 
     AttendanceResponse:
       type: object

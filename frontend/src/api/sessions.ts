@@ -34,6 +34,18 @@ export const sessionsApi = {
     });
   },
 
+  /** Delete a session (owning mentor, FR-7). Attendance cascades. */
+  deleteSession(sessionId: number): Promise<void> {
+    return request<void>(`/api/sessions/${sessionId}`, { method: 'DELETE' });
+  },
+
+  /** Mark a session complete (owning mentor, FR-8). */
+  completeSession(sessionId: number): Promise<MeetingSessionResponse> {
+    return request<MeetingSessionResponse>(`/api/sessions/${sessionId}/complete`, {
+      method: 'POST',
+    });
+  },
+
   /** Pop-up self check-in for a session (participant mentee, within the time window). */
   checkIn(sessionId: number): Promise<AttendanceResponse> {
     return request<AttendanceResponse>(`/api/sessions/${sessionId}/attendance`, {

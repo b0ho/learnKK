@@ -262,6 +262,7 @@ export interface MeetingSessionResponse {
   week: number;
   scheduledAt: string;
   checkInWindowMinutes: number;
+  completed: boolean;
 }
 
 export interface AttendanceResponse {

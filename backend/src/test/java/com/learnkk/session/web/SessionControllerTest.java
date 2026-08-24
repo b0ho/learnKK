@@ -34,7 +34,7 @@ class SessionControllerTest {
   @MockBean private SessionService sessionService;
 
   private final SessionResponse sample =
-      new SessionResponse(5L, 10L, 1, OffsetDateTime.parse("2026-01-01T10:00Z"), 120);
+      new SessionResponse(5L, 10L, 1, OffsetDateTime.parse("2026-01-01T10:00Z"), 120, false);
 
   @Test
   void addSession_asMentor_returns201() throws Exception {

@@ -6,6 +6,7 @@ import { MeetingListPage } from '@/features/meetings/MeetingListPage';
 import { MeetingCreatePage } from '@/features/meetings/MeetingCreatePage';
 import { AdminApprovalPage } from '@/features/meetings/AdminApprovalPage';
 import { MyLearningPage } from '@/features/meetings/MyLearningPage';
+import { MeetingQuestionsEditPage } from '@/features/meetings/MeetingQuestionsEditPage';
 import { MeetingContentPage } from '@/features/content/MeetingContentPage';
 import { MessagesPage } from '@/features/messaging/MessagesPage';
 import { ThreadView } from '@/features/messaging/ThreadView';
@@ -29,6 +30,7 @@ export function AppRouter() {
           <Route path={PATHS.meetings} element={<MeetingListPage />} />
           <Route element={<RequireRole allow={['MENTOR']} />}>
             <Route path={PATHS.meetingCreate} element={<MeetingCreatePage />} />
+            <Route path="/meetings/:id/questions-edit" element={<MeetingQuestionsEditPage />} />
           </Route>
           <Route element={<RequireRole allow={['ADMIN']} />}>
             <Route path={PATHS.adminApproval} element={<AdminApprovalPage />} />
