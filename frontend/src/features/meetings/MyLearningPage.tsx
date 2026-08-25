@@ -14,7 +14,6 @@ import {
   type MeetingSessionResponse,
   type MeetingStatus,
   type MeetingSummary,
-  type MenteeCompletionResponse,
 } from '@/api';
 import { useAuth } from '@/auth/useAuth';
 import { Badge } from '@/components/ui/badge';
@@ -22,13 +21,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Spinner } from '@/components/ui/spinner';
 import { meetingStatusLabel, meetingStatusVariant } from '@/features/shared/meetingStatus';
 import { PATHS } from '@/routes/paths';
-import {
-  completionStatusLabel,
-  completionStatusVariant,
-  formatRate,
-} from '@/features/shared/completionStatus';
+import { formatRate } from '@/features/shared/completionStatus';
 
 /**
  * "내 러닝" tab. Role-adaptive slice:
@@ -123,11 +119,7 @@ function MenteeLearning() {
     <div className="flex flex-col gap-4">
       <h2 className="text-xl font-bold">내 러닝</h2>
 
-      {loading && (
-        <p className="text-sm text-muted-foreground" data-testid="mentee-learning-loading">
-          불러오는 중...
-        </p>
-      )}
+      {loading && <Spinner data-testid="mentee-learning-loading" />}
 
       {error && (
         <p role="alert" className="text-sm text-destructive" data-testid="mentee-learning-error">
@@ -309,11 +301,7 @@ function MenteeSessions({ meetingId }: { meetingId: number }) {
   }
 
   if (loading) {
-    return (
-      <p className="text-sm text-muted-foreground" data-testid={`mentee-sessions-loading-${meetingId}`}>
-        세션 불러오는 중...
-      </p>
-    );
+    return <Spinner data-testid={`mentee-sessions-loading-${meetingId}`} />;
   }
 
   if (error) {
@@ -367,33 +355,36 @@ function MenteeSessions({ meetingId }: { meetingId: number }) {
             return (
               <li
                 key={s.id}
-                className="flex items-center justify-between gap-2"
+                className="flex min-h-9 items-center justify-between gap-2"
                 data-testid={`mentee-session-${s.id}`}
               >
                 <span>
                   {s.week}주차 · {formatWhen(s.scheduledAt)}
                 </span>
-                {done ? (
-                  <Badge variant="secondary" data-testid={`mentee-session-done-${s.id}`}>
-                    출석 완료
-                  </Badge>
-                ) : open ? (
-                  <Button
-                    size="sm"
-                    disabled={busyId === s.id}
-                    onClick={() => handleCheckIn(s.id)}
-                    data-testid={`mentee-checkin-${s.id}`}
-                  >
-                    {busyId === s.id ? '출석 중...' : '출석하기'}
-                  </Button>
-                ) : (
-                  <span
-                    className="text-xs text-muted-foreground"
-                    data-testid={`mentee-session-closed-${s.id}`}
-                  >
-                    출석 시간 아님
-                  </span>
-                )}
+                {/* 우측 슬롯을 버튼 높이(h-9)로 고정해 완료/출석/시간외 상태가 바뀌어도 행 높이가 일정하다. */}
+                <div className="flex h-9 shrink-0 items-center justify-end">
+                  {done ? (
+                    <Badge variant="secondary" data-testid={`mentee-session-done-${s.id}`}>
+                      출석 완료
+                    </Badge>
+                  ) : open ? (
+                    <Button
+                      size="sm"
+                      disabled={busyId === s.id}
+                      onClick={() => handleCheckIn(s.id)}
+                      data-testid={`mentee-checkin-${s.id}`}
+                    >
+                      {busyId === s.id ? '출석 중...' : '출석하기'}
+                    </Button>
+                  ) : (
+                    <span
+                      className="text-xs text-muted-foreground"
+                      data-testid={`mentee-session-closed-${s.id}`}
+                    >
+                      출석 시간 아님
+                    </span>
+                  )}
+                </div>
               </li>
             );
           })}
@@ -463,11 +454,7 @@ function MentorHub() {
         응답을 열람할 수 있습니다.
       </p>
 
-      {loading && (
-        <p className="text-sm text-muted-foreground" data-testid="mentor-hub-loading">
-          불러오는 중...
-        </p>
-      )}
+      {loading && <Spinner data-testid="mentor-hub-loading" />}
 
       {error && (
         <p role="alert" className="text-sm text-destructive" data-testid="mentor-hub-error">
@@ -564,128 +551,11 @@ function MentorHub() {
                     </div>
 
                     {m.status === 'IN_PROGRESS' && <MentorSessions meetingId={m.id} />}
-                    {(m.status === 'IN_PROGRESS' || m.status === 'COMPLETED') && (
-                      <MentorCompletionPanel meetingId={m.id} />
-                    )}
                   </CardContent>
                 </Card>
               </li>
             );
           })}
-        </ul>
-      )}
-    </div>
-  );
-}
-
-/**
- * 멘토용 수료 판정 패널(FR-7). 소유 멘토가 자기 모임의 80% 수료 판정(compute)을 버튼으로 실행하고 멘티별
- * 판정 결과(후보/미수료/확정)를 확인한다. 최종 ④ 수료 확정은 관리자 전용이므로 여기서는 조회·판정만 제공한다.
- */
-function MentorCompletionPanel({ meetingId }: { meetingId: number }) {
-  const [rows, setRows] = useState<MenteeCompletionResponse[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [computing, setComputing] = useState(false);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await sessionsApi.listCompletions(meetingId);
-      setRows(Array.isArray(data) ? data : []);
-    } catch (err) {
-      setError(resolveErrorMessage(err));
-    } finally {
-      setLoading(false);
-    }
-  }, [meetingId]);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
-
-  async function handleCompute() {
-    setComputing(true);
-    setError(null);
-    try {
-      const data = await sessionsApi.computeCompletions(meetingId);
-      setRows(Array.isArray(data) ? data : []);
-    } catch (err) {
-      setError(resolveErrorMessage(err));
-    } finally {
-      setComputing(false);
-    }
-  }
-
-  return (
-    <div
-      className="flex flex-col gap-2 border-t pt-2"
-      data-testid={`mentor-completion-${meetingId}`}
-    >
-      <div className="flex items-center justify-between gap-2">
-        <span className="font-medium text-foreground">수료 판정</span>
-        <Button
-          size="sm"
-          variant="outline"
-          disabled={computing}
-          onClick={handleCompute}
-          data-testid={`mentor-completion-compute-${meetingId}`}
-        >
-          {computing ? '판정 중...' : '수료 판정 실행'}
-        </Button>
-      </div>
-
-      {loading && (
-        <p
-          className="text-sm text-muted-foreground"
-          data-testid={`mentor-completion-loading-${meetingId}`}
-        >
-          불러오는 중...
-        </p>
-      )}
-      {error && (
-        <p
-          role="alert"
-          className="text-sm text-destructive"
-          data-testid={`mentor-completion-error-${meetingId}`}
-        >
-          {error}
-        </p>
-      )}
-
-      {!loading && !error && rows.length === 0 && (
-        <p
-          className="text-sm text-muted-foreground"
-          data-testid={`mentor-completion-empty-${meetingId}`}
-        >
-          아직 판정 내역이 없습니다. &lsquo;수료 판정 실행&rsquo;을 눌러 판정하세요.
-        </p>
-      )}
-
-      {rows.length > 0 && (
-        <ul
-          className="flex flex-col gap-1.5"
-          data-testid={`mentor-completion-list-${meetingId}`}
-        >
-          {rows.map((r) => (
-            <li
-              key={r.menteeId}
-              className="flex items-center justify-between gap-2 text-sm"
-              data-testid={`mentor-completion-row-${meetingId}-${r.menteeId}`}
-            >
-              <span>
-                멘티 #{r.menteeId} · {r.attendedCount}/{r.totalScheduled} (
-                {formatRate(r.totalScheduled > 0 ? r.attendedCount / r.totalScheduled : 0)})
-              </span>
-              <Badge
-                variant={completionStatusVariant(r.status)}
-                data-testid={`mentor-completion-status-${meetingId}-${r.menteeId}`}
-              >
-                {completionStatusLabel(r.status)}
-              </Badge>
-            </li>
-          ))}
         </ul>
       )}
     </div>
@@ -807,11 +677,7 @@ function MentorSessions({ meetingId }: { meetingId: number }) {
     <div className="flex flex-col gap-2 border-t pt-2" data-testid={`mentor-sessions-${meetingId}`}>
       <span className="font-medium text-foreground">세션 관리</span>
 
-      {loading && (
-        <p className="text-sm text-muted-foreground" data-testid={`mentor-sessions-loading-${meetingId}`}>
-          세션 불러오는 중...
-        </p>
-      )}
+      {loading && <Spinner data-testid={`mentor-sessions-loading-${meetingId}`} />}
 
       {error && (
         <p role="alert" className="text-sm text-destructive" data-testid={`mentor-sessions-error-${meetingId}`}>
@@ -834,8 +700,9 @@ function MentorSessions({ meetingId }: { meetingId: number }) {
       {sessions.length > 0 && (
         <ul className="flex flex-col gap-1.5" data-testid={`mentor-session-list-${meetingId}`}>
           {sessions.map((s) => (
-            <li key={s.id} className="flex flex-col gap-1" data-testid={`mentor-session-${s.id}`}>
-              <div className="flex items-center justify-between gap-2">
+            <li key={s.id} className="flex flex-col gap-1.5" data-testid={`mentor-session-${s.id}`}>
+              {/* 주차·시간 영역과 버튼 영역을 각각 한 줄로 분리해 버튼 찌그러짐을 방지한다. */}
+              <div className="flex flex-col gap-1.5">
                 <span className="flex items-center gap-1.5">
                   {s.week}주차 · {formatWhen(s.scheduledAt)}
                   {s.completed && (
@@ -844,10 +711,11 @@ function MentorSessions({ meetingId }: { meetingId: number }) {
                     </Badge>
                   )}
                 </span>
-                <div className="flex gap-1">
+                <div className="flex flex-wrap gap-1.5">
                   <Button
                     size="sm"
                     variant="outline"
+                    className="min-w-[5rem]"
                     disabled={busy}
                     onClick={() => startEdit(s)}
                     data-testid={`mentor-session-edit-${s.id}`}
@@ -858,6 +726,7 @@ function MentorSessions({ meetingId }: { meetingId: number }) {
                     <Button
                       size="sm"
                       variant="outline"
+                      className="min-w-[5rem]"
                       disabled={busy}
                       onClick={() => handleComplete(s.id)}
                       data-testid={`mentor-session-complete-${s.id}`}
@@ -868,6 +737,7 @@ function MentorSessions({ meetingId }: { meetingId: number }) {
                   <Button
                     size="sm"
                     variant="ghost"
+                    className="min-w-[5rem]"
                     disabled={busy}
                     onClick={() => handleDelete(s.id)}
                     data-testid={`mentor-session-delete-${s.id}`}

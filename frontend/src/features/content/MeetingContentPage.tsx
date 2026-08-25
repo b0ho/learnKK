@@ -12,6 +12,7 @@ import { useAuth } from '@/auth/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Spinner } from '@/components/ui/spinner';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { validateAttachment } from './attachmentValidation';
@@ -72,9 +73,7 @@ export function MeetingContentPage() {
 
   if (loading) {
     return (
-      <p className="text-sm text-muted-foreground" data-testid="content-loading">
-        불러오는 중...
-      </p>
+<Spinner data-testid="content-loading" />
     );
   }
 

@@ -1,6 +1,7 @@
 package com.learnkk.meeting.service;
 
 import com.learnkk.kernel.domain.MeetingStatus;
+import com.learnkk.kernel.domain.MentorCompletionStatus;
 import com.learnkk.kernel.error.ConflictException;
 import com.learnkk.kernel.error.ErrorCodes;
 import com.learnkk.kernel.error.ForbiddenException;
@@ -135,6 +136,45 @@ public class MeetingApprovalService {
           ErrorCodes.MEETING_INVALID_TRANSITION, "완료할 수 없는 상태입니다. 이미 처리되었을 수 있습니다.");
     }
     return MeetingResponse.from(reload(meetingId));
+  }
+
+  /**
+   * 멘토 수료 판정(FR-7): 관리자가 모임의 멘토에 대해 '수료(COMPLETED)/미수료(NOT_COMPLETED)'를 판단만으로
+   * 판정한다. 멘티 수료(④, 출석 80% 자동 판정)와 달리 자동 계산 없이 관리자 입력만으로 결정한다. 진행 중
+   * (IN_PROGRESS) 또는 완료(COMPLETED) 모임에 대해서만 판정할 수 있다.
+   */
+  @Transactional
+  public MeetingResponse judgeMentorCompletion(
+      Principal principal, Long meetingId, String statusRaw) {
+    requireAdmin(principal);
+    MentorCompletionStatus status = parseMentorCompletion(statusRaw);
+    Meeting meeting = reload(meetingId);
+    if (meeting.getStatus() != MeetingStatus.IN_PROGRESS
+        && meeting.getStatus() != MeetingStatus.COMPLETED) {
+      throw new ConflictException(
+          ErrorCodes.MEETING_INVALID_TRANSITION, "진행 중이거나 완료된 모임만 멘토 수료 판정이 가능합니다.");
+    }
+    meeting.setMentorCompletionStatus(status);
+    meetingRepository.save(meeting);
+    return MeetingResponse.from(reload(meetingId));
+  }
+
+  private MentorCompletionStatus parseMentorCompletion(String raw) {
+    if (raw == null || raw.isBlank()) {
+      throw new ValidationException(ErrorCodes.MEETING_VALIDATION, "판정 상태는 필수입니다.");
+    }
+    MentorCompletionStatus parsed;
+    try {
+      parsed = MentorCompletionStatus.valueOf(raw.trim().toUpperCase());
+    } catch (IllegalArgumentException e) {
+      throw new ValidationException(
+          ErrorCodes.MEETING_VALIDATION, "지원하지 않는 판정 상태입니다: " + raw);
+    }
+    if (parsed == MentorCompletionStatus.PENDING) {
+      throw new ValidationException(
+          ErrorCodes.MEETING_VALIDATION, "수료(COMPLETED) 또는 미수료(NOT_COMPLETED)만 판정할 수 있습니다.");
+    }
+    return parsed;
   }
 
   /**

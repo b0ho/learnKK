@@ -12,6 +12,9 @@ export type MeetingStatus =
   | 'REJECTED'
   | 'CANCELLED';
 
+/** 멘토 수료 판정(FR-7): 관리자 판단만으로 결정. PENDING=판정 전. */
+export type MentorCompletionStatus = 'PENDING' | 'COMPLETED' | 'NOT_COMPLETED';
+
 /** Survey question type discriminator used by the builder and backend. */
 export type SurveyQuestionType = 'SHORT_TEXT' | 'LONG_TEXT' | 'CHOICE';
 
@@ -84,6 +87,8 @@ export interface MeetingResponse {
   initialContent?: string | null;
   status: MeetingStatus;
   rejectReason?: string | null;
+  /** FR-7: 백엔드는 항상 반환(기본 PENDING). FE에서는 선택적으로 두어 목 데이터 호환성을 유지한다. */
+  mentorCompletionStatus?: MentorCompletionStatus;
 }
 
 export interface MeetingSummary {
@@ -93,6 +98,8 @@ export interface MeetingSummary {
   weeks: number;
   capacity: number;
   status: MeetingStatus;
+  /** FR-7: 백엔드는 항상 반환(기본 PENDING). FE에서는 선택적으로 두어 목 데이터 호환성을 유지한다. */
+  mentorCompletionStatus?: MentorCompletionStatus;
 }
 
 export interface SurveyQuestionDto {

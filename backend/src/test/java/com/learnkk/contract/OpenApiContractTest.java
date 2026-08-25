@@ -11,6 +11,7 @@ import com.learnkk.auth.dto.ProfileResponse;
 import com.learnkk.auth.dto.SessionResponse;
 import com.learnkk.auth.dto.UserResponse;
 import com.learnkk.kernel.domain.MeetingStatus;
+import com.learnkk.kernel.domain.MentorCompletionStatus;
 import com.learnkk.kernel.domain.Role;
 import com.learnkk.kernel.error.ErrorPayload;
 import com.learnkk.kernel.web.PageResponse;
@@ -104,13 +105,16 @@ class OpenApiContractTest {
             "online",
             "c",
             MeetingStatus.RECRUITING,
-            null));
+            null,
+            MentorCompletionStatus.PENDING));
   }
 
   @Test
   void meetingSummary_conformsToSchema() throws Exception {
     assertConforms(
-        "MeetingSummary", new MeetingSummary(10L, "t", "topic", 8, 5, MeetingStatus.RECRUITING));
+        "MeetingSummary",
+        new MeetingSummary(
+            10L, "t", "topic", 8, 5, MeetingStatus.RECRUITING, MentorCompletionStatus.PENDING));
   }
 
   @Test
@@ -246,7 +250,9 @@ class OpenApiContractTest {
   void pageMeetingSummary_conformsToSchema() throws Exception {
     PageResponse<MeetingSummary> page =
         new PageResponse<>(
-            List.of(new MeetingSummary(10L, "t", "topic", 8, 5, MeetingStatus.RECRUITING)),
+            List.of(
+                new MeetingSummary(
+                    10L, "t", "topic", 8, 5, MeetingStatus.RECRUITING, MentorCompletionStatus.PENDING)),
             0,
             20,
             1,

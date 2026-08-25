@@ -9,6 +9,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 
 /**
@@ -59,9 +60,7 @@ export function FeedbackPage() {
 
   if (loading) {
     return (
-      <p className="text-sm text-muted-foreground" data-testid="feedback-loading">
-        불러오는 중...
-      </p>
+<Spinner data-testid="feedback-loading" />
     );
   }
 

@@ -1,6 +1,7 @@
 package com.learnkk.meeting.dto;
 
 import com.learnkk.kernel.domain.MeetingStatus;
+import com.learnkk.kernel.domain.MentorCompletionStatus;
 import com.learnkk.meeting.entity.Meeting;
 import java.time.OffsetDateTime;
 
@@ -17,7 +18,8 @@ public record MeetingResponse(
     String format,
     String initialContent,
     MeetingStatus status,
-    String rejectReason) {
+    String rejectReason,
+    MentorCompletionStatus mentorCompletionStatus) {
 
   public static MeetingResponse from(Meeting m) {
     return new MeetingResponse(
@@ -32,6 +34,7 @@ public record MeetingResponse(
         m.getFormat(),
         m.getInitialContent(),
         m.getStatus(),
-        m.getRejectReason());
+        m.getRejectReason(),
+        m.getMentorCompletionStatus());
   }
 }

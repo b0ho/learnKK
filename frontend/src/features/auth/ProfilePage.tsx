@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Spinner } from '@/components/ui/spinner';
 import { FieldError } from '@/components/FieldError';
 import { PATHS } from '@/routes/paths';
 import { roleLabel } from '@/features/shared/roleLabel';
@@ -101,7 +102,7 @@ export function ProfilePage() {
   }
 
   if (loading) {
-    return <p data-testid="profile-loading">프로필을 불러오는 중...</p>;
+    return <Spinner data-testid="profile-loading" label="프로필을 불러오는 중" />;
   }
 
   if (loadError) {

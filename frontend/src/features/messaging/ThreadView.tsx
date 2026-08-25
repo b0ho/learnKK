@@ -5,6 +5,7 @@ import { messagesApi, resolveErrorMessage, type MessageResponse } from '@/api';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Spinner } from '@/components/ui/spinner';
 import { PATHS } from '@/routes/paths';
 import { formatTime } from './formatTime';
 import { notifyMessagesRead } from './useUnreadCount';
@@ -111,9 +112,7 @@ export function ThreadView() {
       </div>
 
       {loading && (
-        <p className="text-sm text-muted-foreground" data-testid="thread-loading">
-          불러오는 중...
-        </p>
+<Spinner data-testid="thread-loading" />
       )}
 
       {error && (

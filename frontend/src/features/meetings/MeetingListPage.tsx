@@ -10,6 +10,7 @@ import { useAuth } from '@/auth/useAuth';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Spinner } from '@/components/ui/spinner';
 import { PATHS } from '@/routes/paths';
 import { meetingStatusLabel, meetingStatusVariant } from '@/features/shared/meetingStatus';
 
@@ -87,7 +88,7 @@ export function MeetingListPage() {
         {/* FR-9: 관리자 모임 목록의 '개설 승인' 진입 버튼 제거 — 모든 관리 액션은 하단 '관리' 탭에서 수행한다. */}
       </div>
 
-      {state === 'loading' && <p data-testid="meetings-loading">모임을 불러오는 중...</p>}
+      {state === 'loading' && <Spinner data-testid="meetings-loading" label="모임을 불러오는 중" />}
 
       {state === 'error' && (
         <p role="alert" className="text-destructive" data-testid="meetings-error">

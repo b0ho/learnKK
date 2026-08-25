@@ -1,5 +1,10 @@
 import { request } from './client';
-import type { MeetingResponse, MeetingSummary, MeetingStatus, PageResponse } from './types';
+import type {
+  MeetingResponse,
+  MeetingSummary,
+  MeetingStatus,
+  PageResponse,
+} from './types';
 
 export const adminApi = {
   /** FR-2/FR-3: 상태별 모임 목록(관리자 승인 큐). */
@@ -41,5 +46,16 @@ export const adminApi = {
   /** T6: complete the meeting (IN_PROGRESS -> COMPLETED). */
   complete(id: number): Promise<MeetingResponse> {
     return request<MeetingResponse>(`/api/admin/meetings/${id}/complete`, { method: 'POST' });
+  },
+
+  /** FR-7: 멘토 수료 판정(수료/미수료, 관리자 판단만). */
+  judgeMentorCompletion(
+    id: number,
+    status: 'COMPLETED' | 'NOT_COMPLETED',
+  ): Promise<MeetingResponse> {
+    return request<MeetingResponse>(`/api/admin/meetings/${id}/mentor-completion`, {
+      method: 'POST',
+      body: { status },
+    });
   },
 };

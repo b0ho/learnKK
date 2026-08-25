@@ -10,6 +10,7 @@ import com.learnkk.kernel.web.PageResponse;
 import com.learnkk.meeting.dto.ConfirmRecruitmentRequest;
 import com.learnkk.meeting.dto.MeetingResponse;
 import com.learnkk.meeting.dto.MeetingSummary;
+import com.learnkk.meeting.dto.MentorCompletionRequest;
 import com.learnkk.meeting.dto.RejectRequest;
 import com.learnkk.meeting.service.MeetingApprovalService;
 import jakarta.validation.Valid;
@@ -81,6 +82,16 @@ public class MeetingApprovalController {
   public ResponseEntity<MeetingResponse> revert(
       @AuthPrincipal Principal principal, @PathVariable Long id) {
     return ResponseEntity.ok(approvalService.revert(principal, id));
+  }
+
+  /** FR-7: 멘토 수료 판정(수료/미수료, 관리자 판단만, 관리자 전용). */
+  @PostMapping("/{id}/mentor-completion")
+  public ResponseEntity<MeetingResponse> judgeMentorCompletion(
+      @AuthPrincipal Principal principal,
+      @PathVariable Long id,
+      @Valid @RequestBody MentorCompletionRequest request) {
+    return ResponseEntity.ok(
+        approvalService.judgeMentorCompletion(principal, id, request.status()));
   }
 
   /** FR-2/FR-3: 상태별 모임 목록(관리자 승인 큐). */

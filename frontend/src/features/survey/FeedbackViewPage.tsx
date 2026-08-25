@@ -12,6 +12,7 @@ import {
   type SurveyAnswerResponse,
 } from '@/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Spinner } from '@/components/ui/spinner';
 
 /**
  * Feedback + pre-survey answer review for the owning mentor or admin (US-8.2, W4). Lists every
@@ -79,9 +80,7 @@ export function FeedbackViewPage() {
 
   if (loading) {
     return (
-      <p className="text-sm text-muted-foreground" data-testid="feedback-view-loading">
-        불러오는 중...
-      </p>
+<Spinner data-testid="feedback-view-loading" />
     );
   }
 

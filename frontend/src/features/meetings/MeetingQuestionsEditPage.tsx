@@ -9,6 +9,7 @@ import {
 } from '@/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Spinner } from '@/components/ui/spinner';
 import { PATHS } from '@/routes/paths';
 import { SurveyBuilder, createEmptyQuestion, type DraftQuestion } from './SurveyBuilder';
 
@@ -93,9 +94,7 @@ export function MeetingQuestionsEditPage() {
 
   if (loading) {
     return (
-      <p className="text-sm text-muted-foreground" data-testid="questions-edit-loading">
-        불러오는 중...
-      </p>
+<Spinner data-testid="questions-edit-loading" />
     );
   }
 
