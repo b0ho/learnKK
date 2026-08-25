@@ -54,5 +54,12 @@
     "dirName": "260824-ux-bugfixes",
     "scope": "bugfix",
     "status": "complete"
+  },
+  {
+    "uuid": "01a03751-0005-7295-bc30-07cce5b472d0",
+    "slug": "design-system",
+    "dirName": "260825-design-system",
+    "scope": "feature",
+    "status": "in-flight"
   }
 ]

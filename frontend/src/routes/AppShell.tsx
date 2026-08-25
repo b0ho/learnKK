@@ -3,6 +3,7 @@ import { BookOpen, GraduationCap, MessageSquare, Shield, User } from 'lucide-rea
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/auth/useAuth';
 import { useUnreadCount } from '@/features/messaging/useUnreadCount';
+import { Toaster } from '@/components/ui/sonner';
 import { PATHS } from './paths';
 
 interface TabDef {
@@ -32,16 +33,18 @@ export function AppShell() {
 
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col bg-background">
-      <header className="border-b px-4 py-3">
-        <h1 className="text-lg font-bold tracking-tight">런크크</h1>
+      <header className="sticky top-0 z-30 border-b border-border/80 bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/75">
+        <h1 className="text-lg font-extrabold tracking-tight text-primary">런크크</h1>
       </header>
 
       <main className="flex-1 px-4 py-4 pb-24" data-testid="app-content">
         <Outlet />
       </main>
 
+      <Toaster position="top-center" richColors closeButton />
+
       <nav
-        className="fixed inset-x-0 bottom-0 mx-auto flex max-w-md border-t bg-background"
+        className="fixed inset-x-0 bottom-0 z-30 mx-auto flex max-w-md border-t border-border/80 bg-background/95 shadow-[0_-1px_3px_0_hsl(155_25%_12%_/_0.06)] backdrop-blur supports-[backdrop-filter]:bg-background/85"
         aria-label="주요 메뉴"
       >
         {TABS.map(({ to, label, icon: Icon, testId }) => (
@@ -51,8 +54,10 @@ export function AppShell() {
             data-testid={testId}
             className={({ isActive }) =>
               cn(
-                'relative flex flex-1 flex-col items-center gap-1 py-2 text-xs font-medium transition-colors',
-                isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
+                'relative flex flex-1 flex-col items-center gap-1 py-2.5 text-xs font-medium transition-colors',
+                isActive
+                  ? 'text-primary after:absolute after:inset-x-5 after:top-0 after:h-0.5 after:rounded-full after:bg-primary'
+                  : 'text-muted-foreground hover:text-foreground',
               )
             }
           >

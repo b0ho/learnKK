@@ -26,7 +26,7 @@ function page(content: MeetingSummary[]) {
  * only for `showIn`. A POST to `/{action}` returns `nextStatus` (used for reload assertions).
  */
 function queueFetch(showIn: MeetingStatus, opts: { completions?: unknown[] } = {}) {
-  return vi.fn(async (url: string) => {
+  return vi.fn(async (url: string, _init?: RequestInit) => {
     const u = String(url);
     if (u.includes('/api/admin/meetings?status=')) {
       const status = new URL(u).searchParams.get('status');
