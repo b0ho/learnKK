@@ -15,9 +15,17 @@ interface TabDef {
   testId: string;
 }
 
-/** A tab "owns" its root path and any deeper path under it (segment-aware, so /me ≠ /meetings). */
+/**
+ * 탭의 스코프 루트. '관리' 탭(→ /admin/meetings)은 승인 큐·운영 현황 등 /admin 하위 전체를 하나의 탭으로 묶는다.
+ */
+function tabScope(to: string): string {
+  return to === PATHS.adminApproval ? '/admin' : to;
+}
+
+/** A tab "owns" its scope root and any deeper path under it (segment-aware, so /me ≠ /meetings). */
 function isWithinTab(pathname: string, to: string): boolean {
-  return pathname === to || pathname.startsWith(`${to}/`);
+  const scope = tabScope(to);
+  return pathname === scope || pathname.startsWith(`${scope}/`);
 }
 
 /** Tab root paths — the back button is hidden on these (they are tab tops, not deep views). */
@@ -104,10 +112,10 @@ export function AppShell() {
                 setReloadKey((k) => k + 1);
               }
             }}
-            className={({ isActive }) =>
+            className={() =>
               cn(
                 'relative flex flex-1 flex-col items-center gap-1 py-2.5 text-xs font-medium transition-colors',
-                isActive
+                isWithinTab(pathname, to)
                   ? 'text-primary after:absolute after:inset-x-5 after:top-0 after:h-0.5 after:rounded-full after:bg-primary'
                   : 'text-muted-foreground hover:text-foreground',
               )

@@ -14,8 +14,6 @@ import com.learnkk.meeting.service.MeetingService;
 import com.learnkk.session.dto.MeetingProgressSummary;
 import com.learnkk.session.dto.MenteeCompletionResponse;
 import com.learnkk.session.service.CompletionService;
-import com.learnkk.session.service.SessionService;
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.stereotype.Service;
@@ -35,17 +33,14 @@ public class AdminQueryService {
   private final MeetingService meetingService;
   private final EnrollmentService enrollmentService;
   private final CompletionService completionService;
-  private final SessionService sessionService;
 
   public AdminQueryService(
       MeetingService meetingService,
       EnrollmentService enrollmentService,
-      CompletionService completionService,
-      SessionService sessionService) {
+      CompletionService completionService) {
     this.meetingService = meetingService;
     this.enrollmentService = enrollmentService;
     this.completionService = completionService;
-    this.sessionService = sessionService;
   }
 
   /** US-9.2 운영 현황 모니터링: 모임별 상태·신청/정원·세션 기준 출석율·수료 진행. */
@@ -62,6 +57,7 @@ public class AdminQueryService {
               m.title(),
               m.mentorId(),
               m.status(),
+              m.mentorCompletionStatus(),
               m.capacity(),
               applicants,
               progress.participantCount(),
@@ -76,17 +72,16 @@ public class AdminQueryService {
   @Transactional(readOnly = true)
   public ApprovalQueues getApprovalQueues(Principal principal) {
     requireAdmin(principal);
-    OffsetDateTime now = OffsetDateTime.now();
 
+    // 승인 큐 화면(AdminApprovalPage)의 상태별 섹션과 카운트를 일치시키기 위해, 각 큐는 해당 상태의 모든 모임을 센다.
+    // (모집종료일·세션종료 같은 '실행 가능' 필터는 적용하지 않는다 — FR-6로 완료도 세션 종료 게이트 없이 가능.)
     List<MeetingQueueItem> creation =
         meetingService.listByStatus(MeetingStatus.PENDING_APPROVAL).stream()
             .map(MeetingQueueItem::from)
             .toList();
 
-    // 모집 확정 대기: RECRUITING 이면서 모집기간이 종료된 모임(모집종료일이 지정되어 지난 경우) [assumption].
     List<MeetingQueueItem> recruitConfirm =
         meetingService.listByStatus(MeetingStatus.RECRUITING).stream()
-            .filter(m -> m.recruitEnd() != null && !m.recruitEnd().isAfter(now))
             .map(MeetingQueueItem::from)
             .toList();
 
@@ -95,10 +90,8 @@ public class AdminQueryService {
             .map(MeetingQueueItem::from)
             .toList();
 
-    // 모임 완료 대기: IN_PROGRESS 이면서 U5 전 세션 종료.
     List<MeetingQueueItem> meetingComplete =
         meetingService.listByStatus(MeetingStatus.IN_PROGRESS).stream()
-            .filter(m -> sessionService.allScheduledSessionsEnded(m.id()))
             .map(MeetingQueueItem::from)
             .toList();
 

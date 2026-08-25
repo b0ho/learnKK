@@ -17,7 +17,6 @@ import com.learnkk.meeting.service.MeetingService;
 import com.learnkk.session.dto.MeetingProgressSummary;
 import com.learnkk.session.dto.MenteeCompletionResponse;
 import com.learnkk.session.service.CompletionService;
-import com.learnkk.session.service.SessionService;
 import java.time.OffsetDateTime;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -32,7 +31,6 @@ class AdminQueryServiceTest {
   @Mock private MeetingService meetingService;
   @Mock private EnrollmentService enrollmentService;
   @Mock private CompletionService completionService;
-  @Mock private SessionService sessionService;
 
   @InjectMocks private AdminQueryService adminQueryService;
 
@@ -41,7 +39,7 @@ class AdminQueryServiceTest {
 
   private MeetingResponse meeting(Long id, MeetingStatus status, OffsetDateTime recruitEnd) {
     return new MeetingResponse(
-        id, 10L, "모임" + id, null, 4, null, recruitEnd, 6, null, null, status, null);
+        id, 10L, "모임" + id, null, 4, null, recruitEnd, 6, null, null, status, null, null);
   }
 
   @Test
@@ -93,28 +91,24 @@ class AdminQueryServiceTest {
   }
 
   @Test
-  void getApprovalQueues_aggregatesFiveQueuesWithFilters() {
-    OffsetDateTime past = OffsetDateTime.now().minusDays(1);
-    OffsetDateTime future = OffsetDateTime.now().plusDays(1);
-
+  void getApprovalQueues_countsByStatusToMatchApprovalScreen() {
+    // 승인 큐 화면과 일치하도록 각 큐는 상태별 전체 모임을 센다('실행 가능' 필터 없음).
     when(meetingService.listByStatus(MeetingStatus.PENDING_APPROVAL))
         .thenReturn(List.of(meeting(1L, MeetingStatus.PENDING_APPROVAL, null)));
-    // Two RECRUITING: one recruit-ended (past) qualifies, one still open (future) is filtered out.
+    // 두 RECRUITING 모두 모집 확정 큐에 집계된다(모집종료일 무관).
     when(meetingService.listByStatus(MeetingStatus.RECRUITING))
         .thenReturn(
             List.of(
-                meeting(2L, MeetingStatus.RECRUITING, past),
-                meeting(3L, MeetingStatus.RECRUITING, future)));
+                meeting(2L, MeetingStatus.RECRUITING, null),
+                meeting(3L, MeetingStatus.RECRUITING, null)));
     when(meetingService.listByStatus(MeetingStatus.READY_TO_START))
         .thenReturn(List.of(meeting(4L, MeetingStatus.READY_TO_START, null)));
-    // Two IN_PROGRESS: only the one whose sessions all ended qualifies for ③.
+    // 두 IN_PROGRESS 모두 모임 완료 큐에 집계된다(세션 종료 게이트 없음, FR-6).
     when(meetingService.listByStatus(MeetingStatus.IN_PROGRESS))
         .thenReturn(
             List.of(
                 meeting(5L, MeetingStatus.IN_PROGRESS, null),
                 meeting(6L, MeetingStatus.IN_PROGRESS, null)));
-    when(sessionService.allScheduledSessionsEnded(5L)).thenReturn(true);
-    when(sessionService.allScheduledSessionsEnded(6L)).thenReturn(false);
     when(completionService.listCompletionCandidates())
         .thenReturn(
             List.of(
@@ -125,11 +119,9 @@ class AdminQueryServiceTest {
     ApprovalQueues queues = adminQueryService.getApprovalQueues(admin);
 
     assertThat(queues.creation()).hasSize(1);
-    assertThat(queues.recruitConfirm()).hasSize(1);
-    assertThat(queues.recruitConfirm().get(0).id()).isEqualTo(2L);
+    assertThat(queues.recruitConfirm()).hasSize(2);
     assertThat(queues.start()).hasSize(1);
-    assertThat(queues.meetingComplete()).hasSize(1);
-    assertThat(queues.meetingComplete().get(0).id()).isEqualTo(5L);
+    assertThat(queues.meetingComplete()).hasSize(2);
     assertThat(queues.menteeComplete()).hasSize(1);
     assertThat(queues.menteeComplete().get(0).menteeId()).isEqualTo(100L);
     assertThat(queues.menteeComplete().get(0).meetingTitle()).isEqualTo("모임5");

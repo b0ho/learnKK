@@ -297,12 +297,14 @@ export interface MenteeCompletionResponse {
 
 // --- Admin / monitoring (U9, Bolt 8) ---
 
-/** 운영 현황 모니터링 한 행(US-9.2): 모임별 상태·신청/정원·세션 기준 출석율·수료 진행. */
+/** 운영 현황 모니터링 한 행(US-9.2): 모임별 상태·멘토 수료 판정·신청/정원·세션 기준 출석율·수료 진행. */
 export interface MeetingMonitorRow {
   meetingId: number;
   title: string;
   mentorId: number;
   status: MeetingStatus;
+  /** 멘토 수료 판정(완료 현황 필터/표시용). 백엔드는 항상 반환(기본 PENDING); FE는 목 데이터 호환을 위해 선택적. */
+  mentorCompletionStatus?: MentorCompletionStatus;
   capacity: number;
   applicantCount: number;
   participantCount: number;
