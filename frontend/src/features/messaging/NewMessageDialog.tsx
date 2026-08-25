@@ -10,6 +10,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
+import { Spinner } from '@/components/ui/spinner';
 
 interface NewMessageDialogProps {
   /** Called after a message is sent so the caller can refresh its thread list. */
@@ -77,9 +78,7 @@ export function NewMessageDialog({ onSent }: NewMessageDialogProps) {
         </DialogHeader>
 
         {loading ? (
-          <p className="text-sm text-muted-foreground" data-testid="recipients-loading">
-            받는 사람 목록을 불러오는 중...
-          </p>
+<Spinner data-testid="recipients-loading" label="받는 사람 목록을 불러오는 중" />
         ) : recipients.length === 0 ? (
           <p className="text-sm text-muted-foreground" data-testid="recipients-empty">
             쪽지를 보낼 수 있는 상대가 없습니다.

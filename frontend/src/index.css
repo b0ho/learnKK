@@ -4,26 +4,70 @@
 
 @layer base {
   :root {
+    /* learnKK brand — modern, clean, minimal GREEN system (light).
+       Growth/learning green. Values tuned for WCAG AA on text pairs:
+       white on --primary ≈ 4.9:1, white on --destructive ≈ 5.7:1. */
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --foreground: 155 25% 12%;
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 155 25% 12%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-    --radius: 0.5rem;
+    --popover-foreground: 155 25% 12%;
+    --primary: 152 62% 30%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 150 30% 96%;
+    --secondary-foreground: 152 40% 20%;
+    --muted: 150 20% 96%;
+    --muted-foreground: 155 12% 40%;
+    --accent: 150 40% 94%;
+    --accent-foreground: 152 45% 22%;
+    --destructive: 0 72% 45%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 150 16% 88%;
+    --input: 150 16% 86%;
+    --ring: 152 62% 30%;
+
+    /* Status accents (used by badge variants; never color-only in pages). */
+    --success: 152 62% 30%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 42%;
+    --warning-foreground: 0 0% 100%;
+    --info: 205 70% 40%;
+    --info-foreground: 0 0% 100%;
+
+    --radius: 0.625rem;
+  }
+
+  /* Dark theme scaffold — NOT wired to a toggle yet. Values are reasonable
+     starting slots (deep green-neutral surfaces, brighter brand green for
+     contrast on dark). Tune before enabling a theme switch. */
+  .dark {
+    --background: 155 24% 7%;
+    --foreground: 150 10% 92%;
+    --card: 155 22% 10%;
+    --card-foreground: 150 10% 92%;
+    --popover: 155 22% 10%;
+    --popover-foreground: 150 10% 92%;
+    --primary: 152 55% 45%;
+    --primary-foreground: 155 30% 8%;
+    --secondary: 155 15% 18%;
+    --secondary-foreground: 150 10% 92%;
+    --muted: 155 15% 16%;
+    --muted-foreground: 150 8% 62%;
+    --accent: 155 18% 20%;
+    --accent-foreground: 150 10% 92%;
+    --destructive: 0 62% 48%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 155 12% 20%;
+    --input: 155 12% 22%;
+    --ring: 152 55% 45%;
+
+    --success: 152 55% 45%;
+    --success-foreground: 155 30% 8%;
+    --warning: 38 90% 55%;
+    --warning-foreground: 155 30% 8%;
+    --info: 205 70% 60%;
+    --info-foreground: 155 30% 8%;
   }
 
   * {
@@ -31,7 +75,10 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
     -webkit-tap-highlight-color: transparent;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }

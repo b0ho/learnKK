@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Spinner } from '@/components/ui/spinner';
 import { meetingStatusLabel, meetingStatusVariant } from '@/features/shared/meetingStatus';
 import { PATHS } from '@/routes/paths';
 import { formatRate } from '@/features/shared/completionStatus';
@@ -118,11 +119,7 @@ function MenteeLearning() {
     <div className="flex flex-col gap-4">
       <h2 className="text-xl font-bold">내 러닝</h2>
 
-      {loading && (
-        <p className="text-sm text-muted-foreground" data-testid="mentee-learning-loading">
-          불러오는 중...
-        </p>
-      )}
+      {loading && <Spinner data-testid="mentee-learning-loading" />}
 
       {error && (
         <p role="alert" className="text-sm text-destructive" data-testid="mentee-learning-error">
@@ -185,7 +182,7 @@ function MenteeLearning() {
                         className="self-start"
                         data-testid={`mentee-content-link-${enrollment.id}`}
                       >
-                        <Link to={PATHS.meetingContent(enrollment.meetingId)}>
+                        <Link to={PATHS.myLearningContent(enrollment.meetingId)}>
                           <FolderOpen className="mr-1 h-4 w-4" aria-hidden="true" />
                           자료실 · 공지 보기
                         </Link>
@@ -212,7 +209,7 @@ function MenteeLearning() {
                           className="self-start"
                           data-testid={`mentee-survey-answer-${enrollment.id}`}
                         >
-                          <Link to={PATHS.surveyAnswer(enrollment.meetingId)}>사전설문 응답</Link>
+                          <Link to={PATHS.myLearningSurveyAnswer(enrollment.meetingId)}>사전설문 응답</Link>
                         </Button>
                         <Button
                           asChild
@@ -221,7 +218,7 @@ function MenteeLearning() {
                           className="self-start"
                           data-testid={`mentee-feedback-${enrollment.id}`}
                         >
-                          <Link to={PATHS.feedback(enrollment.meetingId)}>피드백</Link>
+                          <Link to={PATHS.myLearningFeedback(enrollment.meetingId)}>피드백</Link>
                         </Button>
                       </div>
                     )}
@@ -258,6 +255,10 @@ function MenteeSessions({ meetingId }: { meetingId: number }) {
       ]);
       setSessions(list);
       setSummary(attendance);
+      // FR-5: 이미 출석한 세션은 재방문·시간창 종료 후에도 '출석 완료'로 유지 표시.
+      setCheckedIn(
+        Object.fromEntries((attendance.attendedSessionIds ?? []).map((sid) => [sid, true])),
+      );
     } catch (err) {
       setError(resolveErrorMessage(err));
     } finally {
@@ -300,11 +301,7 @@ function MenteeSessions({ meetingId }: { meetingId: number }) {
   }
 
   if (loading) {
-    return (
-      <p className="text-sm text-muted-foreground" data-testid={`mentee-sessions-loading-${meetingId}`}>
-        세션 불러오는 중...
-      </p>
-    );
+    return <Spinner data-testid={`mentee-sessions-loading-${meetingId}`} />;
   }
 
   if (error) {
@@ -358,33 +355,36 @@ function MenteeSessions({ meetingId }: { meetingId: number }) {
             return (
               <li
                 key={s.id}
-                className="flex items-center justify-between gap-2"
+                className="flex min-h-9 items-center justify-between gap-2"
                 data-testid={`mentee-session-${s.id}`}
               >
                 <span>
                   {s.week}주차 · {formatWhen(s.scheduledAt)}
                 </span>
-                {done ? (
-                  <Badge variant="secondary" data-testid={`mentee-session-done-${s.id}`}>
-                    출석 완료
-                  </Badge>
-                ) : open ? (
-                  <Button
-                    size="sm"
-                    disabled={busyId === s.id}
-                    onClick={() => handleCheckIn(s.id)}
-                    data-testid={`mentee-checkin-${s.id}`}
-                  >
-                    {busyId === s.id ? '출석 중...' : '출석하기'}
-                  </Button>
-                ) : (
-                  <span
-                    className="text-xs text-muted-foreground"
-                    data-testid={`mentee-session-closed-${s.id}`}
-                  >
-                    출석 시간 아님
-                  </span>
-                )}
+                {/* 우측 슬롯을 버튼 높이(h-9)로 고정해 완료/출석/시간외 상태가 바뀌어도 행 높이가 일정하다. */}
+                <div className="flex h-9 shrink-0 items-center justify-end">
+                  {done ? (
+                    <Badge variant="secondary" data-testid={`mentee-session-done-${s.id}`}>
+                      출석 완료
+                    </Badge>
+                  ) : open ? (
+                    <Button
+                      size="sm"
+                      disabled={busyId === s.id}
+                      onClick={() => handleCheckIn(s.id)}
+                      data-testid={`mentee-checkin-${s.id}`}
+                    >
+                      {busyId === s.id ? '출석 중...' : '출석하기'}
+                    </Button>
+                  ) : (
+                    <span
+                      className="text-xs text-muted-foreground"
+                      data-testid={`mentee-session-closed-${s.id}`}
+                    >
+                      출석 시간 아님
+                    </span>
+                  )}
+                </div>
               </li>
             );
           })}
@@ -454,11 +454,7 @@ function MentorHub() {
         응답을 열람할 수 있습니다.
       </p>
 
-      {loading && (
-        <p className="text-sm text-muted-foreground" data-testid="mentor-hub-loading">
-          불러오는 중...
-        </p>
-      )}
+      {loading && <Spinner data-testid="mentor-hub-loading" />}
 
       {error && (
         <p role="alert" className="text-sm text-destructive" data-testid="mentor-hub-error">
@@ -505,7 +501,7 @@ function MentorHub() {
                       className="self-start"
                       data-testid={`mentor-content-link-${m.id}`}
                     >
-                      <Link to={PATHS.meetingContent(m.id)}>
+                      <Link to={PATHS.myLearningContent(m.id)}>
                         <FolderOpen className="mr-1 h-4 w-4" aria-hidden="true" />
                         자료실 · 공지 관리
                       </Link>
@@ -520,7 +516,7 @@ function MentorHub() {
                         className="self-start"
                         data-testid={`mentor-questions-edit-${m.id}`}
                       >
-                        <Link to={PATHS.meetingQuestions(m.id)}>
+                        <Link to={PATHS.myLearningQuestions(m.id)}>
                           <FileText className="mr-1 h-4 w-4" aria-hidden="true" />
                           사전설문 문항 관리
                         </Link>
@@ -533,7 +529,7 @@ function MentorHub() {
                       className="self-start"
                       data-testid={`mentor-feedback-view-${m.id}`}
                     >
-                      <Link to={PATHS.feedbackView(m.id)}>피드백·사전설문 열람</Link>
+                      <Link to={PATHS.myLearningFeedbackView(m.id)}>피드백·사전설문 열람</Link>
                     </Button>
 
                     <div className="flex flex-col gap-1">
@@ -681,11 +677,7 @@ function MentorSessions({ meetingId }: { meetingId: number }) {
     <div className="flex flex-col gap-2 border-t pt-2" data-testid={`mentor-sessions-${meetingId}`}>
       <span className="font-medium text-foreground">세션 관리</span>
 
-      {loading && (
-        <p className="text-sm text-muted-foreground" data-testid={`mentor-sessions-loading-${meetingId}`}>
-          세션 불러오는 중...
-        </p>
-      )}
+      {loading && <Spinner data-testid={`mentor-sessions-loading-${meetingId}`} />}
 
       {error && (
         <p role="alert" className="text-sm text-destructive" data-testid={`mentor-sessions-error-${meetingId}`}>
@@ -708,8 +700,9 @@ function MentorSessions({ meetingId }: { meetingId: number }) {
       {sessions.length > 0 && (
         <ul className="flex flex-col gap-1.5" data-testid={`mentor-session-list-${meetingId}`}>
           {sessions.map((s) => (
-            <li key={s.id} className="flex flex-col gap-1" data-testid={`mentor-session-${s.id}`}>
-              <div className="flex items-center justify-between gap-2">
+            <li key={s.id} className="flex flex-col gap-1.5" data-testid={`mentor-session-${s.id}`}>
+              {/* 주차·시간 영역과 버튼 영역을 각각 한 줄로 분리해 버튼 찌그러짐을 방지한다. */}
+              <div className="flex flex-col gap-1.5">
                 <span className="flex items-center gap-1.5">
                   {s.week}주차 · {formatWhen(s.scheduledAt)}
                   {s.completed && (
@@ -718,10 +711,11 @@ function MentorSessions({ meetingId }: { meetingId: number }) {
                     </Badge>
                   )}
                 </span>
-                <div className="flex gap-1">
+                <div className="flex flex-wrap gap-1.5">
                   <Button
                     size="sm"
                     variant="outline"
+                    className="min-w-[5rem]"
                     disabled={busy}
                     onClick={() => startEdit(s)}
                     data-testid={`mentor-session-edit-${s.id}`}
@@ -732,6 +726,7 @@ function MentorSessions({ meetingId }: { meetingId: number }) {
                     <Button
                       size="sm"
                       variant="outline"
+                      className="min-w-[5rem]"
                       disabled={busy}
                       onClick={() => handleComplete(s.id)}
                       data-testid={`mentor-session-complete-${s.id}`}
@@ -742,6 +737,7 @@ function MentorSessions({ meetingId }: { meetingId: number }) {
                   <Button
                     size="sm"
                     variant="ghost"
+                    className="min-w-[5rem]"
                     disabled={busy}
                     onClick={() => handleDelete(s.id)}
                     data-testid={`mentor-session-delete-${s.id}`}

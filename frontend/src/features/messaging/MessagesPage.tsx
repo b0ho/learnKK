@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { messagesApi, resolveErrorMessage, type ThreadSummaryResponse } from '@/api';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { Spinner } from '@/components/ui/spinner';
 import { PATHS } from '@/routes/paths';
 import { formatTime } from './formatTime';
 import { NewMessageDialog } from './NewMessageDialog';
@@ -44,9 +45,7 @@ export function MessagesPage() {
       </div>
 
       {loading && (
-        <p className="text-sm text-muted-foreground" data-testid="messages-loading">
-          불러오는 중...
-        </p>
+<Spinner data-testid="messages-loading" />
       )}
 
       {error && (

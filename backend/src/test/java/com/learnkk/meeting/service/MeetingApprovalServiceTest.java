@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 
 import com.learnkk.kernel.domain.MeetingStatus;
+import com.learnkk.kernel.domain.MentorCompletionStatus;
 import com.learnkk.kernel.domain.Role;
 import com.learnkk.kernel.error.ConflictException;
 import com.learnkk.kernel.error.ErrorCodes;
@@ -27,7 +28,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class MeetingApprovalServiceTest {
 
   @Mock private MeetingRepository meetingRepository;
-  @Mock private SessionCompletionGate sessionCompletionGate;
 
   @InjectMocks private MeetingApprovalService approvalService;
 
@@ -231,7 +231,6 @@ class MeetingApprovalServiceTest {
   @Test
   void completeMeeting_happyPath_transitionsToCompleted() {
     when(meetingRepository.existsById(1L)).thenReturn(true);
-    when(sessionCompletionGate.allScheduledSessionsEnded(1L)).thenReturn(true);
     when(meetingRepository.transitionStatus(
             eq(1L), eq(MeetingStatus.IN_PROGRESS), eq(MeetingStatus.COMPLETED), isNull()))
         .thenReturn(1);
@@ -244,20 +243,23 @@ class MeetingApprovalServiceTest {
   }
 
   @Test
-  void completeMeeting_sessionsNotEnded_conflict409() {
+  void completeMeeting_sessionsNotEnded_stillCompletes_FR6() {
+    // FR-6: 세션 종료 게이트를 제거 — 세션 미종료여도 완료 처리 가능.
     when(meetingRepository.existsById(1L)).thenReturn(true);
-    when(sessionCompletionGate.allScheduledSessionsEnded(1L)).thenReturn(false);
+    when(meetingRepository.transitionStatus(
+            eq(1L), eq(MeetingStatus.IN_PROGRESS), eq(MeetingStatus.COMPLETED), isNull()))
+        .thenReturn(1);
+    when(meetingRepository.findById(1L))
+        .thenReturn(Optional.of(withStatus(MeetingStatus.COMPLETED)));
 
-    assertThatThrownBy(() -> approvalService.completeMeeting(admin, 1L))
-        .isInstanceOf(ConflictException.class)
-        .extracting("code")
-        .isEqualTo(ErrorCodes.MEETING_SESSIONS_NOT_ENDED);
+    MeetingResponse response = approvalService.completeMeeting(admin, 1L);
+
+    assertThat(response.status()).isEqualTo(MeetingStatus.COMPLETED);
   }
 
   @Test
   void completeMeeting_notInProgress_conflict409() {
     when(meetingRepository.existsById(1L)).thenReturn(true);
-    when(sessionCompletionGate.allScheduledSessionsEnded(1L)).thenReturn(true);
     when(meetingRepository.transitionStatus(
             eq(1L), eq(MeetingStatus.IN_PROGRESS), eq(MeetingStatus.COMPLETED), isNull()))
         .thenReturn(0);
@@ -333,6 +335,63 @@ class MeetingApprovalServiceTest {
   @Test
   void revert_nonAdmin_forbidden403() {
     assertThatThrownBy(() -> approvalService.revert(mentor, 1L))
+        .isInstanceOf(ForbiddenException.class)
+        .extracting("code")
+        .isEqualTo(ErrorCodes.MEETING_FORBIDDEN);
+  }
+
+  // --- FR-7: 멘토 수료 판정(관리자 판단만) ---
+
+  @Test
+  void judgeMentorCompletion_completed_setsStatus() {
+    Meeting m = withStatus(MeetingStatus.IN_PROGRESS);
+    when(meetingRepository.findById(1L)).thenReturn(Optional.of(m));
+
+    MeetingResponse response = approvalService.judgeMentorCompletion(admin, 1L, "COMPLETED");
+
+    assertThat(response.mentorCompletionStatus()).isEqualTo(MentorCompletionStatus.COMPLETED);
+  }
+
+  @Test
+  void judgeMentorCompletion_notCompleted_onCompletedMeeting_setsStatus() {
+    Meeting m = withStatus(MeetingStatus.COMPLETED);
+    when(meetingRepository.findById(1L)).thenReturn(Optional.of(m));
+
+    MeetingResponse response = approvalService.judgeMentorCompletion(admin, 1L, "NOT_COMPLETED");
+
+    assertThat(response.mentorCompletionStatus()).isEqualTo(MentorCompletionStatus.NOT_COMPLETED);
+  }
+
+  @Test
+  void judgeMentorCompletion_notInProgressOrCompleted_conflict409() {
+    when(meetingRepository.findById(1L))
+        .thenReturn(Optional.of(withStatus(MeetingStatus.RECRUITING)));
+
+    assertThatThrownBy(() -> approvalService.judgeMentorCompletion(admin, 1L, "COMPLETED"))
+        .isInstanceOf(ConflictException.class)
+        .extracting("code")
+        .isEqualTo(ErrorCodes.MEETING_INVALID_TRANSITION);
+  }
+
+  @Test
+  void judgeMentorCompletion_invalidStatusValue_validation400() {
+    assertThatThrownBy(() -> approvalService.judgeMentorCompletion(admin, 1L, "FOO"))
+        .isInstanceOf(ValidationException.class)
+        .extracting("code")
+        .isEqualTo(ErrorCodes.MEETING_VALIDATION);
+  }
+
+  @Test
+  void judgeMentorCompletion_pendingNotAllowed_validation400() {
+    assertThatThrownBy(() -> approvalService.judgeMentorCompletion(admin, 1L, "PENDING"))
+        .isInstanceOf(ValidationException.class)
+        .extracting("code")
+        .isEqualTo(ErrorCodes.MEETING_VALIDATION);
+  }
+
+  @Test
+  void judgeMentorCompletion_nonAdmin_forbidden403() {
+    assertThatThrownBy(() -> approvalService.judgeMentorCompletion(mentor, 1L, "COMPLETED"))
         .isInstanceOf(ForbiddenException.class)
         .extracting("code")
         .isEqualTo(ErrorCodes.MEETING_FORBIDDEN);

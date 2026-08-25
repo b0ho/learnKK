@@ -26,16 +26,18 @@
       "command": "${workspaceFolder}/backend/gradlew",
       "args": ["bootRun", "--console=plain"],
       "windows": {
-        "command": "${workspaceFolder}/backend/gradlew.bat"
+        "command": "${workspaceFolder}/backend/gradlew.bat",
+        "options": {
+          "shell": {
+            "executable": "cmd.exe",
+            "args": ["/d", "/c"]
+          }
+        }
       },
       "options": {
         "cwd": "${workspaceFolder}/backend",
         "env": {
           "SPRING_PROFILES_ACTIVE": "local"
-        },
-        "shell": {
-          "executable": "cmd.exe",
-          "args": ["/d", "/c"]
         }
       },
       "isBackground": true,

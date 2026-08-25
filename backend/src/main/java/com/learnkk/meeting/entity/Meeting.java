@@ -1,6 +1,7 @@
 package com.learnkk.meeting.entity;
 
 import com.learnkk.kernel.domain.MeetingStatus;
+import com.learnkk.kernel.domain.MentorCompletionStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -53,6 +54,11 @@ public class Meeting {
 
   @Column(name = "reject_reason")
   private String rejectReason;
+
+  /** 멘토 수료 판정(FR-7): 관리자 판단만으로 결정. 초기값 PENDING. */
+  @Enumerated(EnumType.STRING)
+  @Column(name = "mentor_completion_status", nullable = false)
+  private MentorCompletionStatus mentorCompletionStatus = MentorCompletionStatus.PENDING;
 
   @CreationTimestamp
   @Column(name = "created_at", nullable = false, updatable = false)
@@ -140,6 +146,14 @@ public class Meeting {
 
   public void setRejectReason(String rejectReason) {
     this.rejectReason = rejectReason;
+  }
+
+  public MentorCompletionStatus getMentorCompletionStatus() {
+    return mentorCompletionStatus;
+  }
+
+  public void setMentorCompletionStatus(MentorCompletionStatus mentorCompletionStatus) {
+    this.mentorCompletionStatus = mentorCompletionStatus;
   }
 
   public OffsetDateTime getCreatedAt() {

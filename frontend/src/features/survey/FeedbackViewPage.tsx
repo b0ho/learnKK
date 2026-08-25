@@ -12,6 +12,7 @@ import {
   type SurveyAnswerResponse,
 } from '@/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Spinner } from '@/components/ui/spinner';
 
 /**
  * Feedback + pre-survey answer review for the owning mentor or admin (US-8.2, W4). Lists every
@@ -28,6 +29,8 @@ export function FeedbackViewPage() {
   const [surveyRespondents, setSurveyRespondents] = useState<
     { menteeId: number; answers: SurveyAnswerResponse[] }[]
   >([]);
+  // FR-4: 응답을 문항 텍스트와 함께 보여주기 위한 questionId → 문항 텍스트 매핑.
+  const [questionText, setQuestionText] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,13 +39,22 @@ export function FeedbackViewPage() {
     setError(null);
     try {
       // 참여자(신청자) 목록으로 사전설문 대상을 정한다 — 피드백 제출 여부와 무관(FR-11).
-      const [m, list, applicants] = await Promise.all([
+      // 문항 텍스트(FR-4)도 함께 조회해 응답과 결합한다.
+      const [m, list, applicants, questions] = await Promise.all([
         meetingsApi.get(meetingId),
         feedbackApi.list(meetingId),
         enrollmentsApi.listApplicants(meetingId).catch(() => [] as ApplicantResponse[]),
+        meetingsApi.getQuestions(meetingId).catch(() => []),
       ]);
       setMeeting(m);
       setFeedback(list);
+      setQuestionText(
+        Object.fromEntries(
+          (Array.isArray(questions) ? questions : [])
+            .filter((q) => q.id != null)
+            .map((q) => [q.id as number, q.text]),
+        ),
+      );
 
       const withAnswers = await Promise.all(
         applicants.map(async (a) => {
@@ -68,9 +80,7 @@ export function FeedbackViewPage() {
 
   if (loading) {
     return (
-      <p className="text-sm text-muted-foreground" data-testid="feedback-view-loading">
-        불러오는 중...
-      </p>
+<Spinner data-testid="feedback-view-loading" />
     );
   }
 
@@ -140,9 +150,13 @@ export function FeedbackViewPage() {
                       {answers.map((a) => (
                         <li
                           key={a.questionId}
+                          className="flex flex-col"
                           data-testid={`survey-answer-${menteeId}-${a.questionId}`}
                         >
-                          {a.answerText}
+                          <span className="text-xs font-medium text-foreground">
+                            {questionText[a.questionId] ?? `문항 #${a.questionId}`}
+                          </span>
+                          <span className="text-muted-foreground">{a.answerText}</span>
                         </li>
                       ))}
                     </ul>

@@ -10,6 +10,12 @@ export const PATHS = {
   adminApproval: '/admin/meetings',
   adminMonitoring: '/admin/monitoring',
   myLearning: '/my-learning',
+  // '내 러닝' 스코프 하위 경로(FR-2): 자료실·피드백·설문·문항 진입 시에도 하단 탭이 '내 러닝'으로 유지된다.
+  myLearningContent: (id: number | string) => `/my-learning/meetings/${id}/content`,
+  myLearningFeedback: (id: number | string) => `/my-learning/meetings/${id}/feedback`,
+  myLearningFeedbackView: (id: number | string) => `/my-learning/meetings/${id}/feedback-view`,
+  myLearningSurveyAnswer: (id: number | string) => `/my-learning/meetings/${id}/survey-answer`,
+  myLearningQuestions: (id: number | string) => `/my-learning/meetings/${id}/questions-edit`,
   messages: '/messages',
   messageThread: (id: number | string) => `/messages/${id}`,
   profile: '/me',

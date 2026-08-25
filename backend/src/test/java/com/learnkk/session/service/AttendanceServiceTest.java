@@ -144,24 +144,29 @@ class AttendanceServiceTest {
 
   @Test
   void getMyAttendance_computesRate() {
+    // FR-5: attended 는 출석 세션 id 목록(findAttendedSessionIds)의 크기로 산출된다.
     when(sessionRepository.countByMeetingId(10L)).thenReturn(4);
-    when(attendanceRepository.countAttendedSessions(eq(10L), eq(2L))).thenReturn(3L);
+    when(attendanceRepository.findAttendedSessionIds(eq(10L), eq(2L)))
+        .thenReturn(java.util.List.of(1L, 2L, 3L));
 
     AttendanceSummaryResponse res = attendanceService.getMyAttendance(mentee, 10L);
 
     assertThat(res.attended()).isEqualTo(3);
     assertThat(res.totalScheduled()).isEqualTo(4);
     assertThat(res.rate()).isEqualTo(0.75);
+    assertThat(res.attendedSessionIds()).containsExactly(1L, 2L, 3L);
   }
 
   @Test
   void getMyAttendance_noSessions_rateZero() {
     when(sessionRepository.countByMeetingId(10L)).thenReturn(0);
-    when(attendanceRepository.countAttendedSessions(eq(10L), eq(2L))).thenReturn(0L);
+    when(attendanceRepository.findAttendedSessionIds(eq(10L), eq(2L)))
+        .thenReturn(java.util.List.of());
 
     AttendanceSummaryResponse res = attendanceService.getMyAttendance(mentee, 10L);
 
     assertThat(res.totalScheduled()).isZero();
     assertThat(res.rate()).isZero();
+    assertThat(res.attendedSessionIds()).isEmpty();
   }
 }

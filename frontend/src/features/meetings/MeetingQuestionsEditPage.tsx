@@ -5,9 +5,11 @@ import {
   resolveErrorMessage,
   type MeetingResponse,
   type SurveyQuestionDto,
+  type SurveyQuestionType,
 } from '@/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Spinner } from '@/components/ui/spinner';
 import { PATHS } from '@/routes/paths';
 import { SurveyBuilder, createEmptyQuestion, type DraftQuestion } from './SurveyBuilder';
 
@@ -17,7 +19,7 @@ function toDrafts(dtos: SurveyQuestionDto[]): DraftQuestion[] {
     .sort((a, b) => a.orderNo - b.orderNo)
     .map((q) => ({
       text: q.text,
-      type: q.type,
+      type: q.type as SurveyQuestionType,
       options: q.options ?? [],
       required: q.required ?? true,
     }));
@@ -92,9 +94,7 @@ export function MeetingQuestionsEditPage() {
 
   if (loading) {
     return (
-      <p className="text-sm text-muted-foreground" data-testid="questions-edit-loading">
-        불러오는 중...
-      </p>
+<Spinner data-testid="questions-edit-loading" />
     );
   }
 

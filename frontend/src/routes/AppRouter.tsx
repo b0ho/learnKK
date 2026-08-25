@@ -38,6 +38,22 @@ export function AppRouter() {
             <Route path={PATHS.adminMonitoring} element={<AdminMonitoringPage />} />
           </Route>
           <Route path={PATHS.myLearning} element={<MyLearningPage />} />
+          {/* FR-2: '내 러닝' 스코프 하위 경로 — 동일 페이지 재사용, 하단 탭이 '내 러닝'으로 유지된다. */}
+          <Route path="/my-learning/meetings/:id/content" element={<MeetingContentPage />} />
+          <Route path="/my-learning/meetings/:id/survey-answer" element={<PreSurveyAnswerPage />} />
+          <Route path="/my-learning/meetings/:id/feedback" element={<FeedbackPage />} />
+          <Route element={<RequireRole allow={['MENTOR']} />}>
+            <Route
+              path="/my-learning/meetings/:id/questions-edit"
+              element={<MeetingQuestionsEditPage />}
+            />
+          </Route>
+          <Route element={<RequireRole allow={['MENTOR', 'ADMIN']} />}>
+            <Route
+              path="/my-learning/meetings/:id/feedback-view"
+              element={<FeedbackViewPage />}
+            />
+          </Route>
           <Route path="/meetings/:id/content" element={<MeetingContentPage />} />
           <Route path={PATHS.messages} element={<MessagesPage />} />
           <Route path="/messages/:id" element={<ThreadView />} />

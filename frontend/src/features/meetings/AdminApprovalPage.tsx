@@ -9,12 +9,14 @@ import {
   type MeetingStatus,
   type MeetingSummary,
   type MenteeCompletionResponse,
+  type MentorCompletionStatus,
 } from '@/api';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Spinner } from '@/components/ui/spinner';
 import {
   Dialog,
   DialogContent,
@@ -37,10 +39,10 @@ import {
 
 // 승인 유형별 영역 정의(표시 순서).
 const SECTIONS: { status: MeetingStatus; title: string }[] = [
-  { status: 'PENDING_APPROVAL', title: '① 개설 승인 대기' },
+  { status: 'PENDING_APPROVAL', title: '개설 승인 대기' },
   { status: 'RECRUITING', title: '모집 확정 대기 (모집중)' },
-  { status: 'READY_TO_START', title: '② 시작 대기' },
-  { status: 'IN_PROGRESS', title: '③ 완료 · 수료 판정 (진행중)' },
+  { status: 'READY_TO_START', title: '시작 대기' },
+  { status: 'IN_PROGRESS', title: '완료 · 수료 판정 (진행중)' },
   { status: 'COMPLETED', title: '완료됨' },
 ];
 
@@ -233,7 +235,7 @@ export function AdminApprovalPage() {
               disabled={working}
               data-testid={`admin-complete-${m.id}`}
               onClick={() =>
-                ask('모임 완료', `"${m.title}"을(를) 완료 처리할까요? (모든 세션이 종료되어야 합니다)`, () =>
+                ask('모임 완료', `"${m.title}"을(를) 완료 처리할까요?`, () =>
                   adminApi.complete(m.id),
                 )
               }
@@ -259,11 +261,7 @@ export function AdminApprovalPage() {
         </Button>
       </div>
 
-      {loading && (
-        <p className="text-sm text-muted-foreground" data-testid="admin-loading">
-          불러오는 중...
-        </p>
-      )}
+      {loading && <Spinner data-testid="admin-loading" />}
       {error && (
         <p role="alert" className="text-sm text-destructive" data-testid="admin-error">
           {error}
@@ -285,9 +283,7 @@ export function AdminApprovalPage() {
               className="flex flex-col gap-2"
               data-testid={`admin-section-${section.status}`}
             >
-              <h3 className="text-base font-semibold">
-                {section.title} <span className="text-muted-foreground">({list.length})</span>
-              </h3>
+              <h3 className="text-base font-semibold">{section.title}</h3>
               {list.length === 0 ? (
                 <p
                   className="text-sm text-muted-foreground"
@@ -317,6 +313,13 @@ export function AdminApprovalPage() {
                             </span>
                           </div>
                           <div className="flex flex-wrap gap-2">{actionsFor(m)}</div>
+                          {(m.status === 'IN_PROGRESS' || m.status === 'COMPLETED') && (
+                            <MentorCompletionControl
+                              meetingId={m.id}
+                              current={m.mentorCompletionStatus ?? 'PENDING'}
+                              onJudged={load}
+                            />
+                          )}
                           {(m.status === 'IN_PROGRESS' || m.status === 'COMPLETED') && (
                             <CompletionPanel meetingId={m.id} />
                           )}
@@ -389,6 +392,99 @@ export function AdminApprovalPage() {
   );
 }
 
+/** 멘토 수료 판정(FR-7) 상태 한글 라벨. */
+const MENTOR_COMPLETION_LABEL: Record<MentorCompletionStatus, string> = {
+  PENDING: '판정 전',
+  COMPLETED: '수료',
+  NOT_COMPLETED: '미수료',
+};
+
+/**
+ * 멘토 수료 판정 컨트롤(FR-7). 멘티 수료(④, 출석 80% 자동 판정)와 별개로, 관리자가 모임의 멘토에 대해
+ * '수료/미수료'를 판단만으로 판정한다(자동 계산 없음). 현재 상태를 뱃지로 보이고 두 버튼으로 판정한다.
+ */
+function MentorCompletionControl({
+  meetingId,
+  current,
+  onJudged,
+}: {
+  meetingId: number;
+  current: MentorCompletionStatus;
+  onJudged: () => Promise<void> | void;
+}) {
+  const [busy, setBusy] = useState<'COMPLETED' | 'NOT_COMPLETED' | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function judge(status: 'COMPLETED' | 'NOT_COMPLETED') {
+    setBusy(status);
+    setError(null);
+    try {
+      await adminApi.judgeMentorCompletion(meetingId, status);
+      await onJudged();
+    } catch (err) {
+      setError(resolveErrorMessage(err));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  return (
+    <div
+      className="flex flex-col gap-2 border-t pt-3"
+      data-testid={`admin-mentor-completion-${meetingId}`}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <span className="font-medium">멘토 수료 판정</span>
+        <Badge
+          variant={
+            current === 'COMPLETED'
+              ? 'default'
+              : current === 'NOT_COMPLETED'
+                ? 'destructive'
+                : 'outline'
+          }
+          data-testid={`admin-mentor-completion-status-${meetingId}`}
+        >
+          {MENTOR_COMPLETION_LABEL[current]}
+        </Badge>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        멘티 수료(출석률 기준)와 별개로, 관리자 판단만으로 멘토의 수료 여부를 결정합니다.
+      </p>
+      {error && (
+        <p
+          role="alert"
+          className="text-sm text-destructive"
+          data-testid={`admin-mentor-completion-error-${meetingId}`}
+        >
+          {error}
+        </p>
+      )}
+      <div className="flex flex-wrap gap-2">
+        <Button
+          size="sm"
+          className="min-w-[5rem]"
+          disabled={busy !== null || current === 'COMPLETED'}
+          onClick={() => judge('COMPLETED')}
+          data-testid={`admin-mentor-complete-${meetingId}`}
+        >
+          {busy === 'COMPLETED' ? '처리 중...' : '수료'}
+        </Button>
+        <Button
+          size="sm"
+          variant="destructive"
+          className="min-w-[5rem]"
+          disabled={busy !== null || current === 'NOT_COMPLETED'}
+          onClick={() => judge('NOT_COMPLETED')}
+          data-testid={`admin-mentor-not-complete-${meetingId}`}
+        >
+          {busy === 'NOT_COMPLETED' ? '처리 중...' : '미수료'}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 /**
  * ④ Completion panel (admin). 80% 자동 판정(computeCompletions) → 후보 목록 → 각 후보 수료 확정(approveCompletion).
  */
@@ -450,7 +546,7 @@ function CompletionPanel({ meetingId }: { meetingId: number }) {
   return (
     <div className="flex flex-col gap-2 border-t pt-3" data-testid={`admin-completion-${meetingId}`}>
       <div className="flex items-center justify-between gap-2">
-        <span className="font-medium">수료 판정 (④)</span>
+        <span className="font-medium">수료 판정</span>
         <Button
           size="sm"
           variant="outline"
@@ -462,11 +558,7 @@ function CompletionPanel({ meetingId }: { meetingId: number }) {
         </Button>
       </div>
 
-      {loading && (
-        <p className="text-sm text-muted-foreground" data-testid={`admin-completion-loading-${meetingId}`}>
-          불러오는 중...
-        </p>
-      )}
+      {loading && <Spinner data-testid={`admin-completion-loading-${meetingId}`} />}
       {error && (
         <p role="alert" className="text-sm text-destructive" data-testid={`admin-completion-error-${meetingId}`}>
           {error}
@@ -489,14 +581,15 @@ function CompletionPanel({ meetingId }: { meetingId: number }) {
           {rows.map((r) => (
             <li
               key={r.menteeId}
-              className="flex items-center justify-between gap-2 text-sm"
+              className="flex min-h-9 items-center justify-between gap-2 text-sm"
               data-testid={`admin-completion-row-${meetingId}-${r.menteeId}`}
             >
               <span>
                 멘티 #{r.menteeId} · {r.attendedCount}/{r.totalScheduled} (
                 {formatRate(r.totalScheduled > 0 ? r.attendedCount / r.totalScheduled : 0)})
               </span>
-              <div className="flex items-center gap-2">
+              {/* 우측 슬롯 높이를 버튼 높이(h-9)로 고정해 '수료 확정' 버튼 유무로 행 높이가 흔들리지 않게 한다. */}
+              <div className="flex h-9 items-center gap-2">
                 <Badge
                   variant={completionStatusVariant(r.status)}
                   data-testid={`admin-completion-status-${meetingId}-${r.menteeId}`}

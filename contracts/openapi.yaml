@@ -704,9 +704,8 @@ paths:
       tags: [admin]
       summary: Complete the meeting (T6, admin only)
       description: >
-        IN_PROGRESS -> COMPLETED. Gated on session completion; if any scheduled session has not
-        ended the transition yields 409 MEETING_SESSIONS_NOT_ENDED. An illegal source state yields
-        409 MEETING_INVALID_TRANSITION.
+        IN_PROGRESS -> COMPLETED. 세션 종료 여부와 무관하게 완료 처리할 수 있다(ux-bugfixes-2 FR-6:
+        세션 종료 게이트 제거). An illegal source state yields 409 MEETING_INVALID_TRANSITION.
       security:
         - bearerAuth: []
       parameters:
@@ -746,6 +745,42 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MeetingResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /api/admin/meetings/{id}/mentor-completion:
+    post:
+      tags: [admin]
+      summary: Judge the mentor's completion (FR-7, admin only)
+      description: >
+        관리자가 모임의 멘토에 대해 수료(COMPLETED)/미수료(NOT_COMPLETED)를 판단만으로 판정한다. 멘티 수료(④,
+        출석 80% 자동 판정)와 달리 자동 계산이 없다. 진행 중(IN_PROGRESS) 또는 완료(COMPLETED) 모임만 판정
+        가능하며, 그 외 상태는 409 MEETING_INVALID_TRANSITION.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/MeetingId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MentorCompletionRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeetingResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -1409,6 +1444,14 @@ components:
         - REJECTED
         - CANCELLED
 
+    MentorCompletionStatus:
+      type: string
+      description: 멘토 수료 판정(FR-7) — 관리자 판단만으로 결정. PENDING=판정 전.
+      enum:
+        - PENDING
+        - COMPLETED
+        - NOT_COMPLETED
+
     EnrollmentStatus:
       type: string
       enum: [APPLIED, CANCELLED]
@@ -1657,7 +1700,7 @@ components:
 
     MeetingResponse:
       type: object
-      required: [id, mentorId, title, weeks, capacity, status]
+      required: [id, mentorId, title, weeks, capacity, status, mentorCompletionStatus]
       properties:
         id:
           type: integer
@@ -1693,10 +1736,12 @@ components:
         rejectReason:
           type: string
           nullable: true
+        mentorCompletionStatus:
+          $ref: '#/components/schemas/MentorCompletionStatus'
 
     MeetingSummary:
       type: object
-      required: [id, title, weeks, capacity, status]
+      required: [id, title, weeks, capacity, status, mentorCompletionStatus]
       properties:
         id:
           type: integer
@@ -1712,6 +1757,8 @@ components:
           type: integer
         status:
           $ref: '#/components/schemas/MeetingStatus'
+        mentorCompletionStatus:
+          $ref: '#/components/schemas/MentorCompletionStatus'
 
     SurveyQuestionDto:
       type: object
@@ -1742,6 +1789,17 @@ components:
         reason:
           type: string
           description: Rejection / cancellation reason (mandatory since Bolt 2)
+
+    MentorCompletionRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          description: 멘토 수료 판정 결과 — COMPLETED(수료) 또는 NOT_COMPLETED(미수료).
+          enum:
+            - COMPLETED
+            - NOT_COMPLETED
 
     ConfirmRecruitmentRequest:
       type: object
@@ -1933,7 +1991,7 @@ components:
 
     AttendanceSummaryResponse:
       type: object
-      required: [attended, totalScheduled, rate]
+      required: [attended, totalScheduled, rate, attendedSessionIds]
       properties:
         attended:
           type: integer
@@ -1942,6 +2000,11 @@ components:
         rate:
           type: number
           format: double
+        attendedSessionIds:
+          type: array
+          items:
+            type: integer
+            format: int64
 
     MenteeCompletionResponse:
       type: object

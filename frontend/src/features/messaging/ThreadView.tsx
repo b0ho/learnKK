@@ -5,8 +5,10 @@ import { messagesApi, resolveErrorMessage, type MessageResponse } from '@/api';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Spinner } from '@/components/ui/spinner';
 import { PATHS } from '@/routes/paths';
 import { formatTime } from './formatTime';
+import { notifyMessagesRead } from './useUnreadCount';
 
 interface ThreadState {
   partnerId?: number;
@@ -38,6 +40,8 @@ export function ThreadView() {
     try {
       const page = await messagesApi.getThread(threadId, { size: 100 });
       setMessages(page.content);
+      // FR-8: 스레드를 열람하면 서버가 읽음 처리하므로, 안읽음 뱃지를 즉시 갱신한다.
+      notifyMessagesRead();
     } catch (err) {
       setError(resolveErrorMessage(err));
     } finally {
@@ -108,9 +112,7 @@ export function ThreadView() {
       </div>
 
       {loading && (
-        <p className="text-sm text-muted-foreground" data-testid="thread-loading">
-          불러오는 중...
-        </p>
+<Spinner data-testid="thread-loading" />
       )}
 
       {error && (

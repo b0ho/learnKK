@@ -36,7 +36,7 @@ function meeting(id: number, status: MeetingResponse['status']): MeetingResponse
 }
 
 function session(id: number, scheduledAt: string, window = 120): MeetingSessionResponse {
-  return { id, meetingId: 4, week: 1, scheduledAt, checkInWindowMinutes: window };
+  return { id, meetingId: 4, week: 1, scheduledAt, checkInWindowMinutes: window, completed: false };
 }
 
 describe('MyLearningPage — MENTEE', () => {
