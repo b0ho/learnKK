@@ -74,7 +74,7 @@ Per unit: [TBD]
 - [S] nfr-design — EXECUTE
 - [S] infrastructure-design — EXECUTE
 - [x] code-generation — EXECUTE
-- [-] build-and-test — EXECUTE
+- [?] build-and-test — EXECUTE
 - [ ] ci-pipeline — EXECUTE
 
 ### OPERATION PHASE
@@ -91,7 +91,7 @@ Per unit: [TBD]
 - **Current Stage**: build-and-test
 - **Next Stage**: ci-pipeline
 - **Status**: Running
-- **Last Updated**: 2026-08-25T06:11:53Z
+- **Last Updated**: 2026-08-25T06:16:01Z
 
 ## Session Resume Point
 - **Last Completed Stage**: code-generation
