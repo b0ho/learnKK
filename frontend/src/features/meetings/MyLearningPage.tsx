@@ -14,6 +14,7 @@ import {
   type MeetingSessionResponse,
   type MeetingStatus,
   type MeetingSummary,
+  type MenteeCompletionResponse,
 } from '@/api';
 import { useAuth } from '@/auth/useAuth';
 import { Badge } from '@/components/ui/badge';
@@ -23,7 +24,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { meetingStatusLabel, meetingStatusVariant } from '@/features/shared/meetingStatus';
 import { PATHS } from '@/routes/paths';
-import { formatRate } from '@/features/shared/completionStatus';
+import {
+  completionStatusLabel,
+  completionStatusVariant,
+  formatRate,
+} from '@/features/shared/completionStatus';
 
 /**
  * "내 러닝" tab. Role-adaptive slice:
@@ -185,7 +190,7 @@ function MenteeLearning() {
                         className="self-start"
                         data-testid={`mentee-content-link-${enrollment.id}`}
                       >
-                        <Link to={PATHS.meetingContent(enrollment.meetingId)}>
+                        <Link to={PATHS.myLearningContent(enrollment.meetingId)}>
                           <FolderOpen className="mr-1 h-4 w-4" aria-hidden="true" />
                           자료실 · 공지 보기
                         </Link>
@@ -212,7 +217,7 @@ function MenteeLearning() {
                           className="self-start"
                           data-testid={`mentee-survey-answer-${enrollment.id}`}
                         >
-                          <Link to={PATHS.surveyAnswer(enrollment.meetingId)}>사전설문 응답</Link>
+                          <Link to={PATHS.myLearningSurveyAnswer(enrollment.meetingId)}>사전설문 응답</Link>
                         </Button>
                         <Button
                           asChild
@@ -221,7 +226,7 @@ function MenteeLearning() {
                           className="self-start"
                           data-testid={`mentee-feedback-${enrollment.id}`}
                         >
-                          <Link to={PATHS.feedback(enrollment.meetingId)}>피드백</Link>
+                          <Link to={PATHS.myLearningFeedback(enrollment.meetingId)}>피드백</Link>
                         </Button>
                       </div>
                     )}
@@ -258,6 +263,10 @@ function MenteeSessions({ meetingId }: { meetingId: number }) {
       ]);
       setSessions(list);
       setSummary(attendance);
+      // FR-5: 이미 출석한 세션은 재방문·시간창 종료 후에도 '출석 완료'로 유지 표시.
+      setCheckedIn(
+        Object.fromEntries((attendance.attendedSessionIds ?? []).map((sid) => [sid, true])),
+      );
     } catch (err) {
       setError(resolveErrorMessage(err));
     } finally {
@@ -505,7 +514,7 @@ function MentorHub() {
                       className="self-start"
                       data-testid={`mentor-content-link-${m.id}`}
                     >
-                      <Link to={PATHS.meetingContent(m.id)}>
+                      <Link to={PATHS.myLearningContent(m.id)}>
                         <FolderOpen className="mr-1 h-4 w-4" aria-hidden="true" />
                         자료실 · 공지 관리
                       </Link>
@@ -520,7 +529,7 @@ function MentorHub() {
                         className="self-start"
                         data-testid={`mentor-questions-edit-${m.id}`}
                       >
-                        <Link to={PATHS.meetingQuestions(m.id)}>
+                        <Link to={PATHS.myLearningQuestions(m.id)}>
                           <FileText className="mr-1 h-4 w-4" aria-hidden="true" />
                           사전설문 문항 관리
                         </Link>
@@ -533,7 +542,7 @@ function MentorHub() {
                       className="self-start"
                       data-testid={`mentor-feedback-view-${m.id}`}
                     >
-                      <Link to={PATHS.feedbackView(m.id)}>피드백·사전설문 열람</Link>
+                      <Link to={PATHS.myLearningFeedbackView(m.id)}>피드백·사전설문 열람</Link>
                     </Button>
 
                     <div className="flex flex-col gap-1">
@@ -555,11 +564,128 @@ function MentorHub() {
                     </div>
 
                     {m.status === 'IN_PROGRESS' && <MentorSessions meetingId={m.id} />}
+                    {(m.status === 'IN_PROGRESS' || m.status === 'COMPLETED') && (
+                      <MentorCompletionPanel meetingId={m.id} />
+                    )}
                   </CardContent>
                 </Card>
               </li>
             );
           })}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+/**
+ * 멘토용 수료 판정 패널(FR-7). 소유 멘토가 자기 모임의 80% 수료 판정(compute)을 버튼으로 실행하고 멘티별
+ * 판정 결과(후보/미수료/확정)를 확인한다. 최종 ④ 수료 확정은 관리자 전용이므로 여기서는 조회·판정만 제공한다.
+ */
+function MentorCompletionPanel({ meetingId }: { meetingId: number }) {
+  const [rows, setRows] = useState<MenteeCompletionResponse[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [computing, setComputing] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await sessionsApi.listCompletions(meetingId);
+      setRows(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setError(resolveErrorMessage(err));
+    } finally {
+      setLoading(false);
+    }
+  }, [meetingId]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  async function handleCompute() {
+    setComputing(true);
+    setError(null);
+    try {
+      const data = await sessionsApi.computeCompletions(meetingId);
+      setRows(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setError(resolveErrorMessage(err));
+    } finally {
+      setComputing(false);
+    }
+  }
+
+  return (
+    <div
+      className="flex flex-col gap-2 border-t pt-2"
+      data-testid={`mentor-completion-${meetingId}`}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <span className="font-medium text-foreground">수료 판정</span>
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={computing}
+          onClick={handleCompute}
+          data-testid={`mentor-completion-compute-${meetingId}`}
+        >
+          {computing ? '판정 중...' : '수료 판정 실행'}
+        </Button>
+      </div>
+
+      {loading && (
+        <p
+          className="text-sm text-muted-foreground"
+          data-testid={`mentor-completion-loading-${meetingId}`}
+        >
+          불러오는 중...
+        </p>
+      )}
+      {error && (
+        <p
+          role="alert"
+          className="text-sm text-destructive"
+          data-testid={`mentor-completion-error-${meetingId}`}
+        >
+          {error}
+        </p>
+      )}
+
+      {!loading && !error && rows.length === 0 && (
+        <p
+          className="text-sm text-muted-foreground"
+          data-testid={`mentor-completion-empty-${meetingId}`}
+        >
+          아직 판정 내역이 없습니다. &lsquo;수료 판정 실행&rsquo;을 눌러 판정하세요.
+        </p>
+      )}
+
+      {rows.length > 0 && (
+        <ul
+          className="flex flex-col gap-1.5"
+          data-testid={`mentor-completion-list-${meetingId}`}
+        >
+          {rows.map((r) => (
+            <li
+              key={r.menteeId}
+              className="flex items-center justify-between gap-2 text-sm"
+              data-testid={`mentor-completion-row-${meetingId}-${r.menteeId}`}
+            >
+              <span>
+                멘티 #{r.menteeId} · {r.attendedCount}/{r.totalScheduled} (
+                {formatRate(r.totalScheduled > 0 ? r.attendedCount / r.totalScheduled : 0)})
+              </span>
+              <Badge
+                variant={completionStatusVariant(r.status)}
+                data-testid={`mentor-completion-status-${meetingId}-${r.menteeId}`}
+              >
+                {completionStatusLabel(r.status)}
+              </Badge>
+            </li>
+          ))}
         </ul>
       )}
     </div>

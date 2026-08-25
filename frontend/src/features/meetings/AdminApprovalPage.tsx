@@ -278,9 +278,7 @@ export function AdminApprovalPage() {
               className="flex flex-col gap-2"
               data-testid={`admin-section-${section.status}`}
             >
-              <h3 className="text-base font-semibold">
-                {section.title} <span className="text-muted-foreground">({list.length})</span>
-              </h3>
+              <h3 className="text-base font-semibold">{section.title}</h3>
               {list.length === 0 ? (
                 <p
                   className="text-sm text-muted-foreground"

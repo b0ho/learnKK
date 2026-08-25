@@ -99,8 +99,8 @@ public class AttendanceService {
   @Transactional(readOnly = true)
   public AttendanceSummaryResponse getMyAttendance(Principal principal, Long meetingId) {
     int scheduled = sessionRepository.countByMeetingId(meetingId);
-    int attended =
-        (int) attendanceRepository.countAttendedSessions(meetingId, principal.userId());
-    return AttendanceSummaryResponse.of(attended, scheduled);
+    java.util.List<Long> attendedSessionIds =
+        attendanceRepository.findAttendedSessionIds(meetingId, principal.userId());
+    return AttendanceSummaryResponse.of(attendedSessionIds.size(), scheduled, attendedSessionIds);
   }
 }

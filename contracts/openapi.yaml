@@ -1933,7 +1933,7 @@ components:
 
     AttendanceSummaryResponse:
       type: object
-      required: [attended, totalScheduled, rate]
+      required: [attended, totalScheduled, rate, attendedSessionIds]
       properties:
         attended:
           type: integer
@@ -1942,6 +1942,11 @@ components:
         rate:
           type: number
           format: double
+        attendedSessionIds:
+          type: array
+          items:
+            type: integer
+            format: int64
 
     MenteeCompletionResponse:
       type: object

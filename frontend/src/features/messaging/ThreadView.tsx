@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { PATHS } from '@/routes/paths';
 import { formatTime } from './formatTime';
+import { notifyMessagesRead } from './useUnreadCount';
 
 interface ThreadState {
   partnerId?: number;
@@ -38,6 +39,8 @@ export function ThreadView() {
     try {
       const page = await messagesApi.getThread(threadId, { size: 100 });
       setMessages(page.content);
+      // FR-8: 스레드를 열람하면 서버가 읽음 처리하므로, 안읽음 뱃지를 즉시 갱신한다.
+      notifyMessagesRead();
     } catch (err) {
       setError(resolveErrorMessage(err));
     } finally {

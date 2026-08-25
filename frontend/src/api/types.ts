@@ -275,6 +275,8 @@ export interface AttendanceSummaryResponse {
   attended: number;
   totalScheduled: number;
   rate: number;
+  /** 출석한 세션 id 목록(FR-5): 출석완료 상태를 재방문·시간창 종료 후에도 유지 표시하는 데 사용. */
+  attendedSessionIds: number[];
 }
 
 export interface MenteeCompletionResponse {

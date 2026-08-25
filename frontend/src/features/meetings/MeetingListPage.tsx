@@ -84,11 +84,7 @@ export function MeetingListPage() {
             <Link to={PATHS.meetingCreate}>모임 개설</Link>
           </Button>
         )}
-        {role === 'ADMIN' && (
-          <Button asChild size="sm" variant="outline" data-testid="open-admin-queue">
-            <Link to={PATHS.adminApproval}>개설 승인</Link>
-          </Button>
-        )}
+        {/* FR-9: 관리자 모임 목록의 '개설 승인' 진입 버튼 제거 — 모든 관리 액션은 하단 '관리' 탭에서 수행한다. */}
       </div>
 
       {state === 'loading' && <p data-testid="meetings-loading">모임을 불러오는 중...</p>}
