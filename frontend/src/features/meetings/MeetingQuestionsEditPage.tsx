@@ -5,6 +5,7 @@ import {
   resolveErrorMessage,
   type MeetingResponse,
   type SurveyQuestionDto,
+  type SurveyQuestionType,
 } from '@/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,7 +18,7 @@ function toDrafts(dtos: SurveyQuestionDto[]): DraftQuestion[] {
     .sort((a, b) => a.orderNo - b.orderNo)
     .map((q) => ({
       text: q.text,
-      type: q.type,
+      type: q.type as SurveyQuestionType,
       options: q.options ?? [],
       required: q.required ?? true,
     }));
