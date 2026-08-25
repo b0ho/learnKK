@@ -9,6 +9,7 @@ import com.learnkk.kernel.error.NotFoundException;
 import com.learnkk.kernel.security.Principal;
 import com.learnkk.meeting.dto.MeetingResponse;
 import com.learnkk.meeting.service.MeetingService;
+import com.learnkk.session.dto.MeetingProgressSummary;
 import com.learnkk.session.dto.MenteeCompletionResponse;
 import com.learnkk.session.entity.MenteeCompletion;
 import com.learnkk.session.repository.AttendanceRepository;
@@ -106,6 +107,48 @@ public class CompletionService {
 
     mc.approve(OffsetDateTime.now());
     return MenteeCompletionResponse.from(completionRepository.save(mc));
+  }
+
+  /**
+   * 무권한 cross-module read 포트(U9→U5, ADR-007): 모임 단위 진행 현황(세션 기준 출석율·수료 후보/확정 수)을 집계한다.
+   * 출석율은 정수 백분율 {@code round(총 출석 / (S × 참여자))}, 분모 0 이면 0. 인가는 호출 측(U9 AdminQueryService)이
+   * 담당한다. 판정 결과는 저장된 {@link MenteeCompletion} 스냅샷을 read 만 하며 재계산하지 않는다.
+   */
+  @Transactional(readOnly = true)
+  public MeetingProgressSummary getMeetingProgress(Long meetingId) {
+    int scheduled = sessionRepository.countByMeetingId(meetingId);
+    List<Long> participants = enrollmentService.listActiveMenteeIds(meetingId);
+    int participantCount = participants.size();
+
+    long attendedTotal = 0;
+    for (Long menteeId : participants) {
+      attendedTotal += attendanceRepository.countAttendedSessions(meetingId, menteeId);
+    }
+    long denom = (long) scheduled * participantCount;
+    int ratePercent = denom > 0 ? (int) Math.round(attendedTotal * 100.0 / denom) : 0;
+
+    int candidates = 0;
+    int completed = 0;
+    for (MenteeCompletion mc : completionRepository.findByMeetingId(meetingId)) {
+      if (mc.getStatus() == CompletionStatus.COMPLETION_CANDIDATE) {
+        candidates++;
+      } else if (mc.getStatus() == CompletionStatus.COMPLETED) {
+        completed++;
+      }
+    }
+    return new MeetingProgressSummary(
+        scheduled, participantCount, ratePercent, candidates, completed);
+  }
+
+  /**
+   * 무권한 cross-module read 포트(U9→U5, ADR-007): 전체 모임에서 수료 후보(COMPLETION_CANDIDATE) 판정 내역을
+   * 반환한다. 관리자 ④ 멘티 수료 대기 큐 집계로 사용된다. 인가는 호출 측(U9)이 담당한다.
+   */
+  @Transactional(readOnly = true)
+  public List<MenteeCompletionResponse> listCompletionCandidates() {
+    return completionRepository.findByStatus(CompletionStatus.COMPLETION_CANDIDATE).stream()
+        .map(MenteeCompletionResponse::from)
+        .toList();
   }
 
   private void requireOwningMentorOrAdmin(Principal principal, Long meetingId) {

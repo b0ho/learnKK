@@ -213,6 +213,15 @@ public class EnrollmentService {
         .toList();
   }
 
+  /**
+   * 무권한 cross-module read 포트(U9→U4, ADR-007 R-1): 해당 모임의 활성(APPLIED) 신청 수를 반환한다. 관리자 운영
+   * 현황 모니터링의 신청 수 집계로 사용된다. 인가는 호출 측(U9)이 담당한다.
+   */
+  @Transactional(readOnly = true)
+  public int countActiveApplicants(Long meetingId) {
+    return enrollmentRepository.countByMeetingIdAndStatus(meetingId, EnrollmentStatus.APPLIED);
+  }
+
   private String resolveNickname(Long menteeId) {
     return userRepository.findById(menteeId).map(User::getNickname).orElse(null);
   }

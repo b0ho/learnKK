@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { PATHS } from '@/routes/paths';
 import {
   adminApi,
   isApiErrorCode,
@@ -250,7 +252,12 @@ export function AdminApprovalPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <h2 className="text-xl font-bold">모임 승인 · 운영</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold">모임 승인 · 운영</h2>
+        <Button asChild size="sm" variant="outline" data-testid="go-admin-monitoring">
+          <Link to={PATHS.adminMonitoring}>운영 현황</Link>
+        </Button>
+      </div>
 
       {loading && (
         <p className="text-sm text-muted-foreground" data-testid="admin-loading">

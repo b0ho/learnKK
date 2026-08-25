@@ -5,6 +5,7 @@ import { ProfilePage } from '@/features/auth/ProfilePage';
 import { MeetingListPage } from '@/features/meetings/MeetingListPage';
 import { MeetingCreatePage } from '@/features/meetings/MeetingCreatePage';
 import { AdminApprovalPage } from '@/features/meetings/AdminApprovalPage';
+import { AdminMonitoringPage } from '@/features/admin/AdminMonitoringPage';
 import { MyLearningPage } from '@/features/meetings/MyLearningPage';
 import { MeetingQuestionsEditPage } from '@/features/meetings/MeetingQuestionsEditPage';
 import { MeetingContentPage } from '@/features/content/MeetingContentPage';
@@ -34,6 +35,7 @@ export function AppRouter() {
           </Route>
           <Route element={<RequireRole allow={['ADMIN']} />}>
             <Route path={PATHS.adminApproval} element={<AdminApprovalPage />} />
+            <Route path={PATHS.adminMonitoring} element={<AdminMonitoringPage />} />
           </Route>
           <Route path={PATHS.myLearning} element={<MyLearningPage />} />
           <Route path="/meetings/:id/content" element={<MeetingContentPage />} />

@@ -8,6 +8,7 @@ export const PATHS = {
   meetingContent: (id: number | string) => `/meetings/${id}/content`,
   meetingQuestions: (id: number | string) => `/meetings/${id}/questions-edit`,
   adminApproval: '/admin/meetings',
+  adminMonitoring: '/admin/monitoring',
   myLearning: '/my-learning',
   messages: '/messages',
   messageThread: (id: number | string) => `/messages/${id}`,

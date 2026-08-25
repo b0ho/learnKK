@@ -15,6 +15,9 @@ public interface MeetingRepository extends JpaRepository<Meeting, Long> {
 
   Page<Meeting> findByStatus(MeetingStatus status, Pageable pageable);
 
+  /** Unpaged status listing — admin monitoring/queue composition (U9 read port). */
+  List<Meeting> findByStatus(MeetingStatus status);
+
   Page<Meeting> findByMentorId(Long mentorId, Pageable pageable);
 
   /** Ids of every meeting owned by a mentor — a cross-module read for messaging authorization. */

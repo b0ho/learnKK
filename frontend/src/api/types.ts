@@ -285,3 +285,47 @@ export interface MenteeCompletionResponse {
   totalScheduled: number;
   approvedAt?: string | null;
 }
+
+// --- Admin / monitoring (U9, Bolt 8) ---
+
+/** 운영 현황 모니터링 한 행(US-9.2): 모임별 상태·신청/정원·세션 기준 출석율·수료 진행. */
+export interface MeetingMonitorRow {
+  meetingId: number;
+  title: string;
+  mentorId: number;
+  status: MeetingStatus;
+  capacity: number;
+  applicantCount: number;
+  participantCount: number;
+  /** 세션 기준 출석율(정수 백분율 0..100). */
+  attendanceRatePercent: number;
+  completionCandidates: number;
+  completedCount: number;
+}
+
+/** 승인 큐(모임 단위) 최소 표시 항목(US-9.1). */
+export interface MeetingQueueItem {
+  id: number;
+  title: string;
+  mentorId: number;
+  status: MeetingStatus;
+  capacity: number;
+}
+
+/** ④ 멘티 수료 대기 큐 항목(US-9.1). */
+export interface MenteeCompletionQueueItem {
+  meetingId: number;
+  meetingTitle?: string | null;
+  menteeId: number;
+  attendedCount: number;
+  totalScheduled: number;
+}
+
+/** 승인 큐 집계(US-9.1): 5개 큐. */
+export interface ApprovalQueues {
+  creation: MeetingQueueItem[];
+  recruitConfirm: MeetingQueueItem[];
+  start: MeetingQueueItem[];
+  meetingComplete: MeetingQueueItem[];
+  menteeComplete: MenteeCompletionQueueItem[];
+}

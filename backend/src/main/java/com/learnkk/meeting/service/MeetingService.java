@@ -98,6 +98,24 @@ public class MeetingService {
         meetingRepository.findByMentorId(principal.userId(), pageable).map(MeetingSummary::from));
   }
 
+  /**
+   * All meetings (any status). Cross-module read port for the admin monitoring dashboard (U9,
+   * ADR-007) — admin authorization is enforced by the calling {@code AdminQueryService}.
+   */
+  @Transactional(readOnly = true)
+  public List<MeetingResponse> listAllMeetings() {
+    return meetingRepository.findAll().stream().map(MeetingResponse::from).toList();
+  }
+
+  /**
+   * All meetings in a given status (unpaged). Cross-module read port for admin approval-queue
+   * aggregation (U9, ADR-007) — admin authorization is enforced by the caller.
+   */
+  @Transactional(readOnly = true)
+  public List<MeetingResponse> listByStatus(MeetingStatus status) {
+    return meetingRepository.findByStatus(status).stream().map(MeetingResponse::from).toList();
+  }
+
   Meeting loadMeeting(Long id) {
     return meetingRepository
         .findById(id)

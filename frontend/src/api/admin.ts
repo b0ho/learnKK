@@ -1,5 +1,12 @@
 import { request } from './client';
-import type { MeetingResponse, MeetingSummary, MeetingStatus, PageResponse } from './types';
+import type {
+  ApprovalQueues,
+  MeetingMonitorRow,
+  MeetingResponse,
+  MeetingSummary,
+  MeetingStatus,
+  PageResponse,
+} from './types';
 
 export const adminApi = {
   /** FR-2/FR-3: 상태별 모임 목록(관리자 승인 큐). */
@@ -7,6 +14,16 @@ export const adminApi = {
     return request<PageResponse<MeetingSummary>>('/api/admin/meetings', {
       query: { status, size: params.size },
     });
+  },
+
+  /** US-9.1: 승인 큐 집계(5개 큐, 조회 전용). */
+  queues(): Promise<ApprovalQueues> {
+    return request<ApprovalQueues>('/api/admin/queues');
+  },
+
+  /** US-9.2: 운영 현황 모니터링(모임별 현황). */
+  monitoring(): Promise<MeetingMonitorRow[]> {
+    return request<MeetingMonitorRow[]>('/api/admin/monitoring');
   },
 
   /** FR-5: 승인 되돌리기(직전 상태로 역전이). */
