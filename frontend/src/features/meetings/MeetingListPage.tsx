@@ -51,6 +51,30 @@ export function MeetingListPage() {
     };
   }, []);
 
+  // FR-1: 로그인한 멘티는 로드 시 본인 신청 내역을 반영해 이미 신청한 모임을 "신청완료"로 표시한다.
+  // 조회 실패는 목록 렌더를 막지 않는다(신청 상태 반영만 생략).
+  useEffect(() => {
+    if (role !== 'MENTEE') return;
+    let active = true;
+    enrollmentsApi
+      .listMine()
+      .then((list) => {
+        if (!active || !Array.isArray(list)) return;
+        const mine: Record<number, boolean> = {};
+        for (const e of list) {
+          if (e.status === 'APPLIED') mine[e.meetingId] = true;
+        }
+        // 방금 신청한 상태(prev)가 서버 스냅샷보다 우선한다.
+        setApplied((prev) => ({ ...mine, ...prev }));
+      })
+      .catch(() => {
+        /* FR-1: 신청 내역 조회 실패는 목록 표시를 방해하지 않는다. */
+      });
+    return () => {
+      active = false;
+    };
+  }, [role]);
+
   async function handleApply(meetingId: number) {
     setApplyingId(meetingId);
     setFeedback((prev) => {
@@ -107,14 +131,23 @@ export function MeetingListPage() {
           {meetings.map((meeting) => {
             const meetingFeedback = feedback[meeting.id];
             const isApplied = applied[meeting.id];
+            // FR-2/FR-3: 내 신청 상태가 우선. 신청 안 했고 정원이 찬 모임만 "마감"으로 표시.
+            const isFull = !isApplied && meeting.full === true;
             return (
               <li key={meeting.id}>
                 <Card data-testid={`meeting-card-${meeting.id}`}>
                   <CardHeader className="flex-row items-start justify-between gap-2 space-y-0">
                     <CardTitle className="text-base">{meeting.title}</CardTitle>
-                    <Badge variant={meetingStatusVariant(meeting.status)}>
-                      {meetingStatusLabel(meeting.status)}
-                    </Badge>
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      <Badge variant={meetingStatusVariant(meeting.status)}>
+                        {meetingStatusLabel(meeting.status)}
+                      </Badge>
+                      {isFull && (
+                        <Badge variant="destructive" data-testid={`full-badge-${meeting.id}`}>
+                          마감
+                        </Badge>
+                      )}
+                    </div>
                   </CardHeader>
                   <CardContent className="flex flex-col gap-2 text-sm text-muted-foreground">
                     <div className="flex flex-col gap-1">
@@ -128,11 +161,17 @@ export function MeetingListPage() {
                         <Button
                           size="sm"
                           className="self-start"
-                          disabled={applyingId === meeting.id || isApplied}
+                          disabled={applyingId === meeting.id || isApplied || isFull}
                           onClick={() => handleApply(meeting.id)}
                           data-testid={`apply-button-${meeting.id}`}
                         >
-                          {isApplied ? '신청완료' : applyingId === meeting.id ? '신청 중...' : '신청'}
+                          {isApplied
+                            ? '신청완료'
+                            : isFull
+                              ? '마감'
+                              : applyingId === meeting.id
+                                ? '신청 중...'
+                                : '신청'}
                         </Button>
                         {meetingFeedback && (
                           <p

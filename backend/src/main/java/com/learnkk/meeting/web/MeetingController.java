@@ -9,11 +9,13 @@ import com.learnkk.kernel.web.PageResponse;
 import com.learnkk.meeting.dto.MeetingCreateRequest;
 import com.learnkk.meeting.dto.MeetingResponse;
 import com.learnkk.meeting.dto.MeetingSummary;
+import com.learnkk.enrollment.service.EnrollmentService;
 import com.learnkk.meeting.dto.SurveyQuestionDto;
 import com.learnkk.meeting.service.MeetingService;
 import com.learnkk.meeting.service.SurveyTemplateService;
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -36,11 +38,15 @@ public class MeetingController {
 
   private final MeetingService meetingService;
   private final SurveyTemplateService surveyTemplateService;
+  private final EnrollmentService enrollmentService;
 
   public MeetingController(
-      MeetingService meetingService, SurveyTemplateService surveyTemplateService) {
+      MeetingService meetingService,
+      SurveyTemplateService surveyTemplateService,
+      EnrollmentService enrollmentService) {
     this.meetingService = meetingService;
     this.surveyTemplateService = surveyTemplateService;
+    this.enrollmentService = enrollmentService;
   }
 
   @PostMapping
@@ -67,7 +73,35 @@ public class MeetingController {
       throw new ValidationException(ErrorCodes.VALIDATION_FAILED, "지원하지 않는 status 값입니다: " + status);
     }
     Pageable pageable = PageRequestFactory.of(page, size, sort, SORTABLE);
-    return ResponseEntity.ok(meetingService.listRecruiting(pageable));
+    return ResponseEntity.ok(withEnrollmentCounts(meetingService.listRecruiting(pageable)));
+  }
+
+  /**
+   * Enriches a recruiting page with each meeting's active (APPLIED) enrollment count so the client
+   * can render "마감" state on load (FR-2). Counts are fetched in a single batch query
+   * (EnrollmentService, ADR-007 boundary) — no N+1. Meetings absent from the count map default to
+   * 0, and {@code full} is recomputed as {@code enrolledCount >= capacity}.
+   */
+  private PageResponse<MeetingSummary> withEnrollmentCounts(PageResponse<MeetingSummary> page) {
+    List<Long> ids = page.content().stream().map(MeetingSummary::id).toList();
+    Map<Long, Integer> counts = enrollmentService.activeCountsByMeeting(ids);
+    List<MeetingSummary> enriched =
+        page.content().stream()
+            .map(
+                s ->
+                    new MeetingSummary(
+                        s.id(),
+                        s.title(),
+                        s.topic(),
+                        s.weeks(),
+                        s.capacity(),
+                        s.status(),
+                        s.mentorCompletionStatus(),
+                        counts.getOrDefault(s.id(), 0),
+                        counts.getOrDefault(s.id(), 0) >= s.capacity()))
+            .toList();
+    return new PageResponse<>(
+        enriched, page.page(), page.size(), page.totalElements(), page.totalPages());
   }
 
   /** Mentor operations hub: the caller's own meetings across every status (US-2.3). */

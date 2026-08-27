@@ -68,5 +68,12 @@
     "dirName": "260825-ux-bugfixes-2",
     "scope": "bugfix",
     "status": "complete"
+  },
+  {
+    "uuid": "01a040d6-730c-745c-9a73-4970de37f3a2",
+    "slug": "apply-button-state",
+    "dirName": "260827-apply-button-state",
+    "scope": "bugfix",
+    "status": "in-flight"
   }
 ]

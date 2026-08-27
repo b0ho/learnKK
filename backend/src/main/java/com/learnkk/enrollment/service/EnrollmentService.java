@@ -17,7 +17,9 @@ import com.learnkk.meeting.dto.MeetingResponse;
 import com.learnkk.meeting.service.MeetingService;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -198,6 +200,26 @@ public class EnrollmentService {
     }
     return enrollmentRepository.findMenteeIdsByMeetingIdInAndStatus(
         meetingIds, EnrollmentStatus.APPLIED);
+  }
+
+  /**
+   * Active (APPLIED) enrollment count per meeting for the given ids — a batch read used by list
+   * endpoints (U3 recruiting listing) to display each meeting's fill without an N+1 (ADR-007 R-1:
+   * meeting module reads enrollment only through this service). Meetings with zero active
+   * enrollments are absent from the map; callers default those to 0.
+   */
+  @Transactional(readOnly = true)
+  public Map<Long, Integer> activeCountsByMeeting(Collection<Long> meetingIds) {
+    if (meetingIds.isEmpty()) {
+      return Map.of();
+    }
+    Map<Long, Integer> counts = new HashMap<>();
+    for (Object[] row :
+        enrollmentRepository.countByMeetingIdInAndStatusGrouped(
+            meetingIds, EnrollmentStatus.APPLIED)) {
+      counts.put((Long) row[0], ((Number) row[1]).intValue());
+    }
+    return counts;
   }
 
   /**

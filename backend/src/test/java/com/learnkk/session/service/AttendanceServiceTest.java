@@ -43,7 +43,7 @@ class AttendanceServiceTest {
 
   private MeetingResponse meeting(MeetingStatus status) {
     return new MeetingResponse(
-        10L, 1L, "t", "topic", 8, null, null, 5, "online", "c", status, null);
+        10L, 1L, "t", "topic", 8, null, null, 5, "online", "c", status, null, null);
   }
 
   private MeetingSession sessionNow() {

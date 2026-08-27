@@ -8,7 +8,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.learnkk.auth.service.AuthService;
+import com.learnkk.enrollment.service.EnrollmentService;
 import com.learnkk.kernel.domain.MeetingStatus;
+import com.learnkk.kernel.domain.MentorCompletionStatus;
 import com.learnkk.kernel.domain.Role;
 import com.learnkk.kernel.error.ErrorCodes;
 import com.learnkk.kernel.error.ForbiddenException;
@@ -20,6 +22,7 @@ import com.learnkk.meeting.service.MeetingApprovalService;
 import com.learnkk.meeting.service.MeetingService;
 import com.learnkk.meeting.service.SurveyTemplateService;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -36,10 +39,11 @@ class MeetingControllerTest {
   @MockBean private MeetingService meetingService;
   @MockBean private SurveyTemplateService surveyTemplateService;
   @MockBean private MeetingApprovalService approvalService;
+  @MockBean private EnrollmentService enrollmentService;
 
   private MeetingResponse meeting(MeetingStatus status) {
     return new MeetingResponse(
-        10L, 1L, "Spring", "backend", 8, null, null, 5, "online", "intro", status, null);
+        10L, 1L, "Spring", "backend", 8, null, null, 5, "online", "intro", status, null, null);
   }
 
   @Test
@@ -98,18 +102,25 @@ class MeetingControllerTest {
   void listRecruiting_isPublic_returns200() throws Exception {
     PageResponse<MeetingSummary> page =
         new PageResponse<>(
-            List.of(new MeetingSummary(10L, "Spring", "backend", 8, 5, MeetingStatus.RECRUITING)),
+            List.of(
+                new MeetingSummary(
+                    10L, "Spring", "backend", 8, 5, MeetingStatus.RECRUITING,
+                    MentorCompletionStatus.PENDING, 0, false)),
             0,
             20,
             1,
             1);
     when(meetingService.listRecruiting(any())).thenReturn(page);
+    // FR-2: 컨트롤러가 모집 목록을 활성 신청 인원으로 보강한다. 정원 5, 신청 5 → full=true.
+    when(enrollmentService.activeCountsByMeeting(any())).thenReturn(Map.of(10L, 5));
 
     mockMvc
         .perform(get("/api/meetings").param("status", "recruiting"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.totalElements").value(1))
-        .andExpect(jsonPath("$.content[0].status").value("RECRUITING"));
+        .andExpect(jsonPath("$.content[0].status").value("RECRUITING"))
+        .andExpect(jsonPath("$.content[0].enrolledCount").value(5))
+        .andExpect(jsonPath("$.content[0].full").value(true));
   }
 
   @Test
@@ -227,7 +238,10 @@ class MeetingControllerTest {
     when(authService.validateSession("m-tok")).thenReturn(new Principal(1L, Role.MENTOR));
     PageResponse<MeetingSummary> page =
         new PageResponse<>(
-            List.of(new MeetingSummary(10L, "내 모임", "backend", 8, 5, MeetingStatus.READY_TO_START)),
+            List.of(
+                new MeetingSummary(
+                    10L, "내 모임", "backend", 8, 5, MeetingStatus.READY_TO_START,
+                    MentorCompletionStatus.PENDING, 0, false)),
             0,
             20,
             1,

@@ -114,7 +114,8 @@ class OpenApiContractTest {
     assertConforms(
         "MeetingSummary",
         new MeetingSummary(
-            10L, "t", "topic", 8, 5, MeetingStatus.RECRUITING, MentorCompletionStatus.PENDING));
+            10L, "t", "topic", 8, 5, MeetingStatus.RECRUITING, MentorCompletionStatus.PENDING, 3,
+            false));
   }
 
   @Test
@@ -252,7 +253,8 @@ class OpenApiContractTest {
         new PageResponse<>(
             List.of(
                 new MeetingSummary(
-                    10L, "t", "topic", 8, 5, MeetingStatus.RECRUITING, MentorCompletionStatus.PENDING)),
+                    10L, "t", "topic", 8, 5, MeetingStatus.RECRUITING,
+                    MentorCompletionStatus.PENDING, 3, false)),
             0,
             20,
             1,

@@ -31,8 +31,6 @@
 ## Runtime State
 - **Revision Count**: 0
 
-- **Parked**: 2026-08-25T11:07:21Z
-- **Parked At Stage**: ci-pipeline
 ## Phase Progress
 <!-- Status values: Pending, Active, Verified, Skipped -->
 
@@ -93,7 +91,7 @@ Per unit: [TBD]
 - **Current Stage**: ci-pipeline
 - **Next Stage**: deployment-pipeline
 - **Status**: Running
-- **Last Updated**: 2026-08-25T11:07:21Z
+- **Last Updated**: 2026-08-27T01:29:37Z
 
 ## Session Resume Point
 - **Last Completed Stage**: build-and-test

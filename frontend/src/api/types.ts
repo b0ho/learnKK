@@ -100,6 +100,10 @@ export interface MeetingSummary {
   status: MeetingStatus;
   /** FR-7: 백엔드는 항상 반환(기본 PENDING). FE에서는 선택적으로 두어 목 데이터 호환성을 유지한다. */
   mentorCompletionStatus?: MentorCompletionStatus;
+  /** 현재 활성(APPLIED) 신청 인원 수. 목/구버전 응답 호환을 위해 선택적. */
+  enrolledCount?: number;
+  /** 정원 마감 여부(enrolledCount >= capacity). 백엔드 파생 필드. 없으면 마감 미표시로 폴백. */
+  full?: boolean;
 }
 
 export interface SurveyQuestionDto {
