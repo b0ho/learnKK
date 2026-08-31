@@ -129,7 +129,7 @@ FROM meeting_session s JOIN meetings m ON s.meeting_id = m.id, users u
 WHERE m.title = '리액트 실전 스터디' AND s.week = 1 AND u.employee_no = 'MENTEE002'
 ON CONFLICT (session_id, mentee_id) DO NOTHING;
 
--- CS 스터디: 멘티1 = 4/4(수료 확정), 멘티2 = 3/4(수료 후보), 멘티4 = 1/4(미수료)
+-- CS 스터디: 멘티1 = 4/4(수료 확정), 멘티2 = 4/4(수료 후보), 멘티4 = 1/4(미수료)
 INSERT INTO attendance (session_id, mentee_id, checked_in_at)
 SELECT s.id, u.id, s.scheduled_at + interval '5 minute'
 FROM meeting_session s JOIN meetings m ON s.meeting_id = m.id, users u
@@ -139,7 +139,7 @@ ON CONFLICT (session_id, mentee_id) DO NOTHING;
 INSERT INTO attendance (session_id, mentee_id, checked_in_at)
 SELECT s.id, u.id, s.scheduled_at + interval '5 minute'
 FROM meeting_session s JOIN meetings m ON s.meeting_id = m.id, users u
-WHERE m.title = '완료된 CS 스터디' AND s.week IN (1,2,3) AND u.employee_no = 'MENTEE002'
+WHERE m.title = '완료된 CS 스터디' AND u.employee_no = 'MENTEE002'
 ON CONFLICT (session_id, mentee_id) DO NOTHING;
 
 INSERT INTO attendance (session_id, mentee_id, checked_in_at)
@@ -157,8 +157,9 @@ SELECT m.id, u.id, 'COMPLETED', 4, 4, now() - interval '2 day'
 FROM meetings m, users u WHERE m.title = '완료된 CS 스터디' AND u.employee_no = 'MENTEE001'
 ON CONFLICT (meeting_id, mentee_id) DO NOTHING;
 
+-- 멘티2 = 4/4(수료 후보): 80% 규칙(a*100 >= 80*S) 충족(400 >= 320). 확정(멘티1)과 판정 상태만 다르다.
 INSERT INTO mentee_completion (meeting_id, mentee_id, status, attended_count, total_scheduled, approved_at)
-SELECT m.id, u.id, 'COMPLETION_CANDIDATE', 3, 4, NULL
+SELECT m.id, u.id, 'COMPLETION_CANDIDATE', 4, 4, NULL
 FROM meetings m, users u WHERE m.title = '완료된 CS 스터디' AND u.employee_no = 'MENTEE002'
 ON CONFLICT (meeting_id, mentee_id) DO NOTHING;
 

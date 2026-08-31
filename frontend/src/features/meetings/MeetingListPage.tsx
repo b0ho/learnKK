@@ -4,6 +4,7 @@ import {
   enrollmentsApi,
   meetingsApi,
   resolveErrorMessage,
+  type EnrollmentResponse,
   type MeetingSummary,
 } from '@/api';
 import { useAuth } from '@/auth/useAuth';
@@ -34,10 +35,21 @@ export function MeetingListPage() {
   useEffect(() => {
     let active = true;
     setState('loading');
-    meetingsApi
-      .listRecruiting({ page: 0, size: 20 })
-      .then((page) => {
+    // 멘티는 본인 신청 내역을 함께 조회해 목록 로드 시점부터 신청 상태를 반영한다.
+    // 신청 내역 조회가 실패해도 목록 표시는 막지 않는다(빈 배열로 폴백).
+    const enrollmentsPromise: Promise<EnrollmentResponse[]> =
+      role === 'MENTEE' ? enrollmentsApi.listMine().catch(() => []) : Promise.resolve([]);
+    Promise.all([meetingsApi.listRecruiting({ page: 0, size: 20 }), enrollmentsPromise])
+      .then(([page, enrollments]) => {
         if (!active) return;
+        const appliedMap: Record<number, boolean> = {};
+        // 신청 내역이 예상치 못한 형태여도 목록 표시는 절대 막지 않는다(배열 방어).
+        for (const enrollment of Array.isArray(enrollments) ? enrollments : []) {
+          if (enrollment.status === 'APPLIED') {
+            appliedMap[enrollment.meetingId] = true;
+          }
+        }
+        setApplied(appliedMap);
         setMeetings(page.content);
         setState(page.content.length === 0 ? 'empty' : 'ready');
       })
@@ -49,7 +61,7 @@ export function MeetingListPage() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [role]);
 
   async function handleApply(meetingId: number) {
     setApplyingId(meetingId);
