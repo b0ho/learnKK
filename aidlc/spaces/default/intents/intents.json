@@ -68,5 +68,12 @@
     "dirName": "260825-ux-bugfixes-2",
     "scope": "bugfix",
     "status": "complete"
+  },
+  {
+    "uuid": "01a040df-9ef2-7e19-be25-2d9dae7a2178",
+    "slug": "seed-ux-bugfix",
+    "dirName": "260827-seed-ux-bugfix",
+    "scope": "bugfix",
+    "status": "complete"
   }
 ]
