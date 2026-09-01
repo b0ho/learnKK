@@ -39,7 +39,7 @@ class MeetingControllerTest {
 
   private MeetingResponse meeting(MeetingStatus status) {
     return new MeetingResponse(
-        10L, 1L, "Spring", "backend", 8, null, null, 5, "online", "intro", status, null);
+        10L, 1L, "Spring", "backend", 8, null, null, 5, "online", "intro", status, null, null);
   }
 
   @Test
@@ -98,7 +98,7 @@ class MeetingControllerTest {
   void listRecruiting_isPublic_returns200() throws Exception {
     PageResponse<MeetingSummary> page =
         new PageResponse<>(
-            List.of(new MeetingSummary(10L, "Spring", "backend", 8, 5, MeetingStatus.RECRUITING)),
+            List.of(new MeetingSummary(10L, "Spring", "backend", 8, 5, MeetingStatus.RECRUITING, null)),
             0,
             20,
             1,
@@ -227,7 +227,7 @@ class MeetingControllerTest {
     when(authService.validateSession("m-tok")).thenReturn(new Principal(1L, Role.MENTOR));
     PageResponse<MeetingSummary> page =
         new PageResponse<>(
-            List.of(new MeetingSummary(10L, "내 모임", "backend", 8, 5, MeetingStatus.READY_TO_START)),
+            List.of(new MeetingSummary(10L, "내 모임", "backend", 8, 5, MeetingStatus.READY_TO_START, null)),
             0,
             20,
             1,
