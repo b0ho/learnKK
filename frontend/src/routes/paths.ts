@@ -8,6 +8,8 @@ export const PATHS = {
   meetingContent: (id: number | string) => `/meetings/${id}/content`,
   meetingQuestions: (id: number | string) => `/meetings/${id}/questions-edit`,
   adminApproval: '/admin/meetings',
+  // US-9.2(U9): 관리자 운영 현황 모니터링.
+  adminMonitoring: '/admin/monitoring',
   myLearning: '/my-learning',
   // '내 러닝' 스코프 하위 경로(FR-2): 자료실·피드백·설문·문항 진입 시에도 하단 탭이 '내 러닝'으로 유지된다.
   myLearningContent: (id: number | string) => `/my-learning/meetings/${id}/content`,

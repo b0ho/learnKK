@@ -49,7 +49,7 @@ class EnrollmentServiceTest {
 
   private MeetingResponse meeting(MeetingStatus status, int capacity) {
     return new MeetingResponse(
-        10L, 1L, "Spring", "backend", 8, null, null, capacity, "online", "intro", status, null);
+        10L, 1L, "Spring", "backend", 8, null, null, capacity, "online", "intro", status, null, null);
   }
 
   private Enrollment applied(Long id, Long meetingId, Long menteeId) {

@@ -77,11 +77,18 @@ class EnrollmentIntegrationTest extends AbstractIntegrationTest {
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.status").value("APPLIED"));
 
-    // Mentee A cannot re-apply — the cancelled row still occupies the unique pair.
+    // An already-APPLIED mentee re-applying is the true duplicate (BR-U4-2).
+    mockMvc
+        .perform(apply(meetingId, menteeBToken))
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.code").value("ENROLLMENT_DUPLICATE"));
+
+    // Mentee A may re-apply (FR-12: a CANCELLED row is reused), but the seat is taken by B,
+    // so the capacity check rejects with ENROLLMENT_FULL — the row stays CANCELLED.
     mockMvc
         .perform(apply(meetingId, menteeAToken))
         .andExpect(status().isConflict())
-        .andExpect(jsonPath("$.code").value("ENROLLMENT_DUPLICATE"));
+        .andExpect(jsonPath("$.code").value("ENROLLMENT_FULL"));
 
     // Mentee A's own enrollment listing shows the cancelled application.
     mockMvc

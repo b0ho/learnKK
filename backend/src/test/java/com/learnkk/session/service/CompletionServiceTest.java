@@ -46,7 +46,7 @@ class CompletionServiceTest {
   private MeetingResponse meeting() {
     return new MeetingResponse(
         10L, 1L, "t", "topic", 8, null, null, 5, "online", "c",
-        com.learnkk.kernel.domain.MeetingStatus.IN_PROGRESS, null);
+        com.learnkk.kernel.domain.MeetingStatus.IN_PROGRESS, null, null);
   }
 
   @Test

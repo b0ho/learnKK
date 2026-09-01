@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   adminApi,
   isApiErrorCode,
@@ -28,6 +29,7 @@ import {
   completionStatusVariant,
   formatRate,
 } from '@/features/shared/completionStatus';
+import { PATHS } from '@/routes/paths';
 
 /**
  * 관리자 승인 큐(FR-2/FR-3): 처리 대기 모임을 상태(승인 유형)별 영역으로 나눠 목록으로 보여주고, 각 카드에서
@@ -252,7 +254,13 @@ export function AdminApprovalPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <h2 className="text-xl font-bold">모임 승인 · 운영</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold">모임 승인 · 운영</h2>
+        {/* US-9.2: 운영 현황 모니터링 진입점. */}
+        <Button asChild variant="outline" size="sm" data-testid="go-monitoring">
+          <Link to={PATHS.adminMonitoring}>운영 현황</Link>
+        </Button>
+      </div>
 
       {loading && <Spinner data-testid="admin-loading" />}
       {error && (

@@ -44,7 +44,7 @@ class FeedbackServiceTest {
 
   private MeetingResponse meeting(MeetingStatus status) {
     return new MeetingResponse(
-        10L, 1L, "Spring", "backend", 8, null, null, 5, "online", "intro", status, null);
+        10L, 1L, "Spring", "backend", 8, null, null, 5, "online", "intro", status, null, null);
   }
 
   // --- submitFeedback ---

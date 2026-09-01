@@ -70,6 +70,9 @@ public final class ErrorCodes {
   public static final String COMPLETION_NOT_ELIGIBLE = "COMPLETION_NOT_ELIGIBLE";
   public static final String COMPLETION_ALREADY_APPROVED = "COMPLETION_ALREADY_APPROVED";
 
+  // --- Admin / monitoring domain (U9) ---
+  public static final String MONITORING_FORBIDDEN = "MONITORING_FORBIDDEN";
+
   // --- Survey / feedback domain (U8) ---
   public static final String PRESURVEY_NOT_OPEN = "PRESURVEY_NOT_OPEN";
   public static final String PRESURVEY_REQUIRED_MISSING = "PRESURVEY_REQUIRED_MISSING";

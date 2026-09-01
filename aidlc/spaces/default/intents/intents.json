@@ -68,5 +68,12 @@
     "dirName": "260825-ux-bugfixes-2",
     "scope": "bugfix",
     "status": "complete"
+  },
+  {
+    "uuid": "d32c6a8a-b347-4547-b7ba-bbb07d62ef66",
+    "slug": "bolt8-admin",
+    "dirName": "260831-bolt8-admin",
+    "scope": "feature",
+    "status": "complete"
   }
 ]

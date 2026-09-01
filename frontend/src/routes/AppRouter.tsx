@@ -5,6 +5,7 @@ import { ProfilePage } from '@/features/auth/ProfilePage';
 import { MeetingListPage } from '@/features/meetings/MeetingListPage';
 import { MeetingCreatePage } from '@/features/meetings/MeetingCreatePage';
 import { AdminApprovalPage } from '@/features/meetings/AdminApprovalPage';
+import { AdminMonitoringPage } from '@/features/meetings/AdminMonitoringPage';
 import { MyLearningPage } from '@/features/meetings/MyLearningPage';
 import { MeetingQuestionsEditPage } from '@/features/meetings/MeetingQuestionsEditPage';
 import { MeetingContentPage } from '@/features/content/MeetingContentPage';
@@ -34,6 +35,8 @@ export function AppRouter() {
           </Route>
           <Route element={<RequireRole allow={['ADMIN']} />}>
             <Route path={PATHS.adminApproval} element={<AdminApprovalPage />} />
+            {/* US-9.2: 운영 현황 모니터링(read 전용). */}
+            <Route path={PATHS.adminMonitoring} element={<AdminMonitoringPage />} />
           </Route>
           <Route path={PATHS.myLearning} element={<MyLearningPage />} />
           {/* FR-2: '내 러닝' 스코프 하위 경로 — 동일 페이지 재사용, 하단 탭이 '내 러닝'으로 유지된다. */}
