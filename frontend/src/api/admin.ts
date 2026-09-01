@@ -1,5 +1,6 @@
 import { request } from './client';
 import type {
+  MeetingMonitoringSummary,
   MeetingResponse,
   MeetingSummary,
   MeetingStatus,
@@ -11,6 +12,15 @@ export const adminApi = {
   listByStatus(status: MeetingStatus, params: { size?: number } = {}): Promise<PageResponse<MeetingSummary>> {
     return request<PageResponse<MeetingSummary>>('/api/admin/meetings', {
       query: { status, size: params.size },
+    });
+  },
+
+  /** US-9.2(U9): 운영 현황 모니터링 — 모임별 상태·출석율(세션 기준)·수료 진행. status 미지정 시 전체. */
+  listMonitoring(
+    params: { status?: MeetingStatus; page?: number; size?: number } = {},
+  ): Promise<PageResponse<MeetingMonitoringSummary>> {
+    return request<PageResponse<MeetingMonitoringSummary>>('/api/admin/monitoring/meetings', {
+      query: { status: params.status, page: params.page, size: params.size },
     });
   },
 

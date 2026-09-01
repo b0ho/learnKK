@@ -22,6 +22,15 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
   long countAttendedSessions(@Param("meetingId") Long meetingId, @Param("menteeId") Long menteeId);
 
   /**
+   * 해당 모임의 전체 출석 수(모든 멘티×세션 합). 관리자 운영 모니터링(US-9.2, U9 read)의 모임 단위
+   * 출석율 분자 — 멘티별 a 의 합.
+   */
+  @Query(
+      "SELECT COUNT(a) FROM Attendance a, MeetingSession s "
+          + "WHERE a.sessionId = s.id AND s.meetingId = :meetingId")
+  long countByMeetingId(@Param("meetingId") Long meetingId);
+
+  /**
    * 해당 모임에서 한 멘티가 출석한 세션 id 목록(FR-5, 출석완료 상태 유지 표시). 세션 목록과 결합해 출석한 세션을
    * '출석완료'로 지속 표시하는 데 쓴다.
    */

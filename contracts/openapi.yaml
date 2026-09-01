@@ -832,6 +832,53 @@ paths:
         '403':
           $ref: '#/components/responses/Forbidden'
 
+  /api/admin/monitoring/meetings:
+    get:
+      tags: [admin]
+      summary: Operational monitoring — per-meeting status, attendance rate, completion progress (US-9.2, admin only)
+      description: >
+        U9 read composition. Lists meetings (optionally filtered by status) with the
+        session-based attendance rate (total check-ins / (scheduled sessions × active mentees),
+        0.0 when the denominator is 0) and the mentee/mentor completion progress. Read-only —
+        approval actions stay on /api/admin/meetings.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Optional MeetingStatus filter (PENDING_APPROVAL / RECRUITING / READY_TO_START / IN_PROGRESS / COMPLETED / REJECTED / CANCELLED)
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: sort
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageMeetingMonitoringSummary'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
   /api/messages:
     post:
       tags: [messaging]
@@ -1821,6 +1868,63 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/MeetingSummary'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+
+    MeetingMonitoringSummary:
+      type: object
+      required:
+        [id, title, status, mentorId, menteeCount, sessionCount, endedSessionCount,
+         attendanceRate, completedMenteeCount, completionCandidateCount, mentorCompletionStatus]
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+        status:
+          $ref: '#/components/schemas/MeetingStatus'
+        mentorId:
+          type: integer
+          format: int64
+        mentorNickname:
+          type: string
+          nullable: true
+        menteeCount:
+          type: integer
+          description: Active (APPLIED) mentee count
+        sessionCount:
+          type: integer
+          description: Total scheduled sessions S
+        endedSessionCount:
+          type: integer
+          description: Sessions already ended (manual completion or check-in window elapsed)
+        attendanceRate:
+          type: number
+          format: double
+          description: Session-based rate — total check-ins / (S × menteeCount), 0.0 when the denominator is 0
+        completedMenteeCount:
+          type: integer
+        completionCandidateCount:
+          type: integer
+        mentorCompletionStatus:
+          $ref: '#/components/schemas/MentorCompletionStatus'
+
+    PageMeetingMonitoringSummary:
+      type: object
+      required: [content, page, size, totalElements, totalPages]
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/MeetingMonitoringSummary'
         page:
           type: integer
         size:

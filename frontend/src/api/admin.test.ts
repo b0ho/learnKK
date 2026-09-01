@@ -55,6 +55,39 @@ describe('adminApi Bolt 2 transitions', () => {
   });
 });
 
+describe('adminApi.listMonitoring (US-9.2)', () => {
+  function okPage() {
+    return new Response(
+      JSON.stringify({ content: [], page: 0, size: 100, totalElements: 0, totalPages: 0 }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } },
+    );
+  }
+
+  it('GETs the monitoring route without a status by default', async () => {
+    setSession('a-tok', 'ADMIN');
+    const fetchMock = vi.fn().mockResolvedValue(okPage());
+    vi.stubGlobal('fetch', fetchMock);
+
+    await adminApi.listMonitoring({ size: 100 });
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(String(url)).toContain('/api/admin/monitoring/meetings');
+    expect(String(url)).toContain('size=100');
+    expect(String(url)).not.toContain('status=');
+    expect(init.headers.Authorization).toBe('Bearer a-tok');
+  });
+
+  it('passes the status filter as a query param', async () => {
+    setSession('a-tok', 'ADMIN');
+    const fetchMock = vi.fn().mockResolvedValue(okPage());
+    vi.stubGlobal('fetch', fetchMock);
+
+    await adminApi.listMonitoring({ status: 'IN_PROGRESS' });
+
+    expect(String(fetchMock.mock.calls[0][0])).toContain('status=IN_PROGRESS');
+  });
+});
+
 describe('meetingsApi.listMine', () => {
   it('GETs the mine route with auth and pagination params', async () => {
     setSession('m-tok', 'MENTOR');

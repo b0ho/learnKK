@@ -102,6 +102,26 @@ export interface MeetingSummary {
   mentorCompletionStatus?: MentorCompletionStatus;
 }
 
+/** US-9.2(U9): 관리자 운영 현황 모니터링 행 — 모임별 상태·출석율(세션 기준)·수료 진행. */
+export interface MeetingMonitoringSummary {
+  id: number;
+  title: string;
+  status: MeetingStatus;
+  mentorId: number;
+  mentorNickname?: string | null;
+  /** 참여(APPLIED) 멘티 수. */
+  menteeCount: number;
+  /** 전체 예정 세션 수 S. */
+  sessionCount: number;
+  /** 종료된 세션 수(수동 완료 또는 시간창 경과). */
+  endedSessionCount: number;
+  /** 세션 기준 출석율(0..1) — 총 출석 수 / (S × 멘티 수), 분모 0이면 0. */
+  attendanceRate: number;
+  completedMenteeCount: number;
+  completionCandidateCount: number;
+  mentorCompletionStatus?: MentorCompletionStatus;
+}
+
 export interface SurveyQuestionDto {
   /** Populated on read; the upsert/write path ignores it. */
   id?: number | null;
