@@ -49,7 +49,7 @@ class EnrollmentServiceTest {
 
   private MeetingResponse meeting(MeetingStatus status, int capacity) {
     return new MeetingResponse(
-        10L, 1L, "Spring", "backend", 8, null, null, capacity, "online", "intro", status, null);
+        10L, 1L, "Spring", "backend", 8, null, null, capacity, "online", "intro", status, null, null);
   }
 
   private Enrollment applied(Long id, Long meetingId, Long menteeId) {
@@ -259,5 +259,25 @@ class EnrollmentServiceTest {
     assertThat(mine).hasSize(1);
     assertThat(mine.get(0).meetingId()).isEqualTo(10L);
     assertThat(mine.get(0).status()).isEqualTo(EnrollmentStatus.APPLIED);
+  }
+
+  // --- activeCountsByMeeting (FR-2: 정원 마감 표기용 배치 집계) ---
+
+  @Test
+  void activeCountsByMeeting_mapsGroupedRows() {
+    when(enrollmentRepository.countByMeetingIdInAndStatusGrouped(
+            List.of(10L, 11L), EnrollmentStatus.APPLIED))
+        .thenReturn(List.of(new Object[] {10L, 5L}, new Object[] {11L, 2L}));
+
+    var counts = enrollmentService.activeCountsByMeeting(List.of(10L, 11L));
+
+    assertThat(counts).containsEntry(10L, 5).containsEntry(11L, 2);
+  }
+
+  @Test
+  void activeCountsByMeeting_emptyInput_returnsEmptyMap() {
+    assertThat(enrollmentService.activeCountsByMeeting(List.of())).isEmpty();
+    verify(enrollmentRepository, never())
+        .countByMeetingIdInAndStatusGrouped(any(), any());
   }
 }

@@ -1741,7 +1741,7 @@ components:
 
     MeetingSummary:
       type: object
-      required: [id, title, weeks, capacity, status, mentorCompletionStatus]
+      required: [id, title, weeks, capacity, status, mentorCompletionStatus, enrolledCount, full]
       properties:
         id:
           type: integer
@@ -1759,6 +1759,12 @@ components:
           $ref: '#/components/schemas/MeetingStatus'
         mentorCompletionStatus:
           $ref: '#/components/schemas/MentorCompletionStatus'
+        enrolledCount:
+          type: integer
+          description: Number of active (APPLIED) enrollments for this meeting.
+        full:
+          type: boolean
+          description: Whether the meeting has reached capacity (enrolledCount >= capacity).
 
     SurveyQuestionDto:
       type: object

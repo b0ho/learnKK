@@ -49,6 +49,7 @@ class PostServiceTest {
         "online",
         "intro",
         MeetingStatus.IN_PROGRESS,
+        null,
         null);
   }
 

@@ -21,7 +21,7 @@ function isWithinTab(pathname: string, to: string): boolean {
 }
 
 /** Tab root paths — the back button is hidden on these (they are tab tops, not deep views). */
-const TAB_ROOTS = [
+const TAB_ROOTS: readonly string[] = [
   PATHS.meetings,
   PATHS.myLearning,
   PATHS.adminApproval,

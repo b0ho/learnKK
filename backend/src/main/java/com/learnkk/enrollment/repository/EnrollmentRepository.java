@@ -39,6 +39,18 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
       @Param("meetingIds") Collection<Long> meetingIds, @Param("status") EnrollmentStatus status);
 
   /**
+   * Active-enrollment counts grouped by meeting for a set of meetings — a single batch query that
+   * avoids N+1 counting when a list endpoint needs each meeting's fill (U4 capacity display). Each
+   * row is {@code [meetingId (Long), count (Long)]}; meetings with zero active enrollments are
+   * simply absent from the result.
+   */
+  @Query(
+      "SELECT e.meetingId, COUNT(e) FROM Enrollment e "
+          + "WHERE e.meetingId IN :meetingIds AND e.status = :status GROUP BY e.meetingId")
+  List<Object[]> countByMeetingIdInAndStatusGrouped(
+      @Param("meetingIds") Collection<Long> meetingIds, @Param("status") EnrollmentStatus status);
+
+  /**
    * Acquires a transaction-scoped PostgreSQL advisory lock keyed by the meeting id (BR-U4-1). The
    * lock is held until the surrounding transaction commits, so the next {@code apply} for the same
    * meeting observes the committed insert before it counts — making count-then-insert race-free
